@@ -1,0 +1,70 @@
+apiVersion: backstage.io/v1beta3
+kind: Template
+metadata:
+  name: keycloak-create-client
+  title: Create Keycloak OIDC Client
+  description: >-
+    Create an OIDC client in the RefresquitoTime Keycloak realm. Restricted
+    to the cnoe-admin group.
+  tags: [keycloak, identity, oidc]
+spec:
+  owner: group:default/cnoe-admin
+  type: keycloak-identity
+  parameters:
+    - title: Client details
+      required: [clientId, publicClient]
+      properties:
+        clientId:
+          title: Client ID
+          type: string
+        name:
+          title: Display name
+          type: string
+        description:
+          title: Description
+          type: string
+        publicClient:
+          title: Public client
+          description: >-
+            true = no client secret (SPA/mobile app); false = confidential
+            (server-side app, gets a secret back).
+          type: boolean
+          default: false
+        redirectUris:
+          title: Redirect URIs
+          type: array
+          items:
+            type: string
+        webOrigins:
+          title: Web origins (CORS)
+          type: array
+          items:
+            type: string
+        serviceAccountsEnabled:
+          title: Enable service account (client credentials grant)
+          type: boolean
+          default: false
+  steps:
+    - id: create-client
+      name: Create client in Keycloak
+      action: keycloak:create-client
+      input:
+        clientId: ${{ parameters.clientId }}
+        name: ${{ parameters.name }}
+        description: ${{ parameters.description }}
+        publicClient: ${{ parameters.publicClient }}
+        redirectUris: ${{ parameters.redirectUris }}
+        webOrigins: ${{ parameters.webOrigins }}
+        serviceAccountsEnabled: ${{ parameters.serviceAccountsEnabled }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Client **${{ steps['create-client'].output.clientId }}** creado en
+          Keycloak (id interno `${{ steps['create-client'].output.internalId }}`).
+
+          {%- if steps['create-client'].output.clientSecret %}
+
+          ⚠️ **Secret (sensible, visible solo en este log de ejecución):**
+          `${{ steps['create-client'].output.clientSecret }}`
+          {%- endif %}

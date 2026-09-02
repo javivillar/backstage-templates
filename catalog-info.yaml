@@ -1,0 +1,10 @@
+apiVersion: backstage.io/v1beta3
+kind: Location
+metadata:
+  name: templates
+  description: Self-service Software Templates for CNOE Backstage
+spec:
+  targets:
+    - ./templates/keycloak-create-user/template.yaml
+    - ./templates/keycloak-create-group/template.yaml
+    - ./templates/keycloak-create-client/template.yaml
