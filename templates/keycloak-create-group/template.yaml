@@ -5,10 +5,10 @@ metadata:
   title: Create Keycloak Group
   description: >-
     Create a group (optionally as a subgroup of an existing one) in the
-    RefresquitoTime Keycloak realm. Restricted to the cnoe-admin group.
+    RefresquitoTime Keycloak realm. Restricted to the backstage-admin group.
   tags: [keycloak, identity]
 spec:
-  owner: group:default/cnoe-admin
+  owner: group:default/backstage-admin
   type: keycloak-identity
   parameters:
     - title: Group details

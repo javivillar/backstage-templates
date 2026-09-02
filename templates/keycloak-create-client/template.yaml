@@ -5,10 +5,10 @@ metadata:
   title: Create Keycloak OIDC Client
   description: >-
     Create an OIDC client in the RefresquitoTime Keycloak realm. Restricted
-    to the cnoe-admin group.
+    to the backstage-admin group.
   tags: [keycloak, identity, oidc]
 spec:
-  owner: group:default/cnoe-admin
+  owner: group:default/backstage-admin
   type: keycloak-identity
   parameters:
     - title: Client details

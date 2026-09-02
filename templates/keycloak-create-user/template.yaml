@@ -5,10 +5,10 @@ metadata:
   title: Create Keycloak User
   description: >-
     Create a user in the RefresquitoTime Keycloak realm and optionally add it
-    to existing groups. Restricted to the cnoe-admin group.
+    to existing groups. Restricted to the backstage-admin group.
   tags: [keycloak, identity]
 spec:
-  owner: group:default/cnoe-admin
+  owner: group:default/backstage-admin
   type: keycloak-identity
   parameters:
     - title: User details
