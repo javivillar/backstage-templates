@@ -1,4 +1,4 @@
-apiVersion: backstage.io/v1beta3
+apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
   name: keycloak-create-user
@@ -64,7 +64,7 @@ spec:
 
           Debe cambiar la contraseña temporal en su primer login.
 ---
-apiVersion: backstage.io/v1beta3
+apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
   name: keycloak-create-group
@@ -101,7 +101,7 @@ spec:
           Grupo **${{ steps['create-group'].output.name }}** creado en
           Keycloak (id `${{ steps['create-group'].output.groupId }}`).
 ---
-apiVersion: backstage.io/v1beta3
+apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
   name: keycloak-create-client
