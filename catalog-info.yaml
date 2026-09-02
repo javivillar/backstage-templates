@@ -1,10 +1,173 @@
 apiVersion: backstage.io/v1beta3
-kind: Location
+kind: Template
 metadata:
-  name: templates
-  description: Self-service Software Templates for CNOE Backstage
+  name: keycloak-create-user
+  title: Create Keycloak User
+  description: >-
+    Create a user in the RefresquitoTime Keycloak realm and optionally add it
+    to existing groups. Restricted to the backstage-admin group.
+  tags: [keycloak, identity]
 spec:
-  targets:
-    - ./templates/keycloak-create-user/template.yaml
-    - ./templates/keycloak-create-group/template.yaml
-    - ./templates/keycloak-create-client/template.yaml
+  owner: group:default/backstage-admin
+  type: keycloak-identity
+  parameters:
+    - title: User details
+      required: [username, email, temporaryPassword]
+      properties:
+        username:
+          title: Username
+          type: string
+        email:
+          title: Email
+          type: string
+          format: email
+        firstName:
+          title: First name
+          type: string
+        lastName:
+          title: Last name
+          type: string
+        temporaryPassword:
+          title: Temporary password
+          description: The user must change this on first login.
+          type: string
+          ui:widget: password
+        groups:
+          title: Groups
+          description: Existing Keycloak group names to join the user to.
+          type: array
+          items:
+            type: string
+        nationality:
+          title: Nationality
+          description: Required by the realm's user profile.
+          type: string
+          default: ES
+  steps:
+    - id: create-user
+      name: Create user in Keycloak
+      action: keycloak:create-user
+      input:
+        username: ${{ parameters.username }}
+        email: ${{ parameters.email }}
+        firstName: ${{ parameters.firstName }}
+        lastName: ${{ parameters.lastName }}
+        temporaryPassword: ${{ parameters.temporaryPassword }}
+        groups: ${{ parameters.groups }}
+        nationality: ${{ parameters.nationality }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Usuario **${{ steps['create-user'].output.username }}** creado en
+          Keycloak (id `${{ steps['create-user'].output.userId }}`).
+
+          Debe cambiar la contraseña temporal en su primer login.
+---
+apiVersion: backstage.io/v1beta3
+kind: Template
+metadata:
+  name: keycloak-create-group
+  title: Create Keycloak Group
+  description: >-
+    Create a group (optionally as a subgroup of an existing one) in the
+    RefresquitoTime Keycloak realm. Restricted to the backstage-admin group.
+  tags: [keycloak, identity]
+spec:
+  owner: group:default/backstage-admin
+  type: keycloak-identity
+  parameters:
+    - title: Group details
+      required: [name]
+      properties:
+        name:
+          title: Group name
+          type: string
+        parentGroupName:
+          title: Parent group name
+          description: Leave empty to create a top-level group.
+          type: string
+  steps:
+    - id: create-group
+      name: Create group in Keycloak
+      action: keycloak:create-group
+      input:
+        name: ${{ parameters.name }}
+        parentGroupName: ${{ parameters.parentGroupName }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Grupo **${{ steps['create-group'].output.name }}** creado en
+          Keycloak (id `${{ steps['create-group'].output.groupId }}`).
+---
+apiVersion: backstage.io/v1beta3
+kind: Template
+metadata:
+  name: keycloak-create-client
+  title: Create Keycloak OIDC Client
+  description: >-
+    Create an OIDC client in the RefresquitoTime Keycloak realm. Restricted
+    to the backstage-admin group.
+  tags: [keycloak, identity, oidc]
+spec:
+  owner: group:default/backstage-admin
+  type: keycloak-identity
+  parameters:
+    - title: Client details
+      required: [clientId, publicClient]
+      properties:
+        clientId:
+          title: Client ID
+          type: string
+        name:
+          title: Display name
+          type: string
+        description:
+          title: Description
+          type: string
+        publicClient:
+          title: Public client
+          description: >-
+            true = no client secret (SPA/mobile app); false = confidential
+            (server-side app, gets a secret back).
+          type: boolean
+          default: false
+        redirectUris:
+          title: Redirect URIs
+          type: array
+          items:
+            type: string
+        webOrigins:
+          title: Web origins (CORS)
+          type: array
+          items:
+            type: string
+        serviceAccountsEnabled:
+          title: Enable service account (client credentials grant)
+          type: boolean
+          default: false
+  steps:
+    - id: create-client
+      name: Create client in Keycloak
+      action: keycloak:create-client
+      input:
+        clientId: ${{ parameters.clientId }}
+        name: ${{ parameters.name }}
+        description: ${{ parameters.description }}
+        publicClient: ${{ parameters.publicClient }}
+        redirectUris: ${{ parameters.redirectUris }}
+        webOrigins: ${{ parameters.webOrigins }}
+        serviceAccountsEnabled: ${{ parameters.serviceAccountsEnabled }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Client **${{ steps['create-client'].output.clientId }}** creado en
+          Keycloak (id interno `${{ steps['create-client'].output.internalId }}`).
+
+          {%- if steps['create-client'].output.clientSecret %}
+
+          ⚠️ **Secret (sensible, visible solo en este log de ejecución):**
+          `${{ steps['create-client'].output.clientSecret }}`
+          {%- endif %}
