@@ -5,7 +5,8 @@ metadata:
   title: Create Keycloak User
   description: >-
     Create a user in the RefresquitoTime Keycloak realm and optionally add it
-    to existing groups. Restricted to the backstage-admin group.
+    to existing groups. Open to any signed-in user — you become the owner
+    and only you (or backstage-admin) can edit/delete it later.
   tags: [keycloak, identity]
 spec:
   owner: group:default/backstage-admin
@@ -71,7 +72,8 @@ metadata:
   title: Create Keycloak Group
   description: >-
     Create a group (optionally as a subgroup of an existing one) in the
-    RefresquitoTime Keycloak realm. Restricted to the backstage-admin group.
+    RefresquitoTime Keycloak realm. Open to any signed-in user — you become
+    the owner and only you (or backstage-admin) can edit/delete it later.
   tags: [keycloak, identity]
 spec:
   owner: group:default/backstage-admin
@@ -107,8 +109,9 @@ metadata:
   name: keycloak-create-client
   title: Create Keycloak OIDC Client
   description: >-
-    Create an OIDC client in the RefresquitoTime Keycloak realm. Restricted
-    to the backstage-admin group.
+    Create an OIDC client in the RefresquitoTime Keycloak realm. Open to any
+    signed-in user — you become the owner and only you (or backstage-admin)
+    can edit/delete it later.
   tags: [keycloak, identity, oidc]
 spec:
   owner: group:default/backstage-admin
