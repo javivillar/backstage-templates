@@ -171,3 +171,242 @@ spec:
           ⚠️ **Secret (sensible, visible solo en este log de ejecución):**
           `${{ steps['create-client'].output.clientSecret }}`
           {%- endif %}
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: keycloak-update-user
+  title: Update Keycloak User
+  description: >-
+    Update an existing user's email/name/group membership in the
+    RefresquitoTime Keycloak realm. Only the user that created it, or a
+    backstage-admin, may run this.
+  tags: [keycloak, identity]
+spec:
+  owner: group:default/backstage-admin
+  type: keycloak-identity
+  parameters:
+    - title: User to update
+      required: [username]
+      properties:
+        username:
+          title: Username
+          description: Identifies the user to update.
+          type: string
+        email:
+          title: Email
+          type: string
+          format: email
+        firstName:
+          title: First name
+          type: string
+        lastName:
+          title: Last name
+          type: string
+        groups:
+          title: Groups
+          description: Leave empty to leave membership unchanged, otherwise replaces it exactly.
+          type: array
+          items:
+            type: string
+  steps:
+    - id: update-user
+      name: Update user in Keycloak
+      action: keycloak:update-user
+      input:
+        username: ${{ parameters.username }}
+        email: ${{ parameters.email }}
+        firstName: ${{ parameters.firstName }}
+        lastName: ${{ parameters.lastName }}
+        groups: ${{ parameters.groups }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Usuario **${{ parameters.username }}** actualizado en Keycloak.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: keycloak-delete-user
+  title: Delete Keycloak User
+  description: >-
+    Delete a user from the RefresquitoTime Keycloak realm. Only the user
+    that created it, or a backstage-admin, may run this.
+  tags: [keycloak, identity]
+spec:
+  owner: group:default/backstage-admin
+  type: keycloak-identity
+  parameters:
+    - title: User to delete
+      required: [username]
+      properties:
+        username:
+          title: Username
+          type: string
+  steps:
+    - id: delete-user
+      name: Delete user in Keycloak
+      action: keycloak:delete-user
+      input:
+        username: ${{ parameters.username }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Usuario **${{ parameters.username }}** eliminado de Keycloak.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: keycloak-update-group
+  title: Rename Keycloak Group
+  description: >-
+    Rename an existing group in the RefresquitoTime Keycloak realm. Only
+    the user that created it, or a backstage-admin, may run this.
+  tags: [keycloak, identity]
+spec:
+  owner: group:default/backstage-admin
+  type: keycloak-identity
+  parameters:
+    - title: Group to update
+      required: [name]
+      properties:
+        name:
+          title: Group name
+          description: Identifies the group to update.
+          type: string
+        newName:
+          title: New name
+          type: string
+  steps:
+    - id: update-group
+      name: Update group in Keycloak
+      action: keycloak:update-group
+      input:
+        name: ${{ parameters.name }}
+        newName: ${{ parameters.newName }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Grupo **${{ parameters.name }}** actualizado en Keycloak.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: keycloak-delete-group
+  title: Delete Keycloak Group
+  description: >-
+    Delete a group from the RefresquitoTime Keycloak realm. Only the user
+    that created it, or a backstage-admin, may run this.
+  tags: [keycloak, identity]
+spec:
+  owner: group:default/backstage-admin
+  type: keycloak-identity
+  parameters:
+    - title: Group to delete
+      required: [name]
+      properties:
+        name:
+          title: Group name
+          type: string
+  steps:
+    - id: delete-group
+      name: Delete group in Keycloak
+      action: keycloak:delete-group
+      input:
+        name: ${{ parameters.name }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Grupo **${{ parameters.name }}** eliminado de Keycloak.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: keycloak-update-client
+  title: Update Keycloak OIDC Client
+  description: >-
+    Update an existing OIDC client in the RefresquitoTime Keycloak realm.
+    Only the user that created it, or a backstage-admin, may run this.
+    clientId and public/confidential type cannot be changed here.
+  tags: [keycloak, identity, oidc]
+spec:
+  owner: group:default/backstage-admin
+  type: keycloak-identity
+  parameters:
+    - title: Client to update
+      required: [clientId]
+      properties:
+        clientId:
+          title: Client ID
+          description: Identifies the client to update.
+          type: string
+        name:
+          title: Display name
+          type: string
+        description:
+          title: Description
+          type: string
+        redirectUris:
+          title: Redirect URIs
+          type: array
+          items:
+            type: string
+        webOrigins:
+          title: Web origins (CORS)
+          type: array
+          items:
+            type: string
+        serviceAccountsEnabled:
+          title: Enable service account (client credentials grant)
+          type: boolean
+  steps:
+    - id: update-client
+      name: Update client in Keycloak
+      action: keycloak:update-client
+      input:
+        clientId: ${{ parameters.clientId }}
+        name: ${{ parameters.name }}
+        description: ${{ parameters.description }}
+        redirectUris: ${{ parameters.redirectUris }}
+        webOrigins: ${{ parameters.webOrigins }}
+        serviceAccountsEnabled: ${{ parameters.serviceAccountsEnabled }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Client **${{ parameters.clientId }}** actualizado en Keycloak.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: keycloak-delete-client
+  title: Delete Keycloak OIDC Client
+  description: >-
+    Delete an OIDC client from the RefresquitoTime Keycloak realm. Only
+    the user that created it, or a backstage-admin, may run this.
+  tags: [keycloak, identity, oidc]
+spec:
+  owner: group:default/backstage-admin
+  type: keycloak-identity
+  parameters:
+    - title: Client to delete
+      required: [clientId]
+      properties:
+        clientId:
+          title: Client ID
+          type: string
+  steps:
+    - id: delete-client
+      name: Delete client in Keycloak
+      action: keycloak:delete-client
+      input:
+        clientId: ${{ parameters.clientId }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Client **${{ parameters.clientId }}** eliminado de Keycloak.
