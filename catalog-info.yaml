@@ -413,3 +413,400 @@ spec:
       - title: Resultado
         content: |
           Client **${{ parameters.clientId }}** eliminado de Keycloak.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: superset-create-connection
+  title: Create Superset Connection
+  description: >-
+    Create a database connection in Superset. Open to any signed-in user —
+    you become the owner and only you (or backstage-admin) can edit/delete
+    it later, and only you can build datasets on top of it.
+  tags: [superset, data]
+spec:
+  owner: group:default/backstage-admin
+  type: superset-resource
+  parameters:
+    - title: Connection
+      required: [databaseName, sqlalchemyUri]
+      properties:
+        databaseName:
+          title: Connection name
+          type: string
+        sqlalchemyUri:
+          title: SQLAlchemy URI
+          description: 'e.g. postgresql://user:pass@host:5432/dbname'
+          type: string
+    - title: Options
+      properties:
+        allowCtas:
+          title: Allow CREATE TABLE AS
+          type: boolean
+          default: false
+        allowCvas:
+          title: Allow CREATE VIEW AS
+          type: boolean
+          default: false
+        allowDml:
+          title: Allow DML (INSERT/UPDATE/DELETE)
+          type: boolean
+          default: false
+        allowFileUpload:
+          title: Allow file upload
+          type: boolean
+          default: false
+        exposeInSqllab:
+          title: Expose in SQL Lab
+          type: boolean
+          default: true
+        impersonateUser:
+          title: Impersonate logged-in user
+          type: boolean
+          default: false
+        cacheTimeout:
+          title: Cache timeout (seconds)
+          type: number
+    - title: SSH tunnel (optional)
+      properties:
+        sshTunnelServerAddress:
+          title: SSH tunnel server address
+          type: string
+        sshTunnelServerPort:
+          title: SSH tunnel server port
+          type: number
+        sshTunnelUsername:
+          title: SSH tunnel username
+          type: string
+        sshTunnelPassword:
+          title: SSH tunnel password
+          type: string
+          ui:widget: password
+    - title: Advanced
+      properties:
+        extraJson:
+          title: Extra (raw JSON)
+          description: >-
+            Passed through verbatim as Superset's "Extra" field —
+            engine_params, metadata_params, schemas_allowed_for_file_upload,
+            cost-estimate flags, etc. Leave empty for {}.
+          type: string
+          ui:widget: textarea
+  steps:
+    - id: create-connection
+      name: Create connection in Superset
+      action: superset:create-connection
+      input:
+        databaseName: ${{ parameters.databaseName }}
+        sqlalchemyUri: ${{ parameters.sqlalchemyUri }}
+        allowCtas: ${{ parameters.allowCtas }}
+        allowCvas: ${{ parameters.allowCvas }}
+        allowDml: ${{ parameters.allowDml }}
+        allowFileUpload: ${{ parameters.allowFileUpload }}
+        exposeInSqllab: ${{ parameters.exposeInSqllab }}
+        impersonateUser: ${{ parameters.impersonateUser }}
+        cacheTimeout: ${{ parameters.cacheTimeout }}
+        sshTunnelServerAddress: ${{ parameters.sshTunnelServerAddress }}
+        sshTunnelServerPort: ${{ parameters.sshTunnelServerPort }}
+        sshTunnelUsername: ${{ parameters.sshTunnelUsername }}
+        sshTunnelPassword: ${{ parameters.sshTunnelPassword }}
+        extraJson: ${{ parameters.extraJson }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Conexión **${{ steps['create-connection'].output.databaseName }}**
+          creada en Superset (id `${{ steps['create-connection'].output.id }}`).
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: superset-update-connection
+  title: Update Superset Connection
+  description: >-
+    Update an existing Superset database connection. Only the owner or a
+    backstage-admin may run this.
+  tags: [superset, data]
+spec:
+  owner: group:default/backstage-admin
+  type: superset-resource
+  parameters:
+    - title: Connection to update
+      required: [currentDatabaseName, databaseName, sqlalchemyUri]
+      properties:
+        currentDatabaseName:
+          title: Existing connection name
+          description: Identifies the connection to update.
+          type: string
+        databaseName:
+          title: Connection name
+          type: string
+        sqlalchemyUri:
+          title: SQLAlchemy URI
+          type: string
+    - title: Options
+      properties:
+        allowCtas:
+          title: Allow CREATE TABLE AS
+          type: boolean
+          default: false
+        allowCvas:
+          title: Allow CREATE VIEW AS
+          type: boolean
+          default: false
+        allowDml:
+          title: Allow DML (INSERT/UPDATE/DELETE)
+          type: boolean
+          default: false
+        allowFileUpload:
+          title: Allow file upload
+          type: boolean
+          default: false
+        exposeInSqllab:
+          title: Expose in SQL Lab
+          type: boolean
+          default: true
+        impersonateUser:
+          title: Impersonate logged-in user
+          type: boolean
+          default: false
+        cacheTimeout:
+          title: Cache timeout (seconds)
+          type: number
+    - title: SSH tunnel (optional)
+      properties:
+        sshTunnelServerAddress:
+          title: SSH tunnel server address
+          type: string
+        sshTunnelServerPort:
+          title: SSH tunnel server port
+          type: number
+        sshTunnelUsername:
+          title: SSH tunnel username
+          type: string
+        sshTunnelPassword:
+          title: SSH tunnel password
+          type: string
+          ui:widget: password
+    - title: Advanced
+      properties:
+        extraJson:
+          title: Extra (raw JSON)
+          type: string
+          ui:widget: textarea
+  steps:
+    - id: update-connection
+      name: Update connection in Superset
+      action: superset:update-connection
+      input:
+        currentDatabaseName: ${{ parameters.currentDatabaseName }}
+        databaseName: ${{ parameters.databaseName }}
+        sqlalchemyUri: ${{ parameters.sqlalchemyUri }}
+        allowCtas: ${{ parameters.allowCtas }}
+        allowCvas: ${{ parameters.allowCvas }}
+        allowDml: ${{ parameters.allowDml }}
+        allowFileUpload: ${{ parameters.allowFileUpload }}
+        exposeInSqllab: ${{ parameters.exposeInSqllab }}
+        impersonateUser: ${{ parameters.impersonateUser }}
+        cacheTimeout: ${{ parameters.cacheTimeout }}
+        sshTunnelServerAddress: ${{ parameters.sshTunnelServerAddress }}
+        sshTunnelServerPort: ${{ parameters.sshTunnelServerPort }}
+        sshTunnelUsername: ${{ parameters.sshTunnelUsername }}
+        sshTunnelPassword: ${{ parameters.sshTunnelPassword }}
+        extraJson: ${{ parameters.extraJson }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Conexión **${{ parameters.currentDatabaseName }}** actualizada en Superset.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: superset-create-dataset
+  title: Create Superset Dataset
+  description: >-
+    Create a dataset in Superset on top of a connection you own. Open to any
+    signed-in user — you become the owner and only you (or backstage-admin)
+    can edit/delete it later.
+  tags: [superset, data]
+spec:
+  owner: group:default/backstage-admin
+  type: superset-resource
+  parameters:
+    - title: Dataset details
+      required: [connectionName, tableName]
+      properties:
+        connectionName:
+          title: Connection
+          description: >-
+            Name of a database connection you own (or, if you're
+            backstage-admin, any connection).
+          type: string
+        schema:
+          title: Schema
+          type: string
+        tableName:
+          title: Table name
+          description: >-
+            Physical table name, or a display name if you fill in the SQL
+            field below.
+          type: string
+        sql:
+          title: SQL (virtual dataset)
+          description: >-
+            Leave empty for a physical (table-backed) dataset; fill in for a
+            virtual (query-backed) one.
+          type: string
+          ui:widget: textarea
+  steps:
+    - id: create-dataset
+      name: Create dataset in Superset
+      action: superset:create-dataset
+      input:
+        connectionName: ${{ parameters.connectionName }}
+        schema: ${{ parameters.schema }}
+        tableName: ${{ parameters.tableName }}
+        sql: ${{ parameters.sql }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Dataset **${{ steps['create-dataset'].output.tableName }}** creado
+          en Superset (id `${{ steps['create-dataset'].output.id }}`).
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: superset-update-dataset
+  title: Update Superset Dataset
+  description: >-
+    Update an existing Superset dataset. Only the owner or a backstage-admin
+    may run this.
+  tags: [superset, data]
+spec:
+  owner: group:default/backstage-admin
+  type: superset-resource
+  parameters:
+    - title: Dataset to update
+      required: [currentTableName, connectionName, tableName]
+      properties:
+        currentTableName:
+          title: Existing dataset name
+          description: Identifies the dataset to update.
+          type: string
+        connectionName:
+          title: Connection
+          type: string
+        schema:
+          title: Schema
+          type: string
+        tableName:
+          title: Table name
+          type: string
+        sql:
+          title: SQL (virtual dataset)
+          type: string
+          ui:widget: textarea
+  steps:
+    - id: update-dataset
+      name: Update dataset in Superset
+      action: superset:update-dataset
+      input:
+        currentTableName: ${{ parameters.currentTableName }}
+        connectionName: ${{ parameters.connectionName }}
+        schema: ${{ parameters.schema }}
+        tableName: ${{ parameters.tableName }}
+        sql: ${{ parameters.sql }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Dataset **${{ parameters.currentTableName }}** actualizado en Superset.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: superset-provision-chart
+  title: Provision Superset Chart
+  description: >-
+    Create an empty chart in Superset (owned by you) and get a link to
+    finish building it in Superset's own Explore editor — chart config isn't
+    a linear form in Superset, so this template doesn't try to replicate it.
+  tags: [superset, data, viz]
+spec:
+  owner: group:default/backstage-admin
+  type: superset-resource
+  parameters:
+    - title: Chart
+      required: [sliceName, vizType, datasetName]
+      properties:
+        sliceName:
+          title: Chart name
+          type: string
+        vizType:
+          title: Visualization type
+          type: string
+          enum:
+            - table
+            - big_number_total
+            - big_number
+            - line
+            - bar
+            - pie
+            - area
+            - dist_bar
+            - echarts_timeseries_line
+            - echarts_timeseries_bar
+        datasetName:
+          title: Dataset
+          description: >-
+            Name of a dataset you own (or, if you're backstage-admin, any
+            dataset).
+          type: string
+  steps:
+    - id: provision-chart
+      name: Provision chart in Superset
+      action: superset:provision-chart
+      input:
+        sliceName: ${{ parameters.sliceName }}
+        vizType: ${{ parameters.vizType }}
+        datasetName: ${{ parameters.datasetName }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Chart **${{ parameters.sliceName }}** creado en Superset. Termina
+          de construirlo aquí: ${{ steps['provision-chart'].output.exploreUrl }}
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: superset-provision-dashboard
+  title: Provision Superset Dashboard
+  description: >-
+    Create an empty dashboard in Superset (owned by you) and get a link to
+    finish building it in Superset's own dashboard editor.
+  tags: [superset, data, viz]
+spec:
+  owner: group:default/backstage-admin
+  type: superset-resource
+  parameters:
+    - title: Dashboard
+      required: [dashboardTitle]
+      properties:
+        dashboardTitle:
+          title: Dashboard title
+          type: string
+  steps:
+    - id: provision-dashboard
+      name: Provision dashboard in Superset
+      action: superset:provision-dashboard
+      input:
+        dashboardTitle: ${{ parameters.dashboardTitle }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Dashboard **${{ parameters.dashboardTitle }}** creado en Superset.
+          Termina de construirlo aquí: ${{ steps['provision-dashboard'].output.dashboardUrl }}
