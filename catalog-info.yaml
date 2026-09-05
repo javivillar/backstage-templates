@@ -810,3 +810,61 @@ spec:
         content: |
           Dashboard **${{ parameters.dashboardTitle }}** creado en Superset.
           Termina de construirlo aquí: ${{ steps['provision-dashboard'].output.dashboardUrl }}
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: camunda-provision-process
+  title: Provision Camunda Process
+  description: >-
+    Deploys a minimal Camunda process (start event -> one user task -> end
+    event), pre-wired with per-developer isolation, and grants you exclusive
+    rights to it — no other developer can see or start it, even one who
+    shares your Keycloak group. You then download the BPMN and model the
+    real process in the desktop Camunda Modeler.
+  tags: [camunda, bpm]
+spec:
+  owner: group:default/backstage-admin
+  type: camunda-resource
+  parameters:
+    - title: Process
+      required: [processName, processKey]
+      properties:
+        processName:
+          title: Process name
+          type: string
+        processKey:
+          title: Process key (short slug)
+          description: >-
+            Gets prefixed with your username automatically (e.g.
+            "jdoe-onboarding") so it can't collide with another developer's
+            process.
+          type: string
+        description:
+          title: Description
+          type: string
+  steps:
+    - id: provision-process
+      name: Provision process in Camunda
+      action: camunda:provision-process
+      input:
+        processName: ${{ parameters.processName }}
+        processKey: ${{ parameters.processKey }}
+        description: ${{ parameters.description }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Proceso **${{ steps['provision-process'].output.processKey }}**
+          desplegado en Camunda. Ábrelo en Cockpit:
+          ${{ steps['provision-process'].output.cockpitUrl }}
+
+          Descarga el BPMN de abajo, modélalo en el Camunda Modeler de
+          escritorio, y vuelve a desplegarlo bajo la misma key cuando
+          termines — el aislamiento ya está en las autorizaciones, no hace
+          falta volver a pasar por Backstage.
+      - title: BPMN inicial
+        content: |
+          ```xml
+          ${{ steps['provision-process'].output.bpmnXml }}
+          ```
