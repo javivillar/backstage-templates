@@ -1,13 +1,15 @@
 # backstage-templates
 
 Backstage [`Template`](https://backstage.io/docs/features/software-templates/)
-entity catalog for Keycloak self-service identity management on the
-`RefresquitoTime` realm. Consumed by
+entity catalog for self-service resource management across the Refresquito
+stack: Keycloak identities (`RefresquitoTime` realm), Superset connections/
+datasets/charts/dashboards, and Camunda (`bpm-oneke`) process definitions.
+Consumed by
 [`javivillar/backstage-app`](https://github.com/javivillar/backstage-app) —
-see that repo's [`plugins/keycloak-backend`](https://github.com/javivillar/backstage-app/tree/main/plugins/keycloak-backend)
-for the `keycloak:*` scaffolder actions these templates call, and
-[`FORK.md`](https://github.com/javivillar/backstage-app/blob/main/FORK.md)
-for how the whole Keycloak self-service feature fits together.
+see that repo's `plugins/keycloak-backend`, `plugins/superset-backend` and
+`plugins/camunda-backend` for the scaffolder actions these templates call,
+and [`FORK.md`](https://github.com/javivillar/backstage-app/blob/main/FORK.md)
+for how the whole self-service feature set fits together.
 
 ## How this repo is wired in
 
@@ -37,9 +39,11 @@ creating a new file; a new file will not be picked up without also adding a
 
 ## Templates
 
-All 9 exist to keep every Keycloak mutation self-service with per-creator
-ownership (see `plugins/keycloak-backend`'s README in `backstage-app` for
-the ownership model) — one create/update/delete trio per object kind:
+18 templates across 3 self-service resource families, each keeping every
+mutation owner-scoped (per-creator ownership — see each backend plugin's own
+README in `backstage-app` for the exact mechanism used per family):
+
+### Keycloak identities (`keycloak-backend`) — create/update/delete trio per object kind
 
 | Template (`metadata.name`) | Title | Action called |
 | --- | --- | --- |
@@ -53,28 +57,62 @@ the ownership model) — one create/update/delete trio per object kind:
 | `keycloak-update-client` | Update Keycloak OIDC Client | `keycloak:update-client` |
 | `keycloak-delete-client` | Delete Keycloak OIDC Client | `keycloak:delete-client` |
 
-All 9 are `owner: group:default/backstage-admin` (the *template* owner —
-who can edit the template definition — which is unrelated to
-`backstage_owner`, the per-object attribute the actions themselves stamp on
-whatever Keycloak object gets created, see `plugins/keycloak-backend`).
-Every `create-*`/`update-*`/`delete-*` action is reachable by any
-signed-in user with the `backstage` client's `access` role — not
-admin-gated — ownership is what stops user A from editing user B's objects,
-not who can run the template.
+Ownership is a bolted-on `backstage_owner` attribute (Keycloak has no native
+ownership concept) — every `create-*`/`update-*`/`delete-*` action is
+reachable by any signed-in user with the `backstage` client's `access` role,
+not admin-gated; ownership is what stops user A from editing user B's
+objects, not who can run the template.
 
-The `/keycloak-manager` page in `backstage-app` (`plugins/keycloak`)
-navigates here with `?formData=...` pre-filled for Edit/Delete rather than
-duplicating any of this logic — this catalog is the only place the actual
-input schemas live.
+### Superset resources (`superset-backend`) — create/update for connections & datasets, provision-only for charts/dashboards
+
+| Template (`metadata.name`) | Title | Action called |
+| --- | --- | --- |
+| `superset-create-connection` | Create Superset Connection | `superset:create-connection` |
+| `superset-update-connection` | Update Superset Connection | `superset:update-connection` |
+| `superset-create-dataset` | Create Superset Dataset | `superset:create-dataset` |
+| `superset-update-dataset` | Update Superset Dataset | `superset:update-dataset` |
+| `superset-provision-chart` | Provision Superset Chart | `superset:provision-chart` |
+| `superset-provision-dashboard` | Provision Superset Dashboard | `superset:provision-dashboard` |
+
+Charts/dashboards are provision-only (deep-links into Superset's own visual
+editor for the rest) — see `plugins/superset-backend`'s README for why.
+Ownership: native `owners` relation for chart/dataset/dashboard, a
+bolted-on `extra.backstage_owner` for connections (Superset's `Database`
+object has no native ownership relation at all).
+
+### Camunda process definitions (`camunda-backend`) — full create/update/delete trio
+
+| Template (`metadata.name`) | Title | Action called |
+| --- | --- | --- |
+| `camunda-provision-process` | Provision Camunda Process | `camunda:provision-process` |
+| `camunda-update-process` | Update Camunda Process | `camunda:update-process` |
+| `camunda-delete-process` | Delete Camunda Process | `camunda:delete-process` |
+
+Every provisioned process is pre-wired with per-instance isolation (the
+same `executionListener`/`assignee` pattern documented in
+`refresquito-services`' `AUTHZ.md` § bpm-oneke §6) and a
+definition-level ownership grant made directly in Camunda's own native
+authorization table — see `plugins/camunda-backend`'s README for why this
+one doesn't need a bolted-on attribute the way Keycloak/Superset do.
+
+All 18 are `owner: group:default/backstage-admin` (the *template* owner —
+who can edit the template definition — unrelated to per-object ownership,
+which is what actually gates edit/delete of the objects these templates
+create).
+
+The `/keycloak-manager`, `/superset-manager` and `/camunda-manager` pages in
+`backstage-app` navigate here with `?formData=...` pre-filled for Edit/
+Delete rather than duplicating any of this logic — this catalog is the only
+place the actual input schemas live.
 
 ## Adding a new template
 
 1. Add a `---`-separated `Template` document to `catalog-info.yaml`
    (`apiVersion: scaffolder.backstage.io/v1beta3`).
-2. If it calls a new action (not one of the 9 `keycloak:*` ones above), the
-   action itself has to be added to `plugins/keycloak-backend` in
-   `backstage-app` first and deployed — a template whose `action:` doesn't
-   exist on the backend fails at run time, not at import time, so there's
-   no early warning if this order is skipped.
+2. If it calls a new action (not one of the 18 above), the action itself has
+   to be added to the relevant `*-backend` plugin in `backstage-app` first
+   and deployed — a template whose `action:` doesn't exist on the backend
+   fails at run time, not at import time, so there's no early warning if
+   this order is skipped.
 3. Push to `main`. No build/CI here — Backstage picks it up on its next
    catalog refresh poll.

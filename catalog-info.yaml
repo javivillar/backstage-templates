@@ -868,3 +868,76 @@ spec:
           ```xml
           ${{ steps['provision-process'].output.bpmnXml }}
           ```
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: camunda-update-process
+  title: Update Camunda Process
+  description: >-
+    Redeploy a new BPMN version under an existing process key you own (or,
+    if backstage-admin, any key). Model the process further in the desktop
+    Camunda Modeler, then paste the updated XML here — the process id inside
+    it must not change, or ownership won't carry over.
+  tags: [camunda, bpm]
+spec:
+  owner: group:default/backstage-admin
+  type: camunda-resource
+  parameters:
+    - title: Process to update
+      required: [processKey, bpmnXml]
+      properties:
+        processKey:
+          title: Process key
+          description: Identifies the process to update.
+          type: string
+        bpmnXml:
+          title: BPMN XML
+          description: >-
+            The full contents of the .bpmn file exported from the desktop
+            Camunda Modeler.
+          type: string
+          ui:widget: textarea
+  steps:
+    - id: update-process
+      name: Redeploy process in Camunda
+      action: camunda:update-process
+      input:
+        processKey: ${{ parameters.processKey }}
+        bpmnXml: ${{ parameters.bpmnXml }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Proceso **${{ parameters.processKey }}** redesplegado en Camunda.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: camunda-delete-process
+  title: Delete Camunda Process
+  description: >-
+    Delete a process definition (all versions, all instances) you own, or —
+    if backstage-admin — any process key.
+  tags: [camunda, bpm]
+spec:
+  owner: group:default/backstage-admin
+  type: camunda-resource
+  parameters:
+    - title: Process to delete
+      required: [processKey]
+      properties:
+        processKey:
+          title: Process key
+          type: string
+  steps:
+    - id: delete-process
+      name: Delete process in Camunda
+      action: camunda:delete-process
+      input:
+        processKey: ${{ parameters.processKey }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Proceso **${{ parameters.processKey }}** eliminado de Camunda.
