@@ -941,3 +941,276 @@ spec:
       - title: Resultado
         content: |
           Proceso **${{ parameters.processKey }}** eliminado de Camunda.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: seaweedfs-create-bucket
+  title: Create SeaweedFS Bucket
+  description: >-
+    Creates an S3 bucket in SeaweedFS. You become the owner and are
+    automatically granted full access to it — only you (or backstage-admin)
+    can see or use it afterward, in Backstage or in the SeaweedFS Admin UI's
+    own File Browser.
+  tags: [seaweedfs, storage]
+spec:
+  owner: group:default/backstage-admin
+  type: seaweedfs-resource
+  parameters:
+    - title: Bucket
+      required: [name]
+      properties:
+        name:
+          title: Bucket name
+          type: string
+        versioningEnabled:
+          title: Enable object versioning
+          type: boolean
+          default: false
+        quotaSize:
+          title: Quota size (MB, 0 = unlimited)
+          type: number
+          default: 0
+  steps:
+    - id: create-bucket
+      name: Create bucket in SeaweedFS
+      action: seaweedfs:create-bucket
+      input:
+        name: ${{ parameters.name }}
+        versioningEnabled: ${{ parameters.versioningEnabled }}
+        quotaSize: ${{ parameters.quotaSize }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Bucket **${{ steps['create-bucket'].output.name }}** creado en
+          SeaweedFS. Eres el propietario — puedes gestionarlo desde el
+          File Browser o desde la página SeaweedFS Manager en Backstage.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: seaweedfs-delete-bucket
+  title: Delete SeaweedFS Bucket
+  description: >-
+    Delete a bucket you own, or — if backstage-admin — any bucket.
+  tags: [seaweedfs, storage]
+spec:
+  owner: group:default/backstage-admin
+  type: seaweedfs-resource
+  parameters:
+    - title: Bucket to delete
+      required: [name]
+      properties:
+        name:
+          title: Bucket name
+          type: string
+  steps:
+    - id: delete-bucket
+      name: Delete bucket in SeaweedFS
+      action: seaweedfs:delete-bucket
+      input:
+        name: ${{ parameters.name }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Bucket **${{ parameters.name }}** eliminado de SeaweedFS.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: seaweedfs-create-table-bucket
+  title: Create SeaweedFS Table Bucket
+  description: >-
+    Creates an S3 Table Bucket in SeaweedFS. You become the owner.
+  tags: [seaweedfs, storage]
+spec:
+  owner: group:default/backstage-admin
+  type: seaweedfs-resource
+  parameters:
+    - title: Table bucket
+      required: [name]
+      properties:
+        name:
+          title: Table bucket name
+          type: string
+  steps:
+    - id: create-table-bucket
+      name: Create table bucket in SeaweedFS
+      action: seaweedfs:create-table-bucket
+      input:
+        name: ${{ parameters.name }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Table bucket **${{ steps['create-table-bucket'].output.name }}**
+          creado en SeaweedFS (ARN: `${{ steps['create-table-bucket'].output.arn }}`).
+          Eres el propietario.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: seaweedfs-delete-table-bucket
+  title: Delete SeaweedFS Table Bucket
+  description: >-
+    Delete a table bucket you own, or — if backstage-admin — any table
+    bucket. Identify it by ARN (shown in the SeaweedFS Manager page).
+  tags: [seaweedfs, storage]
+spec:
+  owner: group:default/backstage-admin
+  type: seaweedfs-resource
+  parameters:
+    - title: Table bucket to delete
+      required: [arn]
+      properties:
+        arn:
+          title: Table bucket ARN
+          type: string
+  steps:
+    - id: delete-table-bucket
+      name: Delete table bucket in SeaweedFS
+      action: seaweedfs:delete-table-bucket
+      input:
+        arn: ${{ parameters.arn }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Table bucket eliminado de SeaweedFS.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: seaweedfs-create-group
+  title: Create SeaweedFS Group
+  description: >-
+    Creates a SeaweedFS IAM group. You become the owner, visible only to you
+    (or backstage-admin) in the SeaweedFS Manager page — attach policies to
+    it there.
+  tags: [seaweedfs, storage]
+spec:
+  owner: group:default/backstage-admin
+  type: seaweedfs-resource
+  parameters:
+    - title: Group
+      required: [name]
+      properties:
+        name:
+          title: Group name
+          type: string
+  steps:
+    - id: create-group
+      name: Create group in SeaweedFS
+      action: seaweedfs:create-group
+      input:
+        name: ${{ parameters.name }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Grupo **${{ steps['create-group'].output.name }}** creado en
+          SeaweedFS. Adjunta políticas desde la página SeaweedFS Manager en
+          Backstage — solo verás ahí las políticas que tú mismo hayas creado.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: seaweedfs-delete-group
+  title: Delete SeaweedFS Group
+  description: >-
+    Delete a group you own, or — if backstage-admin — any group.
+  tags: [seaweedfs, storage]
+spec:
+  owner: group:default/backstage-admin
+  type: seaweedfs-resource
+  parameters:
+    - title: Group to delete
+      required: [name]
+      properties:
+        name:
+          title: Group name
+          type: string
+  steps:
+    - id: delete-group
+      name: Delete group in SeaweedFS
+      action: seaweedfs:delete-group
+      input:
+        name: ${{ parameters.name }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Grupo **${{ parameters.name }}** eliminado de SeaweedFS.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: seaweedfs-create-policy
+  title: Create SeaweedFS Policy
+  description: >-
+    Creates a SeaweedFS IAM policy from a raw policy document (same JSON
+    shape as AWS IAM). You become the owner — it's the only kind of policy
+    you'll see offered when attaching one to a group you own, unless you're
+    backstage-admin.
+  tags: [seaweedfs, storage]
+spec:
+  owner: group:default/backstage-admin
+  type: seaweedfs-resource
+  parameters:
+    - title: Policy
+      required: [name, documentJson]
+      properties:
+        name:
+          title: Policy name
+          type: string
+        documentJson:
+          title: Policy document (JSON)
+          description: >-
+            e.g. {"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetObject"],"Resource":["arn:aws:s3:::my-bucket/*"]}]}
+          type: string
+          ui:widget: textarea
+  steps:
+    - id: create-policy
+      name: Create policy in SeaweedFS
+      action: seaweedfs:create-policy
+      input:
+        name: ${{ parameters.name }}
+        documentJson: ${{ parameters.documentJson }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Política **${{ steps['create-policy'].output.name }}** creada en
+          SeaweedFS.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: seaweedfs-delete-policy
+  title: Delete SeaweedFS Policy
+  description: >-
+    Delete a policy you own, or — if backstage-admin — any policy.
+  tags: [seaweedfs, storage]
+spec:
+  owner: group:default/backstage-admin
+  type: seaweedfs-resource
+  parameters:
+    - title: Policy to delete
+      required: [name]
+      properties:
+        name:
+          title: Policy name
+          type: string
+  steps:
+    - id: delete-policy
+      name: Delete policy in SeaweedFS
+      action: seaweedfs:delete-policy
+      input:
+        name: ${{ parameters.name }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Política **${{ parameters.name }}** eliminada de SeaweedFS.

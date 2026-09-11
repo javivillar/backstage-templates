@@ -39,7 +39,7 @@ creating a new file; a new file will not be picked up without also adding a
 
 ## Templates
 
-18 templates across 3 self-service resource families, each keeping every
+26 templates across 4 self-service resource families, each keeping every
 mutation owner-scoped (per-creator ownership — see each backend plugin's own
 README in `backstage-app` for the exact mechanism used per family):
 
@@ -95,21 +95,48 @@ definition-level ownership grant made directly in Camunda's own native
 authorization table — see `plugins/camunda-backend`'s README for why this
 one doesn't need a bolted-on attribute the way Keycloak/Superset do.
 
-All 18 are `owner: group:default/backstage-admin` (the *template* owner —
+### SeaweedFS object storage resources (`seaweedfs-backend`) — full create/delete for buckets, table buckets, groups & policies
+
+| Template (`metadata.name`) | Title | Action called |
+| --- | --- | --- |
+| `seaweedfs-create-bucket` | Create SeaweedFS Bucket | `seaweedfs:create-bucket` |
+| `seaweedfs-delete-bucket` | Delete SeaweedFS Bucket | `seaweedfs:delete-bucket` |
+| `seaweedfs-create-table-bucket` | Create SeaweedFS Table Bucket | `seaweedfs:create-table-bucket` |
+| `seaweedfs-delete-table-bucket` | Delete SeaweedFS Table Bucket | `seaweedfs:delete-table-bucket` |
+| `seaweedfs-create-group` | Create SeaweedFS Group | `seaweedfs:create-group` |
+| `seaweedfs-delete-group` | Delete SeaweedFS Group | `seaweedfs:delete-group` |
+| `seaweedfs-create-policy` | Create SeaweedFS Policy | `seaweedfs:create-policy` |
+| `seaweedfs-delete-policy` | Delete SeaweedFS Policy | `seaweedfs:delete-policy` |
+
+Ownership: native `owner` field for buckets/table buckets (SeaweedFS
+persists it); a bolted-on ownership table in Backstage's own database for
+groups/policies (SeaweedFS's `Group`/`Policy` objects have no owner/extra
+field at all to hook into) — see `plugins/seaweedfs-backend`'s README for
+the full split. Creating a bucket also auto-grants the creator a
+bucket-scoped IAM policy so it's actually usable afterward via SeaweedFS's
+own File Browser, not just visible in Backstage. Attaching a policy to a
+group (done from the `/seaweedfs-manager` page, not a template — see below)
+only ever offers policies the caller themself created.
+
+All 26 are `owner: group:default/backstage-admin` (the *template* owner —
 who can edit the template definition — unrelated to per-object ownership,
 which is what actually gates edit/delete of the objects these templates
 create).
 
-The `/keycloak-manager`, `/superset-manager` and `/camunda-manager` pages in
-`backstage-app` navigate here with `?formData=...` pre-filled for Edit/
-Delete rather than duplicating any of this logic — this catalog is the only
-place the actual input schemas live.
+The `/keycloak-manager`, `/superset-manager`, `/camunda-manager` and
+`/seaweedfs-manager` pages in `backstage-app` navigate here with
+`?formData=...` pre-filled for Edit/Delete rather than duplicating any of
+this logic — this catalog is the only place the actual input schemas live.
+Group-policy attach/detach is the one exception: it's an interactive
+manager-page feature, not a template, since editing an existing group's
+policy list needs a live, ownership-scoped picker a one-shot form can't
+easily do — see `plugins/seaweedfs`'s README.
 
 ## Adding a new template
 
 1. Add a `---`-separated `Template` document to `catalog-info.yaml`
    (`apiVersion: scaffolder.backstage.io/v1beta3`).
-2. If it calls a new action (not one of the 18 above), the action itself has
+2. If it calls a new action (not one of the 26 above), the action itself has
    to be added to the relevant `*-backend` plugin in `backstage-app` first
    and deployed — a template whose `action:` doesn't exist on the backend
    fails at run time, not at import time, so there's no early warning if
