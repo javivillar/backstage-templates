@@ -118,19 +118,37 @@ own File Browser, not just visible in Backstage. Attaching a policy to a
 group (done from the `/seaweedfs-manager` page, not a template — see below)
 only ever offers policies the caller themself created.
 
-All 26 are `owner: group:default/backstage-admin` (the *template* owner —
+### Alfresco Sites (`alfresco-backend`) — create/delete Sites
+
+| Template (`metadata.name`) | Title | Action called |
+| --- | --- | --- |
+| `alfresco-create-site` | Create Alfresco Site | `alfresco:create-site` |
+| `alfresco-delete-site` | Delete Alfresco Site | `alfresco:delete-site` |
+
+Open to any signed-in user — this is Alfresco's own native default (the
+creator auto-becomes `SiteManager`, no `GROUP_ALFRESCO_ADMINISTRATORS`
+needed). Authorization is a **live** check against Alfresco's own native
+per-site `SiteManager` role, not a bolted-on ownership table — same idea as
+Camunda's native authorization table, since Alfresco already exposes a rich
+per-site role model. Adding/removing/promoting site members (done from the
+`/alfresco-manager` page, not a template) is gated the same way. See
+`plugins/alfresco-backend`'s README for the full model, and its identity
+gotcha (Alfresco's `Person.id` is keyed by username, not email).
+
+All 28 are `owner: group:default/backstage-admin` (the *template* owner —
 who can edit the template definition — unrelated to per-object ownership,
 which is what actually gates edit/delete of the objects these templates
 create).
 
-The `/keycloak-manager`, `/superset-manager`, `/camunda-manager` and
-`/seaweedfs-manager` pages in `backstage-app` navigate here with
-`?formData=...` pre-filled for Edit/Delete rather than duplicating any of
-this logic — this catalog is the only place the actual input schemas live.
-Group-policy attach/detach is the one exception: it's an interactive
-manager-page feature, not a template, since editing an existing group's
-policy list needs a live, ownership-scoped picker a one-shot form can't
-easily do — see `plugins/seaweedfs`'s README.
+The `/keycloak-manager`, `/superset-manager`, `/camunda-manager`,
+`/seaweedfs-manager` and `/alfresco-manager` pages in `backstage-app`
+navigate here with `?formData=...` pre-filled for Edit/Delete rather than
+duplicating any of this logic — this catalog is the only place the actual
+input schemas live. Group-policy attach/detach (SeaweedFS) and site-member
+management (Alfresco) are the exceptions: interactive manager-page
+features, not templates, since editing an existing list needs a live,
+ownership-scoped picker a one-shot form can't easily do — see
+`plugins/seaweedfs`'s and `plugins/alfresco`'s READMEs.
 
 ## Adding a new template
 

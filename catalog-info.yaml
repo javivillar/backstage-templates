@@ -1214,3 +1214,86 @@ spec:
       - title: Resultado
         content: |
           Política **${{ parameters.name }}** eliminada de SeaweedFS.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: alfresco-create-site
+  title: Create Alfresco Site
+  description: >-
+    Creates a Site in Alfresco. Open to any signed-in user — no Alfresco
+    global-admin rights needed, matching Alfresco's own native default. You
+    become the site's SiteManager and are the only one (besides
+    backstage-admin) who can edit/delete it or manage its members afterward,
+    from the Alfresco Manager page in Backstage.
+  tags: [alfresco, content]
+spec:
+  owner: group:default/backstage-admin
+  type: alfresco-resource
+  parameters:
+    - title: Site
+      required: [id, title]
+      properties:
+        id:
+          title: Site ID
+          description: >-
+            Lowercase, no spaces — becomes part of the site's URL
+            (.../site/<id>/dashboard) and cannot be changed later.
+          type: string
+        title:
+          title: Site title
+          type: string
+        description:
+          title: Description
+          type: string
+        visibility:
+          title: Visibility
+          type: string
+          enum: [PUBLIC, MODERATED, PRIVATE]
+          default: PRIVATE
+  steps:
+    - id: create-site
+      name: Create site in Alfresco
+      action: alfresco:create-site
+      input:
+        id: ${{ parameters.id }}
+        title: ${{ parameters.title }}
+        description: ${{ parameters.description }}
+        visibility: ${{ parameters.visibility }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Site **${{ steps['create-site'].output.id }}** creado en Alfresco.
+          Eres su SiteManager — gestiona sus members/roles desde la página
+          Alfresco Manager en Backstage.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: alfresco-delete-site
+  title: Delete Alfresco Site
+  description: >-
+    Delete a site you're SiteManager of, or — if backstage-admin — any site.
+  tags: [alfresco, content]
+spec:
+  owner: group:default/backstage-admin
+  type: alfresco-resource
+  parameters:
+    - title: Site to delete
+      required: [id]
+      properties:
+        id:
+          title: Site ID
+          type: string
+  steps:
+    - id: delete-site
+      name: Delete site in Alfresco
+      action: alfresco:delete-site
+      input:
+        id: ${{ parameters.id }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Site **${{ parameters.id }}** eliminado de Alfresco.
