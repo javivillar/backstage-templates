@@ -144,6 +144,9 @@ gotcha (Alfresco's `Person.id` is keyed by username, not email).
 | `activepieces-delete-project` | Delete Activepieces Project | `activepieces:delete-project` |
 | `activepieces-set-member` | Add or change an Activepieces Project Member | `activepieces:set-member` |
 | `activepieces-remove-member` | Remove an Activepieces Project Member | `activepieces:remove-member` |
+| `activepieces-create-flow` | Create Activepieces Flow (empty, disabled) | `activepieces:create-flow` |
+| `activepieces-rename-flow` | Rename Activepieces Flow | `activepieces:rename-flow` |
+| `activepieces-delete-flow` | Delete Activepieces Flow | `activepieces:delete-flow` |
 
 Backstage only **initializes and profiles**: it creates an empty project, makes
 the caller its Admin, and assigns members a role. Connections, variables and

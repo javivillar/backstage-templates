@@ -1487,3 +1487,126 @@ spec:
       - title: Resultado
         content: |
           **${{ parameters.username }}** ya no es miembro del proyecto ${{ parameters.projectId }}.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: activepieces-create-flow
+  title: Create Activepieces Flow
+  description: >-
+    Creates an EMPTY, disabled flow in an Activepieces project where your role
+    allows editing flows (Editor or Admin), or in any Backstage-managed project
+    if you are backstage-admin. You then build and publish it inside Activepieces.
+  tags: [activepieces, automation]
+spec:
+  owner: group:default/backstage-admin
+  type: activepieces-resource
+  parameters:
+    - title: Flow
+      required: [projectId, name]
+      properties:
+        projectId:
+          title: Project ID
+          description: Shown in the Activepieces URL, /projects/<id>/flows.
+          type: string
+        name:
+          title: Flow name
+          type: string
+        folder:
+          title: Folder (optional)
+          description: Created in the project if it does not exist yet.
+          type: string
+  steps:
+    - id: create-flow
+      name: Create flow in Activepieces
+      action: activepieces:create-flow
+      input:
+        projectId: ${{ parameters.projectId }}
+        name: ${{ parameters.name }}
+        folder: ${{ parameters.folder }}
+  output:
+    links:
+      - title: Open flow in Activepieces
+        url: ${{ steps['create-flow'].output.url }}
+    text:
+      - title: Resultado
+        content: |
+          Flujo **${{ steps['create-flow'].output.name }}** creado (vacío y desactivado).
+          Ábrelo en Activepieces para modelarlo y publicarlo.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: activepieces-rename-flow
+  title: Rename Activepieces Flow
+  description: >-
+    Rename a flow in a project where your role allows editing flows — or, if
+    backstage-admin, any flow of a Backstage-managed project. The flow must
+    belong to the project you name.
+  tags: [activepieces, automation]
+spec:
+  owner: group:default/backstage-admin
+  type: activepieces-resource
+  parameters:
+    - title: Flow
+      required: [projectId, flowId, name]
+      properties:
+        projectId:
+          title: Project ID
+          type: string
+        flowId:
+          title: Flow ID
+          description: Shown in the Activepieces URL, /flows/<id>.
+          type: string
+        name:
+          title: New name
+          type: string
+  steps:
+    - id: rename-flow
+      name: Rename flow in Activepieces
+      action: activepieces:rename-flow
+      input:
+        projectId: ${{ parameters.projectId }}
+        flowId: ${{ parameters.flowId }}
+        name: ${{ parameters.name }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Flujo **${{ parameters.flowId }}** renombrado a **${{ parameters.name }}**.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: activepieces-delete-flow
+  title: Delete Activepieces Flow
+  description: >-
+    Delete a flow in a project where your role allows editing flows — or, if
+    backstage-admin, any flow of a Backstage-managed project. The flow must
+    belong to the project you name.
+  tags: [activepieces, automation]
+spec:
+  owner: group:default/backstage-admin
+  type: activepieces-resource
+  parameters:
+    - title: Flow to delete
+      required: [projectId, flowId]
+      properties:
+        projectId:
+          title: Project ID
+          type: string
+        flowId:
+          title: Flow ID
+          type: string
+  steps:
+    - id: delete-flow
+      name: Delete flow in Activepieces
+      action: activepieces:delete-flow
+      input:
+        projectId: ${{ parameters.projectId }}
+        flowId: ${{ parameters.flowId }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Flujo **${{ parameters.flowId }}** eliminado del proyecto ${{ parameters.projectId }}.
