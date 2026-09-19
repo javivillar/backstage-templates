@@ -135,7 +135,29 @@ per-site role model. Adding/removing/promoting site members (done from the
 `plugins/alfresco-backend`'s README for the full model, and its identity
 gotcha (Alfresco's `Person.id` is keyed by username, not email).
 
-All 28 are `owner: group:default/backstage-admin` (the *template* owner —
+### Activepieces Projects (`activepieces-backend`) — create/rename/delete projects + members
+
+| Template (`metadata.name`) | Title | Action called |
+| --- | --- | --- |
+| `activepieces-create-project` | Create Activepieces Project | `activepieces:create-project` |
+| `activepieces-update-project` | Rename Activepieces Project | `activepieces:update-project` |
+| `activepieces-delete-project` | Delete Activepieces Project | `activepieces:delete-project` |
+| `activepieces-set-member` | Add or change an Activepieces Project Member | `activepieces:set-member` |
+| `activepieces-remove-member` | Remove an Activepieces Project Member | `activepieces:remove-member` |
+
+Backstage only **initializes and profiles**: it creates an empty project, makes
+the caller its Admin, and assigns members a role. Connections, variables and
+flows are then built by the users directly inside Activepieces (a Viewer only
+reads, an Editor builds, an Admin also manages members). Open to any signed-in
+user; authorization is a **live** check of the caller's own Activepieces role
+in the project (deny by default — the API key used underneath is
+platform-wide, so isolation is enforced by the plugin, not by Activepieces).
+Only projects created here (`externalId` prefix `backstage:`) are ever listed or
+modified. Adding/removing/re-roling members and renaming/deleting are also
+available from the `/activepieces-manager` page. See `plugins/activepieces-backend`'s
+README for the full model.
+
+All 33 are `owner: group:default/backstage-admin` (the *template* owner —
 who can edit the template definition — unrelated to per-object ownership,
 which is what actually gates edit/delete of the objects these templates
 create).

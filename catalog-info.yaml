@@ -1297,3 +1297,193 @@ spec:
       - title: Resultado
         content: |
           Site **${{ parameters.id }}** eliminado de Alfresco.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: activepieces-create-project
+  title: Create Activepieces Project
+  description: >-
+    Creates an empty Activepieces project and makes you its Admin. Open to
+    any signed-in user. You (and anyone you add) then build connections,
+    variables and flows directly inside Activepieces; only you (and
+    backstage-admin) can manage the project's members and role from the
+    Activepieces Manager page in Backstage.
+  tags: [activepieces, automation]
+spec:
+  owner: group:default/backstage-admin
+  type: activepieces-resource
+  parameters:
+    - title: Project
+      required: [name]
+      properties:
+        name:
+          title: Project name
+          description: >-
+            Must be unique among YOUR projects. Its slug (lowercase, dashes)
+            is what makes it unique, so "My Flows" and "my-flows" collide.
+          type: string
+  steps:
+    - id: create-project
+      name: Create project in Activepieces
+      action: activepieces:create-project
+      input:
+        name: ${{ parameters.name }}
+  output:
+    links:
+      - title: Open in Activepieces
+        url: ${{ steps['create-project'].output.url }}
+    text:
+      - title: Resultado
+        content: |
+          Proyecto **${{ steps['create-project'].output.name }}** creado en
+          Activepieces y eres su Admin. Añade a tu equipo y asígnales rol
+          desde la página Activepieces Manager en Backstage.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: activepieces-update-project
+  title: Rename Activepieces Project
+  description: >-
+    Rename a project you can manage (your role must allow editing the
+    project) — or, if backstage-admin, any Backstage-managed project.
+  tags: [activepieces, automation]
+spec:
+  owner: group:default/backstage-admin
+  type: activepieces-resource
+  parameters:
+    - title: Project
+      required: [id, name]
+      properties:
+        id:
+          title: Project ID
+          description: Shown in the Activepieces URL, /projects/<id>/flows.
+          type: string
+        name:
+          title: New name
+          type: string
+  steps:
+    - id: update-project
+      name: Rename project in Activepieces
+      action: activepieces:update-project
+      input:
+        id: ${{ parameters.id }}
+        name: ${{ parameters.name }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Proyecto **${{ parameters.id }}** renombrado a **${{ parameters.name }}**.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: activepieces-delete-project
+  title: Delete Activepieces Project
+  description: >-
+    Delete a project you can manage, or — if backstage-admin — any
+    Backstage-managed project. This removes the project in Activepieces
+    together with its flows, connections and variables.
+  tags: [activepieces, automation]
+spec:
+  owner: group:default/backstage-admin
+  type: activepieces-resource
+  parameters:
+    - title: Project to delete
+      required: [id]
+      properties:
+        id:
+          title: Project ID
+          type: string
+  steps:
+    - id: delete-project
+      name: Delete project in Activepieces
+      action: activepieces:delete-project
+      input:
+        id: ${{ parameters.id }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          Proyecto **${{ parameters.id }}** eliminado de Activepieces.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: activepieces-set-member
+  title: Add or change an Activepieces Project Member
+  description: >-
+    Add someone to your project, or change their role. The role you give
+    decides what they can do inside Activepieces (Viewer only reads, Editor
+    builds flows/connections/variables, Admin also manages members).
+    Requires a role that can manage the project's members.
+  tags: [activepieces, automation]
+spec:
+  owner: group:default/backstage-admin
+  type: activepieces-resource
+  parameters:
+    - title: Member
+      required: [projectId, username, role]
+      properties:
+        projectId:
+          title: Project ID
+          type: string
+        username:
+          title: Backstage username
+          description: e.g. "jdoe". They get Activepieces access automatically.
+          type: string
+        role:
+          title: Role
+          type: string
+          enum: [Viewer, Editor, Admin]
+          default: Viewer
+  steps:
+    - id: set-member
+      name: Set member in Activepieces
+      action: activepieces:set-member
+      input:
+        projectId: ${{ parameters.projectId }}
+        username: ${{ parameters.username }}
+        role: ${{ parameters.role }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          **${{ parameters.username }}** es ahora **${{ parameters.role }}** del
+          proyecto ${{ parameters.projectId }} (${{ steps['set-member'].output.status }}).
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: activepieces-remove-member
+  title: Remove an Activepieces Project Member
+  description: >-
+    Remove someone from your project. The last member able to manage the
+    project's members cannot be removed.
+  tags: [activepieces, automation]
+spec:
+  owner: group:default/backstage-admin
+  type: activepieces-resource
+  parameters:
+    - title: Member
+      required: [projectId, username]
+      properties:
+        projectId:
+          title: Project ID
+          type: string
+        username:
+          title: Backstage username
+          type: string
+  steps:
+    - id: remove-member
+      name: Remove member in Activepieces
+      action: activepieces:remove-member
+      input:
+        projectId: ${{ parameters.projectId }}
+        username: ${{ parameters.username }}
+  output:
+    text:
+      - title: Resultado
+        content: |
+          **${{ parameters.username }}** ya no es miembro del proyecto ${{ parameters.projectId }}.
