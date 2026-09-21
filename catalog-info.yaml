@@ -2189,3 +2189,19 @@ spec:
           ${{ 'Preview only — nothing was filed.' if steps['request'].output.dryRun else ('This was already requested (open issue reused).' if steps['request'].output.alreadyRequested else 'Request filed for the data stewards.') }}
 
           ${{ steps['request'].output.title }}
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: refresquito-services-docs
+  title: Servicios Refresquito — documentación
+  description: >-
+    Qué ofrece cada servicio de Refresquito desde Backstage, quién puede hacer qué
+    y qué esperar de él. Pensada para quien desarrolla en la plataforma.
+  tags: [documentation, refresquito]
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+spec:
+  type: documentation
+  lifecycle: production
+  owner: group:default/backstage-admin

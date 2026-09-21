@@ -1,0 +1,14 @@
+site_name: Servicios Refresquito
+site_description: Qué ofrece cada servicio de Refresquito desde Backstage y qué se espera de él.
+nav:
+  - Inicio: index.md
+  - Servicios:
+      - Keycloak (identidades): services/keycloak.md
+      - Superset (análisis): services/superset.md
+      - Camunda (procesos BPM): services/camunda.md
+      - SeaweedFS (almacenamiento S3): services/seaweedfs.md
+      - Alfresco (documentos): services/alfresco.md
+      - Activepieces (automatización): services/activepieces.md
+      - DataHub (gobierno del dato): services/datahub.md
+plugins:
+  - techdocs-core
