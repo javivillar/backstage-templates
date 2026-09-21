@@ -1610,3 +1610,427 @@ spec:
       - title: Resultado
         content: |
           Flujo **${{ parameters.flowId }}** eliminado del proyecto ${{ parameters.projectId }}.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: datahub-new-data-product
+  title: New data product (declare your data before coding)
+  description: >-
+    Declare who owns your data, its domain, classification, retention, legal basis
+    and where it comes from and goes to. Registers the data product, its datasets,
+    processes and PLANNED lineage in DataHub. Domains, glossary terms and tags must
+    already exist (stewards manage them). Safe to re-run: nothing is duplicated, and
+    assets DataHub already has that Backstage did not create are never touched.
+  tags: [datahub, governance, data]
+spec:
+  owner: group:default/backstage-admin
+  type: datahub-governance
+  parameters:
+    - title: Product
+      required: [name, slug, description, domain, businessOwner]
+      properties:
+        name:
+          title: Name
+          type: string
+        slug:
+          title: Slug
+          description: Lowercase letters/digits and dashes. It becomes urn:li:dataProduct:<slug>.
+          type: string
+          pattern: '^[a-z0-9]+(-[a-z0-9]+)*$'
+        description:
+          title: Description
+          type: string
+        domain:
+          title: Domain
+          description: Id of an EXISTING DataHub domain (e.g. sales, finance, customer).
+          type: string
+        businessOwner:
+          title: Business owner
+          description: Keycloak group name (e.g. sales-analytics) or a person's email.
+          type: string
+        technicalOwner:
+          title: Technical owner (optional)
+          description: Defaults to you.
+          type: string
+        steward:
+          title: Data steward (optional)
+          description: Required from Confidential up; defaults to datahub-admin if left empty.
+          type: string
+        glossaryTerms:
+          title: Glossary terms (optional)
+          description: Ids of EXISTING terms (e.g. customer, net-revenue).
+          type: array
+          items:
+            type: string
+        tags:
+          title: Tags (optional)
+          description: Ids of EXISTING tags (e.g. gold, certified).
+          type: array
+          items:
+            type: string
+        backstageEntity:
+          title: Backstage entity (optional)
+          description: e.g. system:default/pedidos-web — recorded on every asset.
+          type: string
+    - title: Data stores
+      required: [stores]
+      properties:
+        stores:
+          title: Data stores
+          description: >-
+            Databases, topics, S3 prefixes or Alfresco sites this product owns.
+            Each becomes a dataset in DataHub with the governance you declare here.
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [kind, classification, retentionDays]
+            properties:
+              kind:
+                title: Kind
+                type: string
+                enum: [postgres, kafka, s3, alfresco-site]
+              database:
+                title: Database (postgres only)
+                type: string
+              schema:
+                title: Schema (postgres only)
+                type: string
+                default: public
+              table:
+                title: Table (postgres only)
+                type: string
+              name:
+                title: Name (kafka topic / S3 bucket/prefix / Alfresco site shortName)
+                type: string
+              description:
+                title: Description
+                type: string
+              classification:
+                title: Data classification
+                type: string
+                enum: [Public, Internal, Confidential, Restricted]
+              retentionDays:
+                title: Retention (days)
+                type: integer
+                minimum: 1
+              lawfulBasis:
+                title: Lawful basis (GDPR) — required if any column is personal data
+                type: string
+                enum: [Consent, Contract, Legal obligation, Legitimate interest, Not personal data]
+              freshnessSlaHours:
+                title: Freshness SLA (hours, optional)
+                type: integer
+                minimum: 1
+              columns:
+                title: Columns (databases)
+                type: array
+                items:
+                  type: object
+                  required: [name, type]
+                  properties:
+                    name:
+                      title: Column
+                      type: string
+                    type:
+                      title: Type
+                      type: string
+                    description:
+                      title: Description
+                      type: string
+                    personal:
+                      title: Personal data?
+                      type: boolean
+                      default: false
+
+    - title: Processes and lineage
+      properties:
+        processes:
+          title: Processes (optional)
+          description: >-
+            Camunda / Argo / Activepieces processes. What each task reads and writes
+            becomes the PLANNED lineage. Refer to a store above as
+            `postgres:<db>.<schema>.<table>`, `kafka:<topic>`, `s3:<bucket/prefix>` or
+            `alfresco-site:<shortName>`, or paste an existing dataset URN.
+          type: array
+          items:
+            type: object
+            required: [engine, id, name]
+            properties:
+              engine:
+                title: Engine
+                type: string
+                enum: [camunda, argo, activepieces]
+              id:
+                title: Process id
+                type: string
+              name:
+                title: Name
+                type: string
+              tasks:
+                title: Tasks
+                type: array
+                items:
+                  type: object
+                  required: [id, name]
+                  properties:
+                    id:
+                      title: Task id
+                      type: string
+                    name:
+                      title: Name
+                      type: string
+                    reads:
+                      title: Reads
+                      type: array
+                      items:
+                        type: string
+                    writes:
+                      title: Writes
+                      type: array
+                      items:
+                        type: string
+
+        dryRun:
+          title: Validate only
+          description: Check the brief against DataHub and show what would be created, without writing anything.
+          type: boolean
+          default: true
+  steps:
+    - id: register
+      name: Register in DataHub
+      action: datahub:register-data-product
+      input:
+        dryRun: ${{ parameters.dryRun }}
+        brief:
+          slug: ${{ parameters.slug }}
+          name: ${{ parameters.name }}
+          description: ${{ parameters.description }}
+          domain: ${{ parameters.domain }}
+          businessOwner: ${{ parameters.businessOwner }}
+          technicalOwner: ${{ parameters.technicalOwner }}
+          steward: ${{ parameters.steward }}
+          terms: ${{ parameters.glossaryTerms }}
+          tags: ${{ parameters.tags }}
+          backstageEntity: ${{ parameters.backstageEntity }}
+          stores: ${{ parameters.stores }}
+          processes: ${{ parameters.processes }}
+  output:
+    links:
+      - title: Open the data product in DataHub
+        url: ${{ steps['register'].output.productUrl }}
+    text:
+      - title: Result
+        content: |
+          ${{ 'Validated only — nothing was written.' if steps['register'].output.dryRun else 'Registered in DataHub.' }}
+
+          Created: ${{ steps['register'].output.created | join(', ') }}
+
+          Updated: ${{ steps['register'].output.updated | join(', ') }}
+
+          ${{ steps['register'].output.warnings | join(' · ') }}
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: datahub-register-asset
+  title: Register data assets in an existing data product
+  description: >-
+    Adds databases, topics, S3 prefixes, Alfresco sites and processes to a data product
+    Backstage already manages. Only the product's asset list is merged: nothing else of
+    the product is rewritten. You must own the product (or be a steward / backstage-admin).
+  tags: [datahub, governance, data]
+spec:
+  owner: group:default/backstage-admin
+  type: datahub-governance
+  parameters:
+    - title: Product
+      required: [productSlug]
+      properties:
+        productSlug:
+          title: Data product slug
+          description: The slug of an existing product created from Backstage.
+          type: string
+    - title: Data stores
+      required: [stores]
+      properties:
+        stores:
+          title: Data stores
+          description: >-
+            Databases, topics, S3 prefixes or Alfresco sites this product owns.
+            Each becomes a dataset in DataHub with the governance you declare here.
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [kind, classification, retentionDays]
+            properties:
+              kind:
+                title: Kind
+                type: string
+                enum: [postgres, kafka, s3, alfresco-site]
+              database:
+                title: Database (postgres only)
+                type: string
+              schema:
+                title: Schema (postgres only)
+                type: string
+                default: public
+              table:
+                title: Table (postgres only)
+                type: string
+              name:
+                title: Name (kafka topic / S3 bucket/prefix / Alfresco site shortName)
+                type: string
+              description:
+                title: Description
+                type: string
+              classification:
+                title: Data classification
+                type: string
+                enum: [Public, Internal, Confidential, Restricted]
+              retentionDays:
+                title: Retention (days)
+                type: integer
+                minimum: 1
+              lawfulBasis:
+                title: Lawful basis (GDPR) — required if any column is personal data
+                type: string
+                enum: [Consent, Contract, Legal obligation, Legitimate interest, Not personal data]
+              freshnessSlaHours:
+                title: Freshness SLA (hours, optional)
+                type: integer
+                minimum: 1
+              columns:
+                title: Columns (databases)
+                type: array
+                items:
+                  type: object
+                  required: [name, type]
+                  properties:
+                    name:
+                      title: Column
+                      type: string
+                    type:
+                      title: Type
+                      type: string
+                    description:
+                      title: Description
+                      type: string
+                    personal:
+                      title: Personal data?
+                      type: boolean
+                      default: false
+
+    - title: Processes and lineage
+      properties:
+        processes:
+          title: Processes (optional)
+          description: >-
+            Camunda / Argo / Activepieces processes. What each task reads and writes
+            becomes the PLANNED lineage. Refer to a store above as
+            `postgres:<db>.<schema>.<table>`, `kafka:<topic>`, `s3:<bucket/prefix>` or
+            `alfresco-site:<shortName>`, or paste an existing dataset URN.
+          type: array
+          items:
+            type: object
+            required: [engine, id, name]
+            properties:
+              engine:
+                title: Engine
+                type: string
+                enum: [camunda, argo, activepieces]
+              id:
+                title: Process id
+                type: string
+              name:
+                title: Name
+                type: string
+              tasks:
+                title: Tasks
+                type: array
+                items:
+                  type: object
+                  required: [id, name]
+                  properties:
+                    id:
+                      title: Task id
+                      type: string
+                    name:
+                      title: Name
+                      type: string
+                    reads:
+                      title: Reads
+                      type: array
+                      items:
+                        type: string
+                    writes:
+                      title: Writes
+                      type: array
+                      items:
+                        type: string
+
+        dryRun:
+          title: Validate only
+          type: boolean
+          default: true
+  steps:
+    - id: register
+      name: Register in DataHub
+      action: datahub:register-asset
+      input:
+        productSlug: ${{ parameters.productSlug }}
+        dryRun: ${{ parameters.dryRun }}
+        stores: ${{ parameters.stores }}
+        processes: ${{ parameters.processes }}
+  output:
+    links:
+      - title: Open the data product in DataHub
+        url: ${{ steps['register'].output.productUrl }}
+    text:
+      - title: Result
+        content: |
+          ${{ 'Validated only — nothing was written.' if steps['register'].output.dryRun else 'Registered in DataHub.' }}
+
+          Created: ${{ steps['register'].output.created | join(', ') }}
+
+          ${{ steps['register'].output.warnings | join(' · ') }}
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: datahub-deprecate-asset
+  title: Deprecate a data asset
+  description: >-
+    Marks a dataset, data flow or data product that Backstage created as deprecated (or
+    reverses it). Assets that were ingested, or created by someone else, are never touched
+    here: ask a steward. You must own the asset's product (or be a steward / backstage-admin).
+  tags: [datahub, governance, data]
+spec:
+  owner: group:default/backstage-admin
+  type: datahub-governance
+  parameters:
+    - title: Asset
+      required: [urn, note]
+      properties:
+        urn:
+          title: Asset URN
+          description: e.g. urn:li:dataset:(urn:li:dataPlatform:postgres,pedidos_web.public.pedidos,PROD)
+          type: string
+        note:
+          title: Reason / replacement
+          type: string
+        deprecated:
+          title: Deprecated
+          description: Untick to remove the deprecation.
+          type: boolean
+          default: true
+  steps:
+    - id: deprecate
+      name: Deprecate in DataHub
+      action: datahub:deprecate
+      input:
+        urn: ${{ parameters.urn }}
+        note: ${{ parameters.note }}
+        deprecated: ${{ parameters.deprecated }}
