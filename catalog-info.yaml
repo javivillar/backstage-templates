@@ -1797,6 +1797,20 @@ spec:
           description: Check the brief against DataHub and show what would be created, without writing anything.
           type: boolean
           default: true
+    - title: Backstage catalog (optional)
+      properties:
+        repoUrl:
+          title: Repository for the catalog entities
+          description: >-
+            Publishes a repo with the product's catalog-info.yaml (a System, a Resource per data store and a Component
+            per process, each annotated with its DataHub URN and with a DataHub link) and registers it in the Backstage
+            catalog, so the DataHub card and the Data governance tab appear on them. Leave empty to skip. Ignored while
+            "Validate only" is on.
+          type: string
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
   steps:
     - id: register
       name: Register in DataHub
@@ -1816,6 +1830,41 @@ spec:
           backstageEntity: ${{ parameters.backstageEntity }}
           stores: ${{ parameters.stores }}
           processes: ${{ parameters.processes }}
+    - id: catalog-info
+      name: Generate the Backstage catalog entities
+      action: datahub:write-catalog-info
+      input:
+        brief:
+          slug: ${{ parameters.slug }}
+          name: ${{ parameters.name }}
+          description: ${{ parameters.description }}
+          domain: ${{ parameters.domain }}
+          businessOwner: ${{ parameters.businessOwner }}
+          technicalOwner: ${{ parameters.technicalOwner }}
+          steward: ${{ parameters.steward }}
+          terms: ${{ parameters.glossaryTerms }}
+          tags: ${{ parameters.tags }}
+          backstageEntity: ${{ parameters.backstageEntity }}
+          stores: ${{ parameters.stores }}
+          processes: ${{ parameters.processes }}
+    - id: publish
+      name: Publish the repository
+      if: ${{ not parameters.dryRun and parameters.repoUrl }}
+      action: publish:github
+      input:
+        allowedHosts: ['github.com']
+        description: ${{ parameters.name }} - data product registered in DataHub
+        repoUrl: ${{ parameters.repoUrl }}
+        defaultBranch: main
+        repoVisibility: private
+        gitCommitMessage: 'Register data product ${{ parameters.slug }} (catalog-info.yaml)'
+    - id: catalog
+      name: Register in the Backstage catalog
+      if: ${{ not parameters.dryRun and parameters.repoUrl }}
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps['publish'].output.repoContentsUrl }}
+        catalogInfoPath: '/catalog-info.yaml'
   output:
     links:
       - title: Open the data product in DataHub
@@ -1830,6 +1879,8 @@ spec:
           Updated: ${{ steps['register'].output.updated | join(', ') }}
 
           ${{ steps['register'].output.warnings | join(' · ') }}
+
+          ${{ ('Catalog: repository ' ~ steps['publish'].output.remoteUrl ~ ' published and registered.') if (steps['publish'] and steps['publish'].output.remoteUrl) else 'Catalog: nothing published (no repository chosen, or validate-only).' }}
 ---
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
