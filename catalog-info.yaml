@@ -2034,3 +2034,107 @@ spec:
         urn: ${{ parameters.urn }}
         note: ${{ parameters.note }}
         deprecated: ${{ parameters.deprecated }}
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: datahub-check-impact
+  title: Check the impact of changing a dataset
+  description: >-
+    Before you change a table or a schema: lists the assets downstream of it (DataHub lineage: datasets, jobs,
+    charts, dashboards), how many are marked dq-critical, and the owners you should warn first. Read-only.
+  tags: [datahub, governance, data]
+spec:
+  owner: group:default/backstage-admin
+  type: datahub-governance
+  parameters:
+    - title: Dataset
+      required: [urn]
+      properties:
+        urn:
+          title: Dataset URN
+          description: e.g. urn:li:dataset:(urn:li:dataPlatform:postgres,crm.public.customers,PROD)
+          type: string
+  steps:
+    - id: impact
+      name: Compute the downstream impact
+      action: datahub:check-impact
+      input:
+        urn: ${{ parameters.urn }}
+  output:
+    text:
+      - title: Impact
+        content: |
+          ${{ steps['impact'].output.headline }}
+
+          dq-critical assets affected: ${{ steps['impact'].output.critical }}
+
+          Tell first: ${{ steps['impact'].output.owners | join(', ') }}
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: datahub-request-vocabulary
+  title: Request DataHub vocabulary
+  description: >-
+    Need a domain, glossary term, tag or allowed value that does not exist yet? You cannot create it yourself (stewards
+    curate the vocabulary). This opens a request for them. It refuses what already exists and does not duplicate an open request.
+  tags: [datahub, governance, data]
+spec:
+  owner: group:default/backstage-admin
+  type: datahub-governance
+  parameters:
+    - title: What do you need?
+      required: [kind, name, description, justification]
+      properties:
+        kind:
+          title: Kind
+          type: string
+          enum: [domain, glossaryTerm, tag, structuredPropertyValue]
+          enumNames: [Domain, Glossary term, Tag, Allowed value of a structured property]
+        name:
+          title: Name
+          type: string
+        property:
+          title: Structured property (only for "allowed value")
+          description: e.g. refresquito.lawful_basis or refresquito.data_classification
+          type: string
+        description:
+          title: Definition
+          description: What it means, so a steward can define it precisely.
+          type: string
+          ui:widget: textarea
+        justification:
+          title: Why the existing vocabulary is not enough
+          type: string
+          ui:widget: textarea
+        relatedProduct:
+          title: Related data product (optional)
+          type: string
+        dryRun:
+          title: Preview only
+          description: Show the request that would be filed, without filing it.
+          type: boolean
+          default: true
+  steps:
+    - id: request
+      name: File the request
+      action: datahub:request-vocabulary
+      input:
+        kind: ${{ parameters.kind }}
+        name: ${{ parameters.name }}
+        property: ${{ parameters.property }}
+        description: ${{ parameters.description }}
+        justification: ${{ parameters.justification }}
+        relatedProduct: ${{ parameters.relatedProduct }}
+        dryRun: ${{ parameters.dryRun }}
+  output:
+    links:
+      - title: Open the request
+        url: ${{ steps['request'].output.issueUrl }}
+    text:
+      - title: Result
+        content: |
+          ${{ 'Preview only — nothing was filed.' if steps['request'].output.dryRun else ('This was already requested (open issue reused).' if steps['request'].output.alreadyRequested else 'Request filed for the data stewards.') }}
+
+          ${{ steps['request'].output.title }}
