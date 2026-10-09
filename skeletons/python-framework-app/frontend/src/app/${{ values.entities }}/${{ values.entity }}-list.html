@@ -1,0 +1,66 @@
+<section>
+  <header class="toolbar">
+    <h1>${{ values.Entities }}</h1>
+    <a *rqHasRole="admin" class="button primary" routerLink="/${{ values.entities }}/new">New ${{ values.entity }}</a>
+  </header>
+
+  <form class="filters" (ngSubmit)="load(1)">
+    <label>
+      Status
+      <select name="status" [ngModel]="status()" (ngModelChange)="status.set($event); load(1)">
+        <option value="">All</option>
+        @for (s of statuses; track s) {
+          <option [value]="s">{{ s }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Category
+      <input name="category" [ngModel]="category()" (ngModelChange)="category.set($event)" placeholder="tools, books..." />
+    </label>
+    <button type="submit">Search</button>
+  </form>
+
+  @if (page(); as p) {
+    @if (p.items.length) {
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Status</th>
+            <th>Starts</th>
+            <th>Added by</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (${{ values.entity }} of p.items; track ${{ values.entity }}.id) {
+            <tr>
+              <td>{{ ${{ values.entity }}.name }}</td>
+              <td>{{ ${{ values.entity }}.category }}</td>
+              <td><span class="status status-{{ ${{ values.entity }}.status }}">{{ ${{ values.entity }}.status }}</span></td>
+              <td>{{ ${{ values.entity }}.start_date | date: 'mediumDate' }}</td>
+              <td>{{ ${{ values.entity }}.created_by }}</td>
+              <td class="actions">
+                <ng-container *rqHasRole="admin">
+                  <a [routerLink]="['/${{ values.entities }}', ${{ values.entity }}.id, 'edit']">Edit</a>
+                  <button type="button" class="link danger" (click)="remove(${{ values.entity }})">Delete</button>
+                </ng-container>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      <nav class="pager" aria-label="Pages">
+        <button type="button" [disabled]="p.page <= 1 || loading()" (click)="load(p.page - 1)">Previous</button>
+        <span>Page {{ p.page }} of {{ pages() }} · {{ p.total }} ${{ values.entities }}</span>
+        <button type="button" [disabled]="p.page >= pages() || loading()" (click)="load(p.page + 1)">Next</button>
+      </nav>
+    } @else {
+      <p class="empty">No ${{ values.entities }} match.</p>
+    }
+  } @else if (loading()) {
+    <p class="empty">Loading…</p>
+  }
+</section>
