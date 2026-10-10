@@ -94,7 +94,11 @@ docker = OUT / "frontend/Dockerfile"
 text = docker.read_text()
 old = "COPY frontend ./frontend\n"
 assert text.count(old) == 1
-docker.write_text(text.replace(old, "COPY frontend ./frontend\n# the API types are generated from it (npm run gen:api, before the build)\nCOPY backend/openapi.json ./backend/openapi.json\n"))
+text = text.replace(old, "COPY frontend ./frontend\n# the API types are generated from it (npm run gen:api, which 'npm run build' runs first)\nCOPY backend/openapi.json ./backend/openapi.json\n")
+# 'npx ng build' would skip the prebuild script, and the types (src/app/api/schema.ts) are not committed
+old = "npx ng build"
+assert text.count(old) == 1
+docker.write_text(text.replace(old, "npm run build"))
 
 # ---- overrides
 for path in OVERRIDES.rglob("*"):
