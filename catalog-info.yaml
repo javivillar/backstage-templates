@@ -1852,7 +1852,6 @@ spec:
       if: ${{ not parameters.dryRun and parameters.repoUrl }}
       action: publish:github
       input:
-        allowedHosts: ['github.com']
         description: ${{ parameters.name }} - data product registered in DataHub
         repoUrl: ${{ parameters.repoUrl }}
         defaultBranch: main
@@ -2292,7 +2291,6 @@ spec:
       name: Create the repository
       action: publish:github
       input:
-        allowedHosts: ['github.com']
         repoUrl: github.com?owner=${{ parameters.owner }}&repo=${{ parameters.name }}
         description: ${{ parameters.description }}
         defaultBranch: main
