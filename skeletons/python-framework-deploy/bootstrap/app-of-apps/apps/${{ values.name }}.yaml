@@ -1,0 +1,26 @@
+# ${{ values.title }} — https://github.com/${{ values.owner }}/${{ values.name }} (created with the Backstage template
+# "New application (Python Framework)"). This file is all the stack has of it: see README.md.
+name: ${{ values.name }}
+title: ${{ values.title | dump }}
+description: ${{ values.description | dump }}
+repository: ${{ values.owner }}/${{ values.name }}
+# the clusters it is deployed in, as <zone>-<program>
+environments: ${{ values.environments | dump }}
+image:
+  registry: ghcr.io/${{ values.owner }}
+  tag: "${{ values.tag }}"        # quoted: a commit made only of digits is still a text
+# versions of the framework it is built with (shown in the catalog)
+framework: { fastapi: ${{ values.fastapi }}, angular: ${{ values.angular }} }
+tier: bronze
+# its API in the catalog: catalog/apis/${{ values.name }}.json
+api:
+  description: ${{ (values.title + ": list, read, create, update and delete its " + values.entities + "; errors as problem+json.") | dump }}
+# what it uses of the platform (charts/python-app-oneke/INSTALL.md, "Platform blocks")
+platform:
+  sso:
+    enabled: true
+    roles:
+      - { name: viewer, description: "read the ${{ values.entities }}" }
+      - { name: admin, description: "also create, edit and delete ${{ values.entities }}", users: ${{ values.admins | dump }} }
+    testUsers: true
+    extraRedirectUris: ["http://localhost:4200/*"]

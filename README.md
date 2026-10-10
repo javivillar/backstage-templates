@@ -47,8 +47,15 @@ with its names turned into template values.
 ```bash
 python3 tools/make-python-app-skeleton.py ~/petstore      # regenerate after the petstore changes; commit the result
 python3 tools/render-python-app.py /tmp/orders            # render it as Backstage would (needs jinja2)...
+python3 tools/render-python-app.py /tmp/orders --deploy /tmp/orders-deploy   # ...and what it proposes to refresquito-services
 #   ...and run the tests of the application in /tmp/orders, as its README says
 ```
+
+The template also opens a pull request in refresquito-services with the deployment of the application
+(`skeletons/python-framework-deploy/`, generated too: the file of the application from `tools/python-app-deploy/`, and
+the definition of its API, which is the `openapi.json` of the skeleton). Merging that pull request deploys it; the
+template touches no cluster. To check a change, copy the rendered deployment over a checkout of refresquito-services and
+run `helm template t bootstrap/app-of-apps --set zone=nato --set program=sirtap`.
 
 `tools/python-app-overrides/` holds what is not a plain copy (README, CI, catalog entry, release
 notes). The CI of the skeleton names no application, so it is copied without templating.

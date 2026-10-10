@@ -2211,10 +2211,11 @@ metadata:
   name: python-framework-app
   title: New application (Python Framework)
   description: >-
-    Creates the repository of a new business application built with the Python Framework of the
-    platform: an Angular web, a FastAPI service and PostgreSQL, behind Keycloak. It starts as a
-    working copy of the petstore with the names you give here, its tests and its CI, and is
-    registered in the catalog, in the system business-systems.
+    Creates a new business application built with the Python Framework of the platform (an Angular
+    web, a FastAPI service and PostgreSQL, behind Keycloak) and proposes its deployment: the
+    repository, a working copy of the petstore with the names you give here, its tests and its CI;
+    its entry in the catalog; and a pull request to refresquito-services that, once merged, deploys
+    it in the environments you choose with the platform blocks it uses.
   tags: [python-framework, fastapi, angular, postgresql]
 spec:
   owner: group:default/backstage-admin
@@ -2228,7 +2229,7 @@ spec:
           description: >-
             Lowercase letters and digits, starting with a letter (no dashes). It names the
             repository, the Python package, the Keycloak client, the roles <name>-viewer and
-            <name>-admin, and later the namespace <zone>-<program>-<name>-oneke.
+            <name>-admin, the host <name>.<domain> and the namespace <zone>-<program>-<name>-oneke.
           type: string
           pattern: '^[a-z][a-z0-9]{2,30}$'
           ui:autofocus: true
@@ -2237,6 +2238,7 @@ spec:
           description: How people read it, e.g. Orders.
           type: string
           maxLength: 60
+          pattern: '^[^"]+$'
         description:
           title: Description
           description: One sentence on what the application is for.
@@ -2258,6 +2260,56 @@ spec:
           description: Lowercase letters only, e.g. orders. It names the API path (/api/orders) and the page.
           type: string
           pattern: '^[a-z]{2,30}$'
+    - title: Where it runs
+      description: >-
+        The application is deployed by Argo CD from refresquito-services. This template does not
+        touch any cluster: it opens a pull request there, and merging it is what deploys.
+      required: [environments, frameworkVersion]
+      properties:
+        environments:
+          title: Environments
+          description: >-
+            The clusters to deploy it in, as <zone>-<program>. More can be added later, in the file
+            of the application (bootstrap/app-of-apps/apps/<name>.yaml of refresquito-services).
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            # one entry per cluster of the platform
+            enum: [nato-sirtap]
+          default: [nato-sirtap]
+          ui:widget: checkboxes
+        frameworkVersion:
+          title: Version of the Python Framework
+          description: The maintained versions. Its support policy says that only the latest one is, while it is 0.x.
+          type: string
+          enum: ['0.1']
+          enumNames: ['0.1 (refresquito-fastapi 0.1.0, refresquito-angular 0.1.0)']
+          default: '0.1'
+    - title: Platform blocks
+      description: >-
+        What the application uses of the platform. Each block is created when the application is
+        deployed, appears in the catalog as a resource of the application, and makes it depend on
+        the service that provides it. Removing a block later never deletes what it created.
+      properties:
+        sso:
+          title: Single sign-on (Keycloak)
+          description: >-
+            A public client named as the application, the realm roles <name>-viewer and
+            <name>-admin, and one test user per role. Every application of the framework has it:
+            the web signs in with it and the API reads the roles from the token.
+          type: boolean
+          default: true
+          ui:readonly: true
+        admins:
+          title: People who get the role <name>-admin
+          description: User names of the realm (they must exist; nobody is created). Empty, only the test user has it.
+          type: array
+          items:
+            type: string
+            pattern: '^[a-z0-9][a-z0-9._-]{0,60}$'
+          default: []
     - title: Repository
       properties:
         owner:
@@ -2271,6 +2323,7 @@ spec:
       action: fetch:template
       input:
         url: ./skeletons/python-framework-app
+        targetPath: ./app
         # binaries, the lock file, and files with a ${...} syntax of their own
         copyWithoutTemplating:
           - vendor/**
@@ -2292,6 +2345,7 @@ spec:
       action: publish:github
       input:
         repoUrl: github.com?owner=${{ parameters.owner }}&repo=${{ parameters.name }}
+        sourcePath: ./app
         description: ${{ parameters.description }}
         defaultBranch: main
         repoVisibility: private
@@ -2302,24 +2356,77 @@ spec:
       input:
         repoContentsUrl: ${{ steps['publish'].output.repoContentsUrl }}
         catalogInfoPath: '/catalog-info.yaml'
+    # The deployment is GitOps: two files in refresquito-services (the file of the application and
+    # the definition of its API), proposed as a pull request. Merging it is what deploys.
+    - id: deployment
+      name: Prepare the deployment (the file of the application)
+      action: fetch:template
+      input:
+        url: ./skeletons/python-framework-deploy
+        targetPath: ./deploy
+        values:
+          name: ${{ parameters.name }}
+          title: ${{ parameters.title }}
+          description: ${{ parameters.description }}
+          entity: ${{ parameters.entity }}
+          entityTitle: ${{ parameters.entity | capitalize }}
+          entities: ${{ parameters.entities }}
+          entitiesTitle: ${{ parameters.entities | capitalize }}
+          owner: ${{ parameters.owner }}
+          environments: ${{ parameters.environments }}
+          admins: ${{ parameters.admins }}
+          # the commit just pushed: its CI builds the two images with that tag
+          tag: ${{ steps['publish'].output.commitHash }}
+          fastapi: ${{ parameters.frameworkVersion }}.0
+          angular: ${{ parameters.frameworkVersion }}.0
+    - id: deploy
+      name: Open the deployment pull request in refresquito-services
+      action: publish:github:pull-request
+      input:
+        repoUrl: github.com?owner=javivillar&repo=refresquito-services
+        branchName: deploy-${{ parameters.name }}
+        targetBranchName: main
+        sourcePath: ./deploy
+        title: 'Deploy ${{ parameters.name }} (${{ parameters.title }}) in ${{ parameters.environments | join(", ") }}'
+        commitMessage: '${{ parameters.name }}: a new application of the Python Framework, deployed in ${{ parameters.environments | join(", ") }}'
+        description: |
+          **${{ parameters.title }}**: ${{ parameters.description }}
+
+          Created with the Backstage template "New application (Python Framework)": repository
+          [${{ parameters.owner }}/${{ parameters.name }}](https://github.com/${{ parameters.owner }}/${{ parameters.name }}), commit `${{ steps['publish'].output.commitHash }}`.
+
+          Merging this deploys it, with no pass of the bootstrap:
+
+          | | |
+          |---|---|
+          | Environments | ${{ parameters.environments | join(", ") }} |
+          | Namespace | `<zone>-<program>-${{ parameters.name }}-oneke` |
+          | URL | `https://${{ parameters.name }}.<domain>` |
+          | Images | `ghcr.io/${{ parameters.owner }}/${{ parameters.name }}-api` and `-web`, tag of that commit (its CI must have finished) |
+          | Platform blocks | `sso`: client `${{ parameters.name }}`, roles `${{ parameters.name }}-viewer` and `${{ parameters.name }}-admin`, their test users |
+          | Python Framework | ${{ parameters.frameworkVersion }} |
+
+          Files: `bootstrap/app-of-apps/apps/${{ parameters.name }}.yaml` (what it is and what it uses) and
+          `catalog/apis/${{ parameters.name }}.json` (its API, for the catalog). See `charts/python-app-oneke/INSTALL.md`.
   output:
     links:
       - title: Repository
         url: ${{ steps['publish'].output.remoteUrl }}
+      - title: Deployment pull request
+        url: ${{ steps['deploy'].output.remoteUrl }}
       - title: Open in the catalog
         icon: catalog
         entityRef: ${{ steps['register'].output.entityRef }}
     text:
-      - title: Next - deploy it on the platform
+      - title: Next - merge the deployment pull request
         content: |
           The repository exists and its CI is building the two images of commit `${{ steps['publish'].output.commitHash }}`.
 
-          To deploy it, generate its chart, its Keycloak client and roles and its catalog entries in
-          **refresquito-services**, and open a pull request with the result:
+          Its deployment is proposed in a **pull request of refresquito-services** (the link above). Once the CI of the
+          application has finished, merging that pull request deploys it: Argo CD creates
+          `<zone>-<program>-${{ parameters.name }}-oneke` in ${{ parameters.environments | join(", ") }}, and within a few minutes
+          the application answers on `https://${{ parameters.name }}.<domain>` with its Keycloak client, its roles and the
+          test users `${{ parameters.name }}-admin` and `${{ parameters.name }}-viewer`.
 
-          ```
-          python3 bootstrap/add-python-app.py ${{ parameters.name }} --title "${{ parameters.title }}" --entity ${{ parameters.entity }} --entities ${{ parameters.entities }} --tag ${{ steps['publish'].output.commitHash }}
-          ```
-
-          Once merged, a bootstrap pass with `${{ parameters.name }}-oneke` in `RQ_APPS` installs it in the
-          namespace `<zone>-<program>-${{ parameters.name }}-oneke`.
+          Nothing else is needed: no command to run and no pass of the bootstrap. To roll out a later commit, change
+          `image.tag` in `bootstrap/app-of-apps/apps/${{ parameters.name }}.yaml`.
