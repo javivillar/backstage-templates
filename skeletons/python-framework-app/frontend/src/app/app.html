@@ -1,0 +1,18 @@
+<header class="topbar">
+  <a class="brand" routerLink="/">${{ values.title }}</a>
+  <nav>
+    <a *rqHasRole="readers" routerLink="/${{ values.entities }}">${{ values.Entities }}</a>
+  </nav>
+  <div class="session">
+    @if (auth.user(); as user) {
+      <span class="user" [title]="user.roles.join(', ')">{{ user.name || user.username }}</span>
+      <button type="button" (click)="auth.logout()">Sign out</button>
+    } @else {
+      <button type="button" (click)="auth.login()">Sign in</button>
+    }
+  </div>
+</header>
+<div class="notifications"><rq-notifications /></div>
+<main>
+  <router-outlet />
+</main>

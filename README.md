@@ -37,6 +37,22 @@ append a new `---`-separated document to `catalog-info.yaml` rather than
 creating a new file; a new file will not be picked up without also adding a
 `Location` entry for it.
 
+## The application skeleton (`skeletons/python-framework-app/`)
+
+The template `python-framework-app` ("New application (Python Framework)") is the one template
+here that creates a repository. Its skeleton is **generated**, not written by hand: it is the
+[petstore](https://github.com/javivillar/petstore), the reference application of the framework,
+with its names turned into template values.
+
+```bash
+python3 tools/make-python-app-skeleton.py ~/petstore      # regenerate after the petstore changes; commit the result
+python3 tools/render-python-app.py /tmp/orders            # render it as Backstage would (needs jinja2)...
+#   ...and run the tests of the application in /tmp/orders, as its README says
+```
+
+`tools/python-app-overrides/` holds what is not a plain copy (README, CI, catalog entry, release
+notes). The CI of the skeleton names no application, so it is copied without templating.
+
 ## Templates
 
 26 templates across 4 self-service resource families, each keeping every

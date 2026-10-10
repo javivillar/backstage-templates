@@ -10,5 +10,7 @@ nav:
       - Alfresco (documentos): services/alfresco.md
       - Activepieces (automatización): services/activepieces.md
       - DataHub (gobierno del dato): services/datahub.md
+  - Aplicaciones:
+      - Aplicación nueva (Python Framework): services/python-framework.md
 plugins:
   - techdocs-core
