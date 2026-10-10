@@ -12,5 +12,6 @@ nav:
       - DataHub (gobierno del dato): services/datahub.md
   - Aplicaciones:
       - Aplicación nueva (Python Framework): services/python-framework.md
+      - El Python Framework en el catálogo: services/python-framework-catalog.md
 plugins:
   - techdocs-core

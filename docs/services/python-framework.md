@@ -4,6 +4,9 @@ El **Python Framework** es la base de las aplicaciones de negocio de la platafor
 (`refresquito-angular`), un servicio FastAPI (`refresquito-fastapi`) y PostgreSQL, con el login y los permisos en
 Keycloak. La plantilla **New application (Python Framework)** de *Create* te da una aplicación nueva ya funcionando.
 
+Cómo está descrito el framework en el catálogo, su política de soporte y qué se actualiza al publicar una versión:
+[El Python Framework en el catálogo](python-framework-catalog.md).
+
 ## Qué te da
 
 Un repositorio privado `<owner>/<nombre>` con:
