@@ -30,7 +30,8 @@ indiques. La entidad nace con nombre, categoría, estado y fecha de inicio: cám
 | Entity, singular / plural | `order` / `orders` | La tabla y la clase (`Order`), y la ruta del API (`/api/orders`) |
 | Environments | `nato-sirtap` | Los clusters donde se despliega, como `<zona>-<programa>` |
 | Version of the Python Framework | `0.1` | Con qué versión del framework nace. Solo se ofrecen las mantenidas |
-| Platform blocks | *Single sign-on* | Lo que usa de la plataforma. Hoy, el inicio de sesión con Keycloak (lo llevan todas); irán llegando almacenamiento, documentos, gobierno del dato, gateway, procesos, dashboards y flujos |
+| Platform blocks | *Single sign-on* | Lo que usa de la plataforma. Hoy, el inicio de sesión con Keycloak (lo llevan todas) y el almacenamiento de objetos (opcional); irán llegando documentos, gobierno del dato, gateway, procesos, dashboards y flujos |
+| Object storage - buckets | `documents` | Opcional. Un bucket `<name>-documents` en SeaweedFS, solo para la aplicación, con su clave de acceso ya en el entorno del API |
 | People who get the role `<name>-admin` | `javi` | Usuarios del realm que serán administradores de la aplicación (deben existir) |
 | GitHub owner | `javivillar` | Dueño del repositorio |
 
@@ -61,6 +62,22 @@ Cada bloque que eliges se crea al desplegar, aparece en el catálogo como un **r
 `orders-sso-client`) y hace que dependa del **servicio que lo presta** (`iam-oneke`): en la ficha de la aplicación ves
 todo lo que usa, y en la del servicio, todas las aplicaciones a las que afecta. Lo que declares se mantiene: si alguien
 lo cambia a mano en el servicio, vuelve a su sitio en unos minutos. Quitar un bloque nunca borra lo que creó.
+
+### Almacenamiento de objetos (S3)
+
+Si indicas buckets, la aplicación recibe cada uno como `<nombre>-<bucket>` en SeaweedFS, con una identidad propia que
+solo puede usar los suyos. El API lo encuentra todo en su entorno, con los nombres que lee cualquier cliente S3:
+
+| Variable | Valor |
+|---|---|
+| `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | La clave de acceso de la aplicación |
+| `AWS_ENDPOINT_URL_S3`, `AWS_DEFAULT_REGION` | Dónde está el S3 de la plataforma |
+| `S3_BUCKETS` | Todos sus buckets, separados por comas |
+| `S3_BUCKET_<BUCKET>` | El nombre completo de cada uno, por ejemplo `S3_BUCKET_DOCUMENTS=orders-documents` |
+
+El framework **no trae cliente S3**: añade a tu aplicación el que prefieras (por ejemplo `boto3`), que funcionará con
+esas variables tal cual. Puedes añadir buckets después en el fichero de la aplicación; quitar uno de la lista no lo
+borra.
 
 ## Qué se espera de ti
 
