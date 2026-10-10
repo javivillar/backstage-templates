@@ -15,7 +15,7 @@ Users come from Keycloak. Two realm roles: `${{ values.name }}-viewer` reads, `$
 creates, edits and deletes. The web only hides what a role cannot do; the API is what refuses it.
 
 It starts as a working copy of the [petstore](https://github.com/javivillar/petstore), the reference
-application of the framework, with one entity: `${{ values.Entity }}` (name, category, status and start
+application of the framework, with one entity: `${{ values.entityTitle }}` (name, category, status and start
 date). Change it into what the application is about; the tests tell you what you broke.
 
 ## Run it locally

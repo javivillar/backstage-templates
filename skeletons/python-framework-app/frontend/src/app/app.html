@@ -1,7 +1,7 @@
 <header class="topbar">
   <a class="brand" routerLink="/">${{ values.title }}</a>
   <nav>
-    <a *rqHasRole="readers" routerLink="/${{ values.entities }}">${{ values.Entities }}</a>
+    <a *rqHasRole="readers" routerLink="/${{ values.entities }}">${{ values.entitiesTitle }}</a>
   </nav>
   <div class="session">
     @if (auth.user(); as user) {

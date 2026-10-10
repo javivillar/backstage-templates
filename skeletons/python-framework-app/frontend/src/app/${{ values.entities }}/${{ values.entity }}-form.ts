@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angu
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { NotificationService, RqHttpError } from 'refresquito-angular';
-import { ${{ values.Entity }}Api, ${{ values.Entity }}Input, ${{ values.Entity }}Status, STATUSES } from '../api/${{ values.entities }}';
+import { ${{ values.entityTitle }}Api, ${{ values.entityTitle }}Input, ${{ values.entityTitle }}Status, STATUSES } from '../api/${{ values.entities }}';
 
 @Component({
   selector: 'app-${{ values.entity }}-form',
@@ -10,11 +10,11 @@ import { ${{ values.Entity }}Api, ${{ values.Entity }}Input, ${{ values.Entity }
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './${{ values.entity }}-form.html',
 })
-export class ${{ values.Entity }}Form {
+export class ${{ values.entityTitle }}Form {
   /** Route parameter: the ${{ values.entity }} to edit; without it, a new one. */
   readonly id = input<string>();
 
-  private readonly api = inject(${{ values.Entity }}Api);
+  private readonly api = inject(${{ values.entityTitle }}Api);
   private readonly router = inject(Router);
   private readonly notifications = inject(NotificationService);
 
@@ -25,7 +25,7 @@ export class ${{ values.Entity }}Form {
   protected readonly form = inject(NonNullableFormBuilder).group({
     name: ['', [Validators.required, Validators.maxLength(80)]],
     category: ['', [Validators.required, Validators.maxLength(40)]],
-    status: ['active' as ${{ values.Entity }}Status],
+    status: ['active' as ${{ values.entityTitle }}Status],
     start_date: [''],
   });
 
@@ -45,7 +45,7 @@ export class ${{ values.Entity }}Form {
       return;
     }
     const value = this.form.getRawValue();
-    const ${{ values.entity }}: ${{ values.Entity }}Input = { ...value, start_date: value.start_date || null };
+    const ${{ values.entity }}: ${{ values.entityTitle }}Input = { ...value, start_date: value.start_date || null };
     const id = this.id();
     this.saving.set(true);
     this.fieldErrors.set({});

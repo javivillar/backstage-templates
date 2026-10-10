@@ -5,10 +5,10 @@ import { NotificationService } from 'refresquito-angular';
 import { provideRefresquitoTesting } from 'refresquito-angular/testing';
 import { ADMIN, VIEWER } from '../roles';
 import { API, page, ${{ values.entity }}, request } from '../testing';
-import { ${{ values.Entity }}List } from './${{ values.entity }}-list';
+import { ${{ values.entityTitle }}List } from './${{ values.entity }}-list';
 
-describe('${{ values.Entity }}List', () => {
-  let fixture: ComponentFixture<${{ values.Entity }}List>;
+describe('${{ values.entityTitle }}List', () => {
+  let fixture: ComponentFixture<${{ values.entityTitle }}List>;
   const el = () => fixture.nativeElement as HTMLElement;
   const rows = () => [...el().querySelectorAll('tbody tr')].map((r) => r.querySelector('td')?.textContent);
   const settle = async () => {
@@ -18,7 +18,7 @@ describe('${{ values.Entity }}List', () => {
 
   async function open(role: string, first = page([${{ values.entity }}(1, { name: 'Ada' }), ${{ values.entity }}(2, { name: 'Rex', status: 'closed' })])) {
     TestBed.configureTestingModule({ providers: [provideRouter([]), provideRefresquitoTesting({ user: { roles: [role] } })] });
-    fixture = TestBed.createComponent(${{ values.Entity }}List);
+    fixture = TestBed.createComponent(${{ values.entityTitle }}List);
     (await request('GET', `${API}?page=1&size=10`)).flush(first);
     await settle();
   }
@@ -70,7 +70,7 @@ describe('${{ values.Entity }}List', () => {
     next.click();
     (await request('GET', `${API}?page=2&size=10`)).flush(page([${{ values.entity }}(11)], 25, 2));
     await settle();
-    expect(rows()).toEqual(['${{ values.Entity }} 11']);
+    expect(rows()).toEqual(['${{ values.entityTitle }} 11']);
   });
 
   it('deletes after asking, and reloads', async () => {
@@ -91,7 +91,7 @@ describe('${{ values.Entity }}List', () => {
   it('stops loading when the list fails; the framework tells the user', async () => {
     TestBed.configureTestingModule({ providers: [provideRouter([]), provideRefresquitoTesting({ user: { roles: [VIEWER] } })] });
     spyOn(console, 'warn');
-    fixture = TestBed.createComponent(${{ values.Entity }}List);
+    fixture = TestBed.createComponent(${{ values.entityTitle }}List);
     (await request('GET', `${API}?page=1&size=10`)).flush({ status: 500, code: 'internal_error', detail: 'Unexpected error', request_id: 'r-1' }, { status: 500, statusText: 'x' });
     await settle();
     expect(el().querySelector('.empty')).toBeNull();

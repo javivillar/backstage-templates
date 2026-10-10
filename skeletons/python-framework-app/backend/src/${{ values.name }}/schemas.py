@@ -4,13 +4,13 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from .models import ${{ values.Entity }}Status
+from .models import ${{ values.entityTitle }}Status
 
 
-class ${{ values.Entity }}In(BaseModel):
+class ${{ values.entityTitle }}In(BaseModel):
     name: str = Field(min_length=1, max_length=80, examples=["Rex"])
     category: str = Field(min_length=1, max_length=40, examples=["tools"])
-    status: ${{ values.Entity }}Status = ${{ values.Entity }}Status.active
+    status: ${{ values.entityTitle }}Status = ${{ values.entityTitle }}Status.active
     start_date: date | None = None
 
     @field_validator("name", "category")
@@ -29,13 +29,13 @@ class ${{ values.Entity }}In(BaseModel):
         return value
 
 
-class ${{ values.Entity }}Out(BaseModel):
+class ${{ values.entityTitle }}Out(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     name: str
     category: str
-    status: ${{ values.Entity }}Status
+    status: ${{ values.entityTitle }}Status
     start_date: date | None
     created_at: datetime
     created_by: str

@@ -5,10 +5,10 @@ import { NotificationService } from 'refresquito-angular';
 import { provideRefresquitoTesting } from 'refresquito-angular/testing';
 import { ADMIN } from '../roles';
 import { API, ${{ values.entity }}, request } from '../testing';
-import { ${{ values.Entity }}Form } from './${{ values.entity }}-form';
+import { ${{ values.entityTitle }}Form } from './${{ values.entity }}-form';
 
-describe('${{ values.Entity }}Form', () => {
-  let fixture: ComponentFixture<${{ values.Entity }}Form>;
+describe('${{ values.entityTitle }}Form', () => {
+  let fixture: ComponentFixture<${{ values.entityTitle }}Form>;
   let navigate: jasmine.Spy;
   const el = () => fixture.nativeElement as HTMLElement;
   const errors = () => [...el().querySelectorAll('.field-error')].map((e) => e.textContent);
@@ -28,7 +28,7 @@ describe('${{ values.Entity }}Form', () => {
     TestBed.configureTestingModule({ providers: [provideRouter([]), provideRefresquitoTesting({ user: { roles: [ADMIN] } })] });
     navigate = spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(true);
     spyOn(console, 'warn');
-    fixture = TestBed.createComponent(${{ values.Entity }}Form);
+    fixture = TestBed.createComponent(${{ values.entityTitle }}Form);
     if (id) {
       fixture.componentRef.setInput('id', id);
     }
@@ -104,7 +104,7 @@ describe('${{ values.Entity }}Form', () => {
 
   it('goes back to the list when the ${{ values.entity }} to edit does not exist', async () => {
     await open('99');
-    (await request('GET', `${API}/99`)).flush({ status: 404, code: 'not_found', detail: '${{ values.Entity }} 99 does not exist' }, { status: 404, statusText: 'x' });
+    (await request('GET', `${API}/99`)).flush({ status: 404, code: 'not_found', detail: '${{ values.entityTitle }} 99 does not exist' }, { status: 404, statusText: 'x' });
     expect(navigate).toHaveBeenCalledWith('/${{ values.entities }}');
   });
 });
