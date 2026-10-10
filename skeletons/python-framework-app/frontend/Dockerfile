@@ -5,9 +5,9 @@ COPY vendor ./vendor
 COPY frontend/package.json frontend/package-lock.json ./frontend/
 RUN cd frontend && npm ci
 COPY frontend ./frontend
-# the API types are generated from it (npm run gen:api, before the build)
+# the API types are generated from it (npm run gen:api, which 'npm run build' runs first)
 COPY backend/openapi.json ./backend/openapi.json
-RUN cd frontend && npx ng build && rm dist/frontend/browser/config.json
+RUN cd frontend && npm run build && rm dist/frontend/browser/config.json
 
 FROM docker.io/nginxinc/nginx-unprivileged:1.27-alpine
 COPY frontend/deploy/nginx.conf /etc/nginx/conf.d/default.conf
