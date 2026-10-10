@@ -104,6 +104,14 @@ old = "npx ng build"
 assert text.count(old) == 1
 docker.write_text(text.replace(old, "npm run build"))
 
+# the names of a new application are longer than "pet" and "petstore", so lines that fit in the
+# petstore may not fit any more: the line length is not checked (ruff format wraps them when wanted)
+py = OUT / "backend/pyproject.toml"
+text = py.read_text()
+old = 'ignore = ["B008"]\n'
+assert text.count(old) == 1
+py.write_text(text.replace(old, '# E501: the names given when the application was created can make a line too long\nignore = ["B008", "E501"]\n'))
+
 # ---- overrides
 for path in OVERRIDES.rglob("*"):
     if path.is_file():
