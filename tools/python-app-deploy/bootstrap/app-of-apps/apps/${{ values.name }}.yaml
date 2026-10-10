@@ -24,3 +24,8 @@ platform:
       - { name: admin, description: "also create, edit and delete ${{ values.entities }}", users: ${{ values.admins | dump }} }
     testUsers: true
     extraRedirectUris: ["http://localhost:4200/*"]
+{%- if values.buckets | length %}
+  s3:
+    enabled: true
+    buckets: ${{ values.buckets | dump }}
+{%- endif %}
