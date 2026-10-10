@@ -8,7 +8,7 @@ reference application of the framework, with its names turned into template valu
 again when the petstore changes, and commit the result (skeletons/python-framework-app/).
 
     petstore, Petstore            ${{ values.name }}, ${{ values.title }}
-    pet, Pet, pets, Pets          ${{ values.entity }}, ${{ values.Entity }}, ${{ values.entities }}, ${{ values.Entities }}
+    pet, Pet, pets, Pets          ${{ values.entity }}, ${{ values.entityTitle }}, ${{ values.entities }}, ${{ values.entitiesTitle }}
     species, birth_date           category, start_date      (a text to filter by and an optional date)
     available / pending / sold    active / pending / closed
 
@@ -24,13 +24,15 @@ OVERRIDES = HERE / "python-app-overrides"
 src = pathlib.Path(sys.argv[1]).expanduser().resolve() if len(sys.argv) > 1 else sys.exit(__doc__)
 
 V = lambda name: "${{ values.%s }}" % name   # noqa: E731
+# entityTitle and entitiesTitle are the capitalized names. They cannot be called Entity and Entities: the
+# catalog rejects a template whose keys differ only in case ("duplicate keys that vary only in casing")
 RULES = [   # in order: the longer names first
     ("PETSTORE_", "APP_"),
     ("petstore_test", "app_test"),
     ("javivillar/petstore", f"{V('owner')}/{V('name')}"),
     ("Petstore", V("title")),
     ("petstore", V("name")),
-    ("Pets", V("Entities")), ("pets", V("entities")), ("Pet", V("Entity")), ("pet", V("entity")),
+    ("Pets", V("entitiesTitle")), ("pets", V("entities")), ("Pet", V("entityTitle")), ("pet", V("entity")),
     ("Date of birth", "Start date"), ("Born", "Starts"), ("Birth", "Start"),
     ("Species", "Category"), ("species", "category"), ("birth_date", "start_date"),
     ("available", "active"), ("sold", "closed"),

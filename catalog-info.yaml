@@ -2284,9 +2284,9 @@ spec:
           title: ${{ parameters.title }}
           description: ${{ parameters.description }}
           entity: ${{ parameters.entity }}
-          Entity: ${{ parameters.entity | capitalize }}
+          entityTitle: ${{ parameters.entity | capitalize }}
           entities: ${{ parameters.entities }}
-          Entities: ${{ parameters.entities | capitalize }}
+          entitiesTitle: ${{ parameters.entities | capitalize }}
           owner: ${{ parameters.owner }}
     - id: publish
       name: Create the repository

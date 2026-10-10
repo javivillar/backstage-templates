@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NotificationService, RqHasRole } from 'refresquito-angular';
-import { ${{ values.Entity }}, ${{ values.Entity }}Api, ${{ values.Entity }}Page, ${{ values.Entity }}Status, STATUSES } from '../api/${{ values.entities }}';
+import { ${{ values.entityTitle }}, ${{ values.entityTitle }}Api, ${{ values.entityTitle }}Page, ${{ values.entityTitle }}Status, STATUSES } from '../api/${{ values.entities }}';
 import { ADMIN } from '../roles';
 
 @Component({
@@ -12,16 +12,16 @@ import { ADMIN } from '../roles';
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './${{ values.entity }}-list.html',
 })
-export class ${{ values.Entity }}List {
-  private readonly api = inject(${{ values.Entity }}Api);
+export class ${{ values.entityTitle }}List {
+  private readonly api = inject(${{ values.entityTitle }}Api);
   private readonly notifications = inject(NotificationService);
 
   protected readonly admin = ADMIN;
   protected readonly statuses = STATUSES;
   protected readonly size = 10;
-  protected readonly status = signal<${{ values.Entity }}Status | ''>('');
+  protected readonly status = signal<${{ values.entityTitle }}Status | ''>('');
   protected readonly category = signal('');
-  protected readonly page = signal<${{ values.Entity }}Page | null>(null);
+  protected readonly page = signal<${{ values.entityTitle }}Page | null>(null);
   protected readonly loading = signal(false);
   protected readonly pages = computed(() => Math.max(1, Math.ceil((this.page()?.total ?? 0) / this.size)));
 
@@ -40,7 +40,7 @@ export class ${{ values.Entity }}List {
     });
   }
 
-  protected remove(${{ values.entity }}: ${{ values.Entity }}): void {
+  protected remove(${{ values.entity }}: ${{ values.entityTitle }}): void {
     if (!confirm(`Delete ${${{ values.entity }}.name}?`)) {
       return;
     }

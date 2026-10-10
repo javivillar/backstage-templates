@@ -14,11 +14,11 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
-      "Page_${{ values.Entity }}Out_": {
+      "Page_${{ values.entityTitle }}Out_": {
         "properties": {
           "items": {
             "items": {
-              "$ref": "#/components/schemas/${{ values.Entity }}Out"
+              "$ref": "#/components/schemas/${{ values.entityTitle }}Out"
             },
             "title": "Items",
             "type": "array"
@@ -42,10 +42,10 @@
           "page",
           "size"
         ],
-        "title": "Page[${{ values.Entity }}Out]",
+        "title": "Page[${{ values.entityTitle }}Out]",
         "type": "object"
       },
-      "${{ values.Entity }}In": {
+      "${{ values.entityTitle }}In": {
         "properties": {
           "start_date": {
             "anyOf": [
@@ -78,7 +78,7 @@
             "type": "string"
           },
           "status": {
-            "$ref": "#/components/schemas/${{ values.Entity }}Status",
+            "$ref": "#/components/schemas/${{ values.entityTitle }}Status",
             "default": "active"
           }
         },
@@ -86,10 +86,10 @@
           "name",
           "category"
         ],
-        "title": "${{ values.Entity }}In",
+        "title": "${{ values.entityTitle }}In",
         "type": "object"
       },
-      "${{ values.Entity }}Out": {
+      "${{ values.entityTitle }}Out": {
         "properties": {
           "start_date": {
             "anyOf": [
@@ -125,7 +125,7 @@
             "type": "string"
           },
           "status": {
-            "$ref": "#/components/schemas/${{ values.Entity }}Status"
+            "$ref": "#/components/schemas/${{ values.entityTitle }}Status"
           }
         },
         "required": [
@@ -137,16 +137,16 @@
           "created_at",
           "created_by"
         ],
-        "title": "${{ values.Entity }}Out",
+        "title": "${{ values.entityTitle }}Out",
         "type": "object"
       },
-      "${{ values.Entity }}Status": {
+      "${{ values.entityTitle }}Status": {
         "enum": [
           "active",
           "pending",
           "closed"
         ],
-        "title": "${{ values.Entity }}Status",
+        "title": "${{ values.entityTitle }}Status",
         "type": "string"
       },
       "ValidationError": {
@@ -216,7 +216,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "$ref": "#/components/schemas/${{ values.Entity }}Status"
+                  "$ref": "#/components/schemas/${{ values.entityTitle }}Status"
                 },
                 {
                   "type": "null"
@@ -277,7 +277,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Page_${{ values.Entity }}Out_"
+                  "$ref": "#/components/schemas/Page_${{ values.entityTitle }}Out_"
                 }
               }
             },
@@ -299,7 +299,7 @@
             "HTTPBearer": []
           }
         ],
-        "summary": "List ${{ values.Entities }}",
+        "summary": "List ${{ values.entitiesTitle }}",
         "tags": [
           "${{ values.entities }}"
         ]
@@ -310,7 +310,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/${{ values.Entity }}In"
+                "$ref": "#/components/schemas/${{ values.entityTitle }}In"
               }
             }
           },
@@ -321,7 +321,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/${{ values.Entity }}Out"
+                  "$ref": "#/components/schemas/${{ values.entityTitle }}Out"
                 }
               }
             },
@@ -343,7 +343,7 @@
             "HTTPBearer": []
           }
         ],
-        "summary": "Create ${{ values.Entity }}",
+        "summary": "Create ${{ values.entityTitle }}",
         "tags": [
           "${{ values.entities }}"
         ]
@@ -358,7 +358,7 @@
             "name": "${{ values.entity }}_id",
             "required": true,
             "schema": {
-              "title": "${{ values.Entity }} Id",
+              "title": "${{ values.entityTitle }} Id",
               "type": "integer"
             }
           }
@@ -383,7 +383,7 @@
             "HTTPBearer": []
           }
         ],
-        "summary": "Delete ${{ values.Entity }}",
+        "summary": "Delete ${{ values.entityTitle }}",
         "tags": [
           "${{ values.entities }}"
         ]
@@ -396,7 +396,7 @@
             "name": "${{ values.entity }}_id",
             "required": true,
             "schema": {
-              "title": "${{ values.Entity }} Id",
+              "title": "${{ values.entityTitle }} Id",
               "type": "integer"
             }
           }
@@ -406,7 +406,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/${{ values.Entity }}Out"
+                  "$ref": "#/components/schemas/${{ values.entityTitle }}Out"
                 }
               }
             },
@@ -428,7 +428,7 @@
             "HTTPBearer": []
           }
         ],
-        "summary": "Get ${{ values.Entity }}",
+        "summary": "Get ${{ values.entityTitle }}",
         "tags": [
           "${{ values.entities }}"
         ]
@@ -441,7 +441,7 @@
             "name": "${{ values.entity }}_id",
             "required": true,
             "schema": {
-              "title": "${{ values.Entity }} Id",
+              "title": "${{ values.entityTitle }} Id",
               "type": "integer"
             }
           }
@@ -450,7 +450,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/${{ values.Entity }}In"
+                "$ref": "#/components/schemas/${{ values.entityTitle }}In"
               }
             }
           },
@@ -461,7 +461,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/${{ values.Entity }}Out"
+                  "$ref": "#/components/schemas/${{ values.entityTitle }}Out"
                 }
               }
             },
@@ -483,7 +483,7 @@
             "HTTPBearer": []
           }
         ],
-        "summary": "Update ${{ values.Entity }}",
+        "summary": "Update ${{ values.entityTitle }}",
         "tags": [
           "${{ values.entities }}"
         ]

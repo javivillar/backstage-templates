@@ -17,8 +17,8 @@ out = pathlib.Path(sys.argv[1]).expanduser().resolve()
 values = {"name": "orders", "title": "Orders", "description": "Orders of the shop", "entity": "order", "entities": "orders",
           "owner": "javivillar"}
 values.update(dict(a.split("=", 1) for a in sys.argv[2:]))
-values["Entity"] = values["entity"].capitalize()
-values["Entities"] = values["entities"].capitalize()
+values["entityTitle"] = values["entity"].capitalize()
+values["entitiesTitle"] = values["entities"].capitalize()
 env = jinja2.Environment(variable_start_string="${{", variable_end_string="}}", undefined=jinja2.StrictUndefined,
                          keep_trailing_newline=True)
 env.filters["dump"] = json.dumps   # nunjucks has it built in
@@ -35,4 +35,4 @@ for path in sorted(SKELETON.rglob("*")):
     else:
         dest.write_text(env.from_string(path.read_text()).render(values=values))
     shutil.copymode(path, dest)
-print(f"rendered {values['name']} ({values['Entity']}/{values['entities']}) in {out}")
+print(f"rendered {values['name']} ({values['entityTitle']}/{values['entities']}) in {out}")
