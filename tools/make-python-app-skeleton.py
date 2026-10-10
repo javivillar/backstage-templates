@@ -13,7 +13,11 @@ again when the petstore changes, and commit the result (skeletons/python-framewo
     available / pending / sold    active / pending / closed
 
 What is not a plain copy is in tools/python-app-overrides/ (README, CI, catalog entry...), copied
-over the result. Check a change with tools/render-python-app.py, which renders the skeleton the
+over the result.
+
+It also writes skeletons/python-framework-deploy/: the two files the template proposes to
+refresquito-services in a pull request to deploy the application (tools/python-app-deploy/: the
+file of the application; and the definition of its API, which is the openapi.json of the skeleton). Check a change with tools/render-python-app.py, which renders the skeleton the
 way Backstage does and leaves an application whose tests can be run.
 """
 import json, pathlib, shutil, subprocess, sys
@@ -106,6 +110,15 @@ for path in OVERRIDES.rglob("*"):
         dest = OUT / path.relative_to(OVERRIDES)
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(path, dest)
+
+# ---- the deployment: what the template proposes to refresquito-services in a pull request
+DEPLOY = OUT.parent / "python-framework-deploy"
+if DEPLOY.exists():
+    shutil.rmtree(DEPLOY)
+shutil.copytree(HERE / "python-app-deploy", DEPLOY)
+api = DEPLOY / "catalog" / "apis" / f"{V('name')}.json"
+api.parent.mkdir(parents=True)
+shutil.copyfile(OUT / "backend" / "openapi.json", api)
 
 left = [str(p.relative_to(OUT)) for p in OUT.rglob("*") if p.is_file() and not str(p.relative_to(OUT)).startswith(VERBATIM)
         and p.suffix not in BINARY and "pet" in p.read_text(errors="ignore").lower().replace("perpetual", "")]

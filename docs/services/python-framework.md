@@ -28,20 +28,39 @@ indiques. La entidad nace con nombre, categoría, estado y fecha de inicio: cám
 | Title | `Orders` | Cómo se lee |
 | Description | `Orders of the shop` | Una frase |
 | Entity, singular / plural | `order` / `orders` | La tabla y la clase (`Order`), y la ruta del API (`/api/orders`) |
+| Environments | `nato-sirtap` | Los clusters donde se despliega, como `<zona>-<programa>` |
+| Version of the Python Framework | `0.1` | Con qué versión del framework nace. Solo se ofrecen las mantenidas |
+| Platform blocks | *Single sign-on* | Lo que usa de la plataforma. Hoy, el inicio de sesión con Keycloak (lo llevan todas); irán llegando almacenamiento, documentos, gobierno del dato, gateway, procesos, dashboards y flujos |
+| People who get the role `<name>-admin` | `javi` | Usuarios del realm que serán administradores de la aplicación (deben existir) |
 | GitHub owner | `javivillar` | Dueño del repositorio |
 
-## Desplegarla en la plataforma
+## Cómo se despliega
 
-La plantilla crea el repositorio; el despliegue se prepara en `refresquito-services` con un comando, que la propia
-plantilla te muestra al terminar con el commit ya puesto:
+**La plantilla no toca ningún cluster.** Además de crear el repositorio, abre una *pull request* en
+`refresquito-services` con dos ficheros: el de la aplicación (`bootstrap/app-of-apps/apps/<nombre>.yaml`: qué es, en qué
+entornos va, qué imágenes y qué bloques usa) y la definición de su API para el catálogo. Al terminar te da el enlace.
 
-```bash
-python3 bootstrap/add-python-app.py orders --title "Orders" --entity order --entities orders --tag <commit>
-```
+**Fusionar esa pull request es lo que despliega**: Argo CD crea el namespace `<zona>-<programa>-<nombre>-oneke` y
+arranca la web, el API y la base de datos. En unos minutos la aplicación responde en `https://<nombre>.<dominio>`, con
+su cliente de Keycloak, sus roles y los usuarios de prueba `<nombre>-admin` y `<nombre>-viewer`. No hay comandos que
+ejecutar ni pasadas del bootstrap.
 
-Genera el chart `orders-oneke`, el cliente y los roles en el fichero del realm de Keycloak, la clave del almacén de
-secretos y las entradas del catálogo. Se revisa en una *pull request*; una vez fusionada, una pasada del bootstrap con
-`orders-oneke` en `RQ_APPS` la instala en `<zona>-<programa>-orders-oneke`.
+| Para | Qué se hace |
+|---|---|
+| Publicar una versión nueva | Cambiar `image.tag` en el fichero de la aplicación por el commit cuyas imágenes quieres, en una pull request |
+| Llevarla a otro entorno | Añadir su `<zona>-<programa>` a `environments` |
+| Dar el rol de administrador a alguien | Añadirlo a `users` del rol `admin` |
+| Dejar de usar un bloque | Ponerlo a `enabled: false`: deja de gestionarse, y lo que creó se queda |
+
+Espera a que termine el CI del repositorio nuevo antes de fusionar: es el que publica las imágenes de ese commit. Si
+fusionas antes, los pods quedan en `ImagePullBackOff` hasta que existan.
+
+## Lo que usa de la plataforma (bloques)
+
+Cada bloque que eliges se crea al desplegar, aparece en el catálogo como un **recurso de la aplicación** (por ejemplo
+`orders-sso-client`) y hace que dependa del **servicio que lo presta** (`iam-oneke`): en la ficha de la aplicación ves
+todo lo que usa, y en la del servicio, todas las aplicaciones a las que afecta. Lo que declares se mantiene: si alguien
+lo cambia a mano en el servicio, vuelve a su sitio en unos minutos. Quitar un bloque nunca borra lo que creó.
 
 ## Qué se espera de ti
 
