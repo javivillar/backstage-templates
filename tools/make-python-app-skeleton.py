@@ -20,7 +20,7 @@ refresquito-services in a pull request to deploy the application (tools/python-a
 file of the application; and the definition of its API, which is the openapi.json of the skeleton). Check a change with tools/render-python-app.py, which renders the skeleton the
 way Backstage does and leaves an application whose tests can be run.
 """
-import json, pathlib, shutil, subprocess, sys
+import json, pathlib, re, shutil, subprocess, sys
 
 HERE = pathlib.Path(__file__).resolve().parent
 OUT = HERE.parent / "skeletons" / "python-framework-app"
@@ -47,6 +47,7 @@ PATHS = [
     ("_pets.py", f"_{V('entities')}.py"),
     ("frontend/src/app/api/pets.ts", f"frontend/src/app/api/{V('entities')}.ts"),
     ("frontend/src/app/pets/pet-", f"frontend/src/app/{V('entities')}/{V('entity')}-"),
+    ("platform/processes/petstore-", f"platform/processes/{V('name')}-"),
 ]
 BINARY = (".ico", ".whl", ".tgz")
 # kept as they are: binaries, the lock file, and what has its own ${...} syntax
@@ -80,11 +81,19 @@ for name in files:
     shutil.copymode(src / name, dest)
 
 # ---- what differs from the petstore on purpose
+# a new application starts at 0.1.0, whatever version the petstore is at
+for rel, old_re, new in (("backend/pyproject.toml", r'(?m)^version = "[^"]+"', 'version = "0.1.0"'),
+                         (f"backend/src/{V('name')}/__init__.py", r'__version__ = "[^"]+"', '__version__ = "0.1.0"')):
+    path = OUT / rel
+    text, count = re.subn(old_re, new, path.read_text(), count=1)
+    assert count == 1, rel
+    path.write_text(text)
 # the API types of the web are generated from backend/openapi.json when it is built, tested or
 # served (not committed): a new application starts with whatever entity name it was given
 pkg_path = OUT / "frontend/package.json"
 pkg = json.loads(pkg_path.read_text())
 pkg["name"] = "app-frontend"
+pkg["version"] = "0.1.0"
 pkg["scripts"].update({"prestart": "npm run gen:api", "prebuild": "npm run gen:api", "pretest": "npm run gen:api"})
 pkg["dependencies"]["refresquito-angular"] = "file:../vendor/refresquito-angular-0.1.0.tgz"
 pkg_path.write_text(json.dumps(pkg, indent=2) + "\n")

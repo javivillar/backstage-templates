@@ -2380,6 +2380,23 @@ spec:
           type: string
           pattern: '^(gravitee-team-[a-z0-9-]+)?$'
           default: ""
+        processes:
+          title: Processes (Camunda) - deploy its processes
+          description: >-
+            Optional. The BPMN in platform/processes/ of its repository (it starts with an example,
+            <name>-review) are deployed in Camunda with each version. The API gets its own identity
+            there (CAMUNDA_URL, CAMUNDA_USERNAME, CAMUNDA_PASSWORD) to start them and work their tasks.
+          type: boolean
+          default: false
+        processGroups:
+          title: Processes (Camunda) - groups that start them and work their tasks
+          description: Keycloak groups (name or /path) whose members use them in Tasklist. Only used with processes.
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            pattern: '^/?[A-Za-z0-9][A-Za-z0-9 ._/-]*$'
+          default: []
         admins:
           title: People who get the role <name>-admin
           description: User names of the realm (they must exist; nobody is created). Empty, only the test user has it.
@@ -2461,6 +2478,8 @@ spec:
           dataOwnerGroups: ${{ parameters.dataOwnerGroups }}
           gateway: ${{ parameters.gateway }}
           gatewayTeam: ${{ parameters.gatewayTeam }}
+          processes: ${{ parameters.processes }}
+          processGroups: ${{ parameters.processGroups }}
           # the commit just pushed: its CI builds the two images with that tag
           tag: ${{ steps['publish'].output.commitHash }}
           fastapi: ${{ parameters.frameworkVersion }}.0
@@ -2489,7 +2508,7 @@ spec:
           | Namespace | `<zone>-<program>-${{ parameters.name }}-oneke` |
           | URL | `https://${{ parameters.name }}.<domain>` |
           | Images | `ghcr.io/${{ parameters.owner }}/${{ parameters.name }}-api` and `-web`, tag of that commit (its CI must have finished) |
-          | Platform blocks | `sso`: client `${{ parameters.name }}`, roles `${{ parameters.name }}-viewer` and `${{ parameters.name }}-admin`, their test users{% if parameters.s3Buckets | length %}. `s3`: buckets ${{ parameters.s3Buckets | join(", ") }} (each one as `${{ parameters.name }}-<bucket>`){% endif %}{% if parameters.dmsSites | length %}. `dms`: Alfresco sites ${{ parameters.dmsSites | join(", ") }} (each one as `${{ parameters.name }}-<site>`){% endif %}{% if parameters.datahub %}. `datahub`: data product `${{ parameters.name }}` with the tables of its database{% endif %}{% if parameters.gateway %}. `gateway`: its API at `/gateway/${{ parameters.name }}/` in Gravitee{% endif %} |
+          | Platform blocks | `sso`: client `${{ parameters.name }}`, roles `${{ parameters.name }}-viewer` and `${{ parameters.name }}-admin`, their test users{% if parameters.s3Buckets | length %}. `s3`: buckets ${{ parameters.s3Buckets | join(", ") }} (each one as `${{ parameters.name }}-<bucket>`){% endif %}{% if parameters.dmsSites | length %}. `dms`: Alfresco sites ${{ parameters.dmsSites | join(", ") }} (each one as `${{ parameters.name }}-<site>`){% endif %}{% if parameters.datahub %}. `datahub`: data product `${{ parameters.name }}` with the tables of its database{% endif %}{% if parameters.gateway %}. `gateway`: its API at `/gateway/${{ parameters.name }}/` in Gravitee{% endif %}{% if parameters.processes %}. `processes`: its BPMN of `platform/processes/` in Camunda{% endif %} |
           | Python Framework | ${{ parameters.frameworkVersion }} |
 
           Files: `bootstrap/app-of-apps/apps/${{ parameters.name }}.yaml` (what it is and what it uses) and

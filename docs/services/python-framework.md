@@ -30,7 +30,7 @@ indiques. La entidad nace con nombre, categoría, estado y fecha de inicio: cám
 | Entity, singular / plural | `order` / `orders` | La tabla y la clase (`Order`), y la ruta del API (`/api/orders`) |
 | Environments | `nato-sirtap` | Los clusters donde se despliega, como `<zona>-<programa>` |
 | Version of the Python Framework | `0.1` | Con qué versión del framework nace. Solo se ofrecen las mantenidas |
-| Platform blocks | *Single sign-on* | Lo que usa de la plataforma. Hoy, el inicio de sesión con Keycloak (lo llevan todas), el almacenamiento de objetos, los documentos, el catálogo de datos y el gateway de APIs (opcionales); irán llegando procesos, dashboards y flujos |
+| Platform blocks | *Single sign-on* | Lo que usa de la plataforma. Hoy, el inicio de sesión con Keycloak (lo llevan todas), el almacenamiento de objetos, los documentos, el catálogo de datos, el gateway de APIs y los procesos de Camunda (opcionales); irán llegando dashboards y flujos |
 | Object storage - buckets | `documents` | Opcional. Un bucket `<name>-documents` en SeaweedFS, solo para la aplicación, con su clave de acceso ya en el entorno del API |
 | Documents (Alfresco) - sites | `records` | Opcional. Un sitio privado `<name>-records` en Alfresco, con un usuario propio de la aplicación y sus credenciales ya en el entorno del API |
 | Documents (Alfresco) - groups | `finance` | Grupos de Keycloak cuyos miembros entran en los sitios de la aplicación |
@@ -38,6 +38,8 @@ indiques. La entidad nace con nombre, categoría, estado y fecha de inicio: cám
 | Data catalog (DataHub) - people / groups who own its data | `ana` / `finance` | Responsables de negocio de sus datos. Tu equipo es siempre el responsable técnico |
 | API gateway (Gravitee) - publish its API | sí / no | Opcional. Su API en el gateway, en `/gateway/<name>/`, pública en el portal de desarrolladores |
 | API gateway (Gravitee) - team | `gravitee-team-alpha` | Opcional. El grupo cuyos miembros ven la API en Backstage |
+| Processes (Camunda) - deploy its processes | sí / no | Opcional. Los BPMN de `platform/processes/` se despliegan en Camunda con cada versión |
+| Processes (Camunda) - groups | `finance` | Grupos cuyos miembros inician los procesos y trabajan sus tareas en Tasklist |
 | People who get the role `<name>-admin` | `javi` | Usuarios del realm que serán administradores de la aplicación (deben existir) |
 | GitHub owner | `javivillar` | Dueño del repositorio |
 
@@ -137,6 +139,21 @@ suscripción se acepta sola.
 
 Tu aplicación no recibe nada en su entorno: sigue sirviendo su API en `/api` como siempre, y el gateway es una puerta
 más para otros consumidores.
+
+### Procesos (Camunda)
+
+Tus procesos son parte de tu código: los BPMN (y DMN y formularios) van en `platform/processes/` de tu repositorio, y el
+Dockerfile del API los copia a la imagen. Así, Camunda tiene siempre los procesos de la versión que corre: al desplegar
+un commit nuevo, lo que cambió pasa a ser una versión nueva del proceso. La aplicación nace con uno de ejemplo,
+`<nombre>-review`, que puedes cambiar o borrar.
+
+**Regla:** el `id` de cada proceso y decisión empieza por el nombre de la aplicación y un guion (`orders-approval`).
+Uno con otro id no se despliega, y el despliegue de ese commit te lo dice en el log del provisioner.
+
+Tu API habla con Camunda como ella misma: `CAMUNDA_URL` (la API REST, `engine-rest`), `CAMUNDA_USERNAME` y
+`CAMUNDA_PASSWORD` (autenticación HTTP Basic). Puede iniciar sus procesos y leer, reclamar y completar sus tareas, nada
+de otras aplicaciones. Las personas de los grupos que indiques los inician y trabajan sus tareas en Tasklist
+(`https://bpm.<dominio>`). El framework no trae cliente de Camunda: usa su API REST con el cliente HTTP que prefieras.
 
 ## Qué se espera de ti
 

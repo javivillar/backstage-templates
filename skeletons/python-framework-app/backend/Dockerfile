@@ -12,6 +12,8 @@ COPY --from=build /install /usr/local
 WORKDIR /app
 COPY backend/alembic.ini ./
 COPY backend/migrations ./migrations
+# what the application brings to the platform (processes...): the stack takes it from this image
+COPY platform ./platform
 USER 10001
 EXPOSE 8000
 ENV RQ_APP_NAME=${{ values.name }}
