@@ -1,0 +1,17 @@
+database_name: ${{ values.title }}
+sqlalchemy_uri: postgresql://${{ values.name }}:XXXXXXXXXX@ss-db:5432/${{ values.name }}
+cache_timeout: null
+expose_in_sqllab: true
+allow_run_async: false
+allow_ctas: false
+allow_cvas: false
+allow_dml: false
+allow_file_upload: false
+extra:
+  metadata_params: {}
+  engine_params: {}
+  metadata_cache_timeout: {}
+  schemas_allowed_for_file_upload: []
+impersonate_user: false
+uuid: bc67df80-b260-45e7-ac7b-3baa40872b9e
+version: 1.0.0

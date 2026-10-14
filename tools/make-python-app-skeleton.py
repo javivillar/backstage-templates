@@ -48,6 +48,12 @@ PATHS = [
     ("frontend/src/app/api/pets.ts", f"frontend/src/app/api/{V('entities')}.ts"),
     ("frontend/src/app/pets/pet-", f"frontend/src/app/{V('entities')}/{V('entity')}-"),
     ("platform/processes/petstore-", f"platform/processes/{V('name')}-"),
+    # the dashboard export: the names Superset gave its files, made neutral
+    ("platform/dashboards/databases/Petstore.yaml", "platform/dashboards/databases/application.yaml"),
+    ("platform/dashboards/datasets/Petstore/pet.yaml", f"platform/dashboards/datasets/application/{V('entity')}.yaml"),
+    ("platform/dashboards/dashboards/Petstore_1.yaml", "platform/dashboards/dashboards/overview.yaml"),
+    ("platform/dashboards/charts/Pets_by_status_1.yaml", "platform/dashboards/charts/by_status.yaml"),
+    ("platform/dashboards/charts/Pets_2.yaml", "platform/dashboards/charts/count.yaml"),
 ]
 BINARY = (".ico", ".whl", ".tgz")
 # kept as they are: binaries, the lock file, and what has its own ${...} syntax

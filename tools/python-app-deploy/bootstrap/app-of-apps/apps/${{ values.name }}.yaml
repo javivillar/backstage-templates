@@ -54,3 +54,7 @@ platform:
     enabled: true
     groups: ${{ values.processGroups | dump }}
 {%- endif %}
+{%- if values.dashboards %}
+  dashboards:
+    enabled: true
+{%- endif %}
