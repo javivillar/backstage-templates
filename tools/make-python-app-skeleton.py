@@ -88,6 +88,12 @@ for rel, old_re, new in (("backend/pyproject.toml", r'(?m)^version = "[^"]+"', '
     text, count = re.subn(old_re, new, path.read_text(), count=1)
     assert count == 1, rel
     path.write_text(text)
+# ... and so does its OpenAPI document (its CI checks it matches the code)
+api_path = OUT / "backend/openapi.json"
+api_text = api_path.read_text()
+api_doc = json.loads(api_text)
+api_doc["info"]["version"] = "0.1.0"
+api_path.write_text(json.dumps(api_doc, indent=2) + ("\n" if api_text.endswith("\n") else ""))
 # the API types of the web are generated from backend/openapi.json when it is built, tested or
 # served (not committed): a new application starts with whatever entity name it was given
 pkg_path = OUT / "frontend/package.json"
