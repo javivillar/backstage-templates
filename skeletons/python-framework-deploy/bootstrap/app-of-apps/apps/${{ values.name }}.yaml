@@ -37,3 +37,8 @@ platform:
       - { name: ${{ site }}, groups: ${{ values.siteGroups | dump }} }
 {%- endfor %}
 {%- endif %}
+{%- if values.datahub %}
+  datahub:
+    enabled: true
+    owners: { users: ${{ values.dataOwners | dump }}, groups: ${{ values.dataOwnerGroups | dump }} }
+{%- endif %}

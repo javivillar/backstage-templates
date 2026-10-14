@@ -30,10 +30,12 @@ indiques. La entidad nace con nombre, categoría, estado y fecha de inicio: cám
 | Entity, singular / plural | `order` / `orders` | La tabla y la clase (`Order`), y la ruta del API (`/api/orders`) |
 | Environments | `nato-sirtap` | Los clusters donde se despliega, como `<zona>-<programa>` |
 | Version of the Python Framework | `0.1` | Con qué versión del framework nace. Solo se ofrecen las mantenidas |
-| Platform blocks | *Single sign-on* | Lo que usa de la plataforma. Hoy, el inicio de sesión con Keycloak (lo llevan todas), el almacenamiento de objetos y los documentos (opcionales); irán llegando gobierno del dato, gateway, procesos, dashboards y flujos |
+| Platform blocks | *Single sign-on* | Lo que usa de la plataforma. Hoy, el inicio de sesión con Keycloak (lo llevan todas), el almacenamiento de objetos, los documentos y el catálogo de datos (opcionales); irán llegando gateway, procesos, dashboards y flujos |
 | Object storage - buckets | `documents` | Opcional. Un bucket `<name>-documents` en SeaweedFS, solo para la aplicación, con su clave de acceso ya en el entorno del API |
 | Documents (Alfresco) - sites | `records` | Opcional. Un sitio privado `<name>-records` en Alfresco, con un usuario propio de la aplicación y sus credenciales ya en el entorno del API |
 | Documents (Alfresco) - groups | `finance` | Grupos de Keycloak cuyos miembros entran en los sitios de la aplicación |
+| Data catalog (DataHub) - register its data | sí / no | Opcional. Un producto de datos `<name>` en DataHub con las tablas de su base de datos |
+| Data catalog (DataHub) - people / groups who own its data | `ana` / `finance` | Responsables de negocio de sus datos. Tu equipo es siempre el responsable técnico |
 | People who get the role `<name>-admin` | `javi` | Usuarios del realm que serán administradores de la aplicación (deben existir) |
 | GitHub owner | `javivillar` | Dueño del repositorio |
 
@@ -103,6 +105,22 @@ vez en Alfresco.
 
 El framework **no trae cliente de Alfresco**: usa su API REST con el cliente HTTP que prefieras. Puedes añadir sitios
 después en el fichero de la aplicación; quitar uno de la lista no lo borra.
+
+### Catálogo de datos (DataHub)
+
+Si lo marcas, la aplicación tiene en DataHub un producto de datos con su nombre y, dentro, un dataset por cada tabla
+de su base de datos, con sus columnas y tipos. Las tablas se leen del esquema de la base de datos cada pocos minutos,
+así que lo que cambien tus migraciones (una tabla o una columna nueva) aparece solo. Los comentarios de tablas y
+columnas (`COMMENT ON TABLE ...`, `COMMENT ON COLUMN ...`, o `comment=` en SQLAlchemy) son sus descripciones en
+DataHub: es la forma de documentar tus datos desde el código.
+
+Responsables: tu equipo (`<segmento>-team`) como responsable técnico, y las personas y grupos que indiques como
+responsables de negocio. Solo se añaden: lo que alguien añada en DataHub (responsables, descripciones, etiquetas,
+términos del glosario) se queda. Los dominios, etiquetas y términos los crean los stewards; el fichero de la aplicación
+puede indicar un dominio que ya exista (`domain:`). En Backstage, la aplicación muestra la tarjeta de DataHub y la
+pestaña *Data governance*.
+
+La aplicación no recibe nada en su entorno: esto es para quien busca o gobierna los datos, no para el código.
 
 ## Qué se espera de ti
 
