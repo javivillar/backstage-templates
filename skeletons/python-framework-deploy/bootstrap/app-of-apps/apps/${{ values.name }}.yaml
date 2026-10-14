@@ -29,3 +29,11 @@ platform:
     enabled: true
     buckets: ${{ values.buckets | dump }}
 {%- endif %}
+{%- if values.sites | length %}
+  dms:
+    enabled: true
+    sites:
+{%- for site in values.sites %}
+      - { name: ${{ site }}, groups: ${{ values.siteGroups | dump }} }
+{%- endfor %}
+{%- endif %}
