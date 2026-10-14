@@ -30,12 +30,14 @@ indiques. La entidad nace con nombre, categoría, estado y fecha de inicio: cám
 | Entity, singular / plural | `order` / `orders` | La tabla y la clase (`Order`), y la ruta del API (`/api/orders`) |
 | Environments | `nato-sirtap` | Los clusters donde se despliega, como `<zona>-<programa>` |
 | Version of the Python Framework | `0.1` | Con qué versión del framework nace. Solo se ofrecen las mantenidas |
-| Platform blocks | *Single sign-on* | Lo que usa de la plataforma. Hoy, el inicio de sesión con Keycloak (lo llevan todas), el almacenamiento de objetos, los documentos y el catálogo de datos (opcionales); irán llegando gateway, procesos, dashboards y flujos |
+| Platform blocks | *Single sign-on* | Lo que usa de la plataforma. Hoy, el inicio de sesión con Keycloak (lo llevan todas), el almacenamiento de objetos, los documentos, el catálogo de datos y el gateway de APIs (opcionales); irán llegando procesos, dashboards y flujos |
 | Object storage - buckets | `documents` | Opcional. Un bucket `<name>-documents` en SeaweedFS, solo para la aplicación, con su clave de acceso ya en el entorno del API |
 | Documents (Alfresco) - sites | `records` | Opcional. Un sitio privado `<name>-records` en Alfresco, con un usuario propio de la aplicación y sus credenciales ya en el entorno del API |
 | Documents (Alfresco) - groups | `finance` | Grupos de Keycloak cuyos miembros entran en los sitios de la aplicación |
 | Data catalog (DataHub) - register its data | sí / no | Opcional. Un producto de datos `<name>` en DataHub con las tablas de su base de datos |
 | Data catalog (DataHub) - people / groups who own its data | `ana` / `finance` | Responsables de negocio de sus datos. Tu equipo es siempre el responsable técnico |
+| API gateway (Gravitee) - publish its API | sí / no | Opcional. Su API en el gateway, en `/gateway/<name>/`, pública en el portal de desarrolladores |
+| API gateway (Gravitee) - team | `gravitee-team-alpha` | Opcional. El grupo cuyos miembros ven la API en Backstage |
 | People who get the role `<name>-admin` | `javi` | Usuarios del realm que serán administradores de la aplicación (deben existir) |
 | GitHub owner | `javivillar` | Dueño del repositorio |
 
@@ -121,6 +123,20 @@ puede indicar un dominio que ya exista (`domain:`). En Backstage, la aplicación
 pestaña *Data governance*.
 
 La aplicación no recibe nada en su entorno: esto es para quien busca o gobierna los datos, no para el código.
+
+### Gateway de APIs (Gravitee)
+
+Si lo marcas, tu API se publica en el gateway, en `https://gravitee.<dominio>/gateway/<nombre>/`. Una llamada a
+`/gateway/<nombre>/orders` llega a `/api/orders` de tu aplicación. Aparece pública en el portal de desarrolladores, con
+tu OpenAPI como documentación. Se lee de tu API cada pocos minutos, así que una versión nueva actualiza el portal sola.
+
+Para llamarla por el gateway hace falta un token del realm de Keycloak de un cliente suscrito. El gateway lo comprueba
+y se lo pasa a tu API, que sigue mirando los roles como siempre. El cliente de tu propia web ya está suscrito. Quien
+quiera consumir tu API desde otra aplicación la registra en el portal, con su cliente de Keycloak, y se suscribe; la
+suscripción se acepta sola.
+
+Tu aplicación no recibe nada en su entorno: sigue sirviendo su API en `/api` como siempre, y el gateway es una puerta
+más para otros consumidores.
 
 ## Qué se espera de ti
 
