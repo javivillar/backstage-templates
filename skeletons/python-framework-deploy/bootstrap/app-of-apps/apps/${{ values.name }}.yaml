@@ -49,3 +49,8 @@ platform:
     team: ${{ values.gatewayTeam }}
 {%- endif %}
 {%- endif %}
+{%- if values.processes %}
+  processes:
+    enabled: true
+    groups: ${{ values.processGroups | dump }}
+{%- endif %}
