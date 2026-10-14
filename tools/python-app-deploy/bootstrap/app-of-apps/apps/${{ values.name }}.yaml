@@ -42,3 +42,10 @@ platform:
     enabled: true
     owners: { users: ${{ values.dataOwners | dump }}, groups: ${{ values.dataOwnerGroups | dump }} }
 {%- endif %}
+{%- if values.gateway %}
+  gateway:
+    enabled: true
+{%- if values.gatewayTeam %}
+    team: ${{ values.gatewayTeam }}
+{%- endif %}
+{%- endif %}
