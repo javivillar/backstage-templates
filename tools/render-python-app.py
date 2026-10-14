@@ -2,7 +2,7 @@
 """render-python-app.py — render the skeleton the way Backstage's fetch:template does, to test it.
 
     python3 tools/render-python-app.py OUT_DIR [name=orders title=Orders entity=order entities=orders owner=javivillar]
-    python3 tools/render-python-app.py OUT_DIR --deploy DEPLOY_DIR [... tag=<commit> environments=nato-sirtap admins=javi buckets=documents]
+    python3 tools/render-python-app.py OUT_DIR --deploy DEPLOY_DIR [... tag=<commit> environments=nato-sirtap admins=javi buckets=documents sites=records siteGroups=finance]
 
 Then run the tests of the application in OUT_DIR (its README says how). With --deploy it also
 renders what the template proposes to refresquito-services to deploy it: copy DEPLOY_DIR over a
@@ -54,6 +54,8 @@ if deploy:
     values.update(tag=values.get("tag", "0000000"), fastapi=values.get("fastapi", "0.1.0"), angular=values.get("angular", "0.1.0"),
                   environments=values.get("environments", "nato-sirtap").split(","),
                   admins=[a for a in values.get("admins", "").split(",") if a],
-                  buckets=[b for b in values.get("buckets", "").split(",") if b])
+                  buckets=[b for b in values.get("buckets", "").split(",") if b],
+                  sites=[s for s in values.get("sites", "").split(",") if s],
+                  siteGroups=[g for g in values.get("siteGroups", "").split(",") if g])
     render(SKELETON.parent / "python-framework-deploy", deploy)
     print(f"rendered its deployment (the pull request to refresquito-services) in {deploy}")

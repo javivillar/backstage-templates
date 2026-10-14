@@ -2315,6 +2315,31 @@ spec:
             type: string
             pattern: '^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$'
           default: []
+        dmsSites:
+          title: Documents (Alfresco) - sites
+          description: >-
+            Optional. One short name per site, e.g. documents: the application gets the private Alfresco
+            site <name>-documents, a person of its own that works in it, and its credentials in the
+            environment of the API (ALFRESCO_URL, ALFRESCO_USERNAME, ALFRESCO_PASSWORD, ALFRESCO_SITES).
+            Empty, the application does not use Alfresco.
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            pattern: '^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$'
+          default: []
+        dmsGroups:
+          title: Documents (Alfresco) - groups of people who may enter its sites
+          description: >-
+            Keycloak groups (name or /path) whose members enter every site of the application, as
+            Consumer the first time. Only used with sites. Empty, people are added later to the group
+            alfrescodms-site-<name>-<site>.
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            pattern: '^/?[A-Za-z0-9][A-Za-z0-9 ._/-]*$'
+          default: []
         admins:
           title: People who get the role <name>-admin
           description: User names of the realm (they must exist; nobody is created). Empty, only the test user has it.
@@ -2389,6 +2414,8 @@ spec:
           environments: ${{ parameters.environments }}
           admins: ${{ parameters.admins }}
           buckets: ${{ parameters.s3Buckets }}
+          sites: ${{ parameters.dmsSites }}
+          siteGroups: ${{ parameters.dmsGroups }}
           # the commit just pushed: its CI builds the two images with that tag
           tag: ${{ steps['publish'].output.commitHash }}
           fastapi: ${{ parameters.frameworkVersion }}.0
@@ -2417,7 +2444,7 @@ spec:
           | Namespace | `<zone>-<program>-${{ parameters.name }}-oneke` |
           | URL | `https://${{ parameters.name }}.<domain>` |
           | Images | `ghcr.io/${{ parameters.owner }}/${{ parameters.name }}-api` and `-web`, tag of that commit (its CI must have finished) |
-          | Platform blocks | `sso`: client `${{ parameters.name }}`, roles `${{ parameters.name }}-viewer` and `${{ parameters.name }}-admin`, their test users{% if parameters.s3Buckets | length %}. `s3`: buckets ${{ parameters.s3Buckets | join(", ") }} (each one as `${{ parameters.name }}-<bucket>`){% endif %} |
+          | Platform blocks | `sso`: client `${{ parameters.name }}`, roles `${{ parameters.name }}-viewer` and `${{ parameters.name }}-admin`, their test users{% if parameters.s3Buckets | length %}. `s3`: buckets ${{ parameters.s3Buckets | join(", ") }} (each one as `${{ parameters.name }}-<bucket>`){% endif %}{% if parameters.dmsSites | length %}. `dms`: Alfresco sites ${{ parameters.dmsSites | join(", ") }} (each one as `${{ parameters.name }}-<site>`){% endif %} |
           | Python Framework | ${{ parameters.frameworkVersion }} |
 
           Files: `bootstrap/app-of-apps/apps/${{ parameters.name }}.yaml` (what it is and what it uses) and

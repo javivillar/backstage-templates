@@ -30,8 +30,10 @@ indiques. La entidad nace con nombre, categoría, estado y fecha de inicio: cám
 | Entity, singular / plural | `order` / `orders` | La tabla y la clase (`Order`), y la ruta del API (`/api/orders`) |
 | Environments | `nato-sirtap` | Los clusters donde se despliega, como `<zona>-<programa>` |
 | Version of the Python Framework | `0.1` | Con qué versión del framework nace. Solo se ofrecen las mantenidas |
-| Platform blocks | *Single sign-on* | Lo que usa de la plataforma. Hoy, el inicio de sesión con Keycloak (lo llevan todas) y el almacenamiento de objetos (opcional); irán llegando documentos, gobierno del dato, gateway, procesos, dashboards y flujos |
+| Platform blocks | *Single sign-on* | Lo que usa de la plataforma. Hoy, el inicio de sesión con Keycloak (lo llevan todas), el almacenamiento de objetos y los documentos (opcionales); irán llegando gobierno del dato, gateway, procesos, dashboards y flujos |
 | Object storage - buckets | `documents` | Opcional. Un bucket `<name>-documents` en SeaweedFS, solo para la aplicación, con su clave de acceso ya en el entorno del API |
+| Documents (Alfresco) - sites | `records` | Opcional. Un sitio privado `<name>-records` en Alfresco, con un usuario propio de la aplicación y sus credenciales ya en el entorno del API |
+| Documents (Alfresco) - groups | `finance` | Grupos de Keycloak cuyos miembros entran en los sitios de la aplicación |
 | People who get the role `<name>-admin` | `javi` | Usuarios del realm que serán administradores de la aplicación (deben existir) |
 | GitHub owner | `javivillar` | Dueño del repositorio |
 
@@ -78,6 +80,29 @@ solo puede usar los suyos. El API lo encuentra todo en su entorno, con los nombr
 El framework **no trae cliente S3**: añade a tu aplicación el que prefieras (por ejemplo `boto3`), que funcionará con
 esas variables tal cual. Puedes añadir buckets después en el fichero de la aplicación; quitar uno de la lista no lo
 borra.
+
+### Documentos (Alfresco)
+
+Si indicas sitios, la aplicación recibe cada uno como un sitio privado `<nombre>-<sitio>` en Alfresco. El API de
+Alfresco no acepta los tokens de Keycloak, así que la aplicación entra con un usuario propio de Alfresco,
+`app-<nombre>`, colaborador de sus sitios (lee, crea y edita en ellos) y de ningún otro. El API lo encuentra todo en su
+entorno:
+
+| Variable | Valor |
+|---|---|
+| `ALFRESCO_URL` | El repositorio de Alfresco dentro del cluster (API REST en `/alfresco/api/-default-/public/alfresco/versions/1`) |
+| `ALFRESCO_USERNAME`, `ALFRESCO_PASSWORD` | El usuario de la aplicación (autenticación HTTP Basic) |
+| `ALFRESCO_SITES` | Todos sus sitios, separados por comas |
+| `ALFRESCO_SITE_<SITIO>` | El id de cada uno, por ejemplo `ALFRESCO_SITE_RECORDS=orders-records` |
+
+Las personas entran por Keycloak: cada sitio tiene un grupo `alfrescodms-site-<nombre>-<sitio>`, y quien está en él
+entra en el sitio como lector (Consumer) la primera vez; después su rol se cambia en el propio Alfresco. Los miembros
+de los grupos que indiques en el formulario se añaden a ese grupo, también quien entre en ellos más adelante. Nunca se
+saca a nadie: quien deba salir se quita del grupo a mano. Una persona aparece en el sitio después de haber entrado una
+vez en Alfresco.
+
+El framework **no trae cliente de Alfresco**: usa su API REST con el cliente HTTP que prefieras. Puedes añadir sitios
+después en el fichero de la aplicación; quitar uno de la lista no lo borra.
 
 ## Qué se espera de ti
 
