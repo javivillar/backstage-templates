@@ -30,7 +30,7 @@ indiques. La entidad nace con nombre, categoría, estado y fecha de inicio: cám
 | Entity, singular / plural | `order` / `orders` | La tabla y la clase (`Order`), y la ruta del API (`/api/orders`) |
 | Environments | `nato-sirtap` | Los clusters donde se despliega, como `<zona>-<programa>` |
 | Version of the Python Framework | `0.1` | Con qué versión del framework nace. Solo se ofrecen las mantenidas |
-| Platform blocks | *Single sign-on* | Lo que usa de la plataforma. Hoy, el inicio de sesión con Keycloak (lo llevan todas), el almacenamiento de objetos, los documentos, el catálogo de datos, el gateway de APIs y los procesos de Camunda (opcionales); irán llegando dashboards y flujos |
+| Platform blocks | *Single sign-on* | Lo que usa de la plataforma. Hoy, el inicio de sesión con Keycloak (lo llevan todas), el almacenamiento de objetos, los documentos, el catálogo de datos, el gateway de APIs, los procesos de Camunda y los dashboards de Superset (opcionales); irán llegando los flujos |
 | Object storage - buckets | `documents` | Opcional. Un bucket `<name>-documents` en SeaweedFS, solo para la aplicación, con su clave de acceso ya en el entorno del API |
 | Documents (Alfresco) - sites | `records` | Opcional. Un sitio privado `<name>-records` en Alfresco, con un usuario propio de la aplicación y sus credenciales ya en el entorno del API |
 | Documents (Alfresco) - groups | `finance` | Grupos de Keycloak cuyos miembros entran en los sitios de la aplicación |
@@ -40,6 +40,7 @@ indiques. La entidad nace con nombre, categoría, estado y fecha de inicio: cám
 | API gateway (Gravitee) - team | `gravitee-team-alpha` | Opcional. El grupo cuyos miembros ven la API en Backstage |
 | Processes (Camunda) - deploy its processes | sí / no | Opcional. Los BPMN de `platform/processes/` se despliegan en Camunda con cada versión |
 | Processes (Camunda) - groups | `finance` | Grupos cuyos miembros inician los procesos y trabajan sus tareas en Tasklist |
+| Dashboards (Superset) - import its dashboards | sí / no | Opcional. El export de Superset de `platform/dashboards/` se importa en Superset con cada versión |
 | People who get the role `<name>-admin` | `javi` | Usuarios del realm que serán administradores de la aplicación (deben existir) |
 | GitHub owner | `javivillar` | Dueño del repositorio |
 
@@ -154,6 +155,17 @@ Tu API habla con Camunda como ella misma: `CAMUNDA_URL` (la API REST, `engine-re
 `CAMUNDA_PASSWORD` (autenticación HTTP Basic). Puede iniciar sus procesos y leer, reclamar y completar sus tareas, nada
 de otras aplicaciones. Las personas de los grupos que indiques los inician y trabajan sus tareas en Tasklist
 (`https://bpm.<dominio>`). El framework no trae cliente de Camunda: usa su API REST con el cliente HTTP que prefieras.
+
+### Dashboards (Superset)
+
+Tus dashboards también son parte de tu código. Créalos en Superset sobre cualquier base de datos con tus mismas tablas,
+expórtalos (Dashboards, ⋮, Export) y descomprime el fichero en `platform/dashboards/` tal como viene. La aplicación nace
+con uno de ejemplo sobre su tabla principal.
+
+Con cada versión desplegada se importan en Superset sobre **tu base de datos de ese clúster**, sea cual sea la conexión
+que traiga el export, con un rol de **solo lectura** (`<nombre>_reader`): puede leer todas tus tablas, también las que
+creen migraciones futuras, y no puede escribir en ninguna. Los ven los grupos `superset-editor` y `superset-admin`.
+Tu aplicación no recibe nada en su entorno.
 
 ## Qué se espera de ti
 

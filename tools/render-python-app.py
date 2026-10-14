@@ -5,7 +5,7 @@
     python3 tools/render-python-app.py OUT_DIR --deploy DEPLOY_DIR [... tag=<commit> environments=nato-sirtap admins=javi buckets=documents sites=records siteGroups=finance
                                               datahub=true dataOwners=ana dataOwnerGroups=finance
                                               gateway=true gatewayTeam=gravitee-team-alpha
-                                              processes=true processGroups=finance]
+                                              processes=true processGroups=finance dashboards=true]
 
 Then run the tests of the application in OUT_DIR (its README says how). With --deploy it also
 renders what the template proposes to refresquito-services to deploy it: copy DEPLOY_DIR over a
@@ -65,6 +65,7 @@ if deploy:
                   dataOwnerGroups=[g for g in values.get("dataOwnerGroups", "").split(",") if g],
                   gateway=values.get("gateway", "") in ("true", "1", "yes"), gatewayTeam=values.get("gatewayTeam", ""),
                   processes=values.get("processes", "") in ("true", "1", "yes"),
-                  processGroups=[g for g in values.get("processGroups", "").split(",") if g])
+                  processGroups=[g for g in values.get("processGroups", "").split(",") if g],
+                  dashboards=values.get("dashboards", "") in ("true", "1", "yes"))
     render(SKELETON.parent / "python-framework-deploy", deploy)
     print(f"rendered its deployment (the pull request to refresquito-services) in {deploy}")
