@@ -300,7 +300,79 @@ application** pasa a pre y a pro, y cada paso es una pull request que copia el t
 
 El código de la aplicación no cambia entre etapas. Cómo mover versiones: [Promocionar una aplicación](python-framework-promote.md).
 
-## 9. Problemas frecuentes
+## 9. Cómo trabajar en el repositorio con dev, pre y pro
+
+**Las etapas no son ramas.** En el repositorio de la aplicación hay una sola rama principal, `main`. Qué versión corre en
+cada etapa no está en tu repositorio, sino en el fichero de despliegue de `refresquito-services`:
+
+```yaml
+stages:
+  dev: { tag: "c3..." }   # lo último de main
+  pre: { tag: "c2..." }   # en validación
+  pro: { tag: "c1..." }   # en producción
+```
+
+### El ciclo de un cambio
+
+1. Trabajas en una rama corta (`feature/...`) y abres una pull request hacia `main`. Su CI pasa las pruebas, pero **no
+   publica imágenes**.
+2. Al hacer merge en `main`, el CI publica `<nombre>-api` y `<nombre>-web` con la etiqueta del **hash del commit**: esa
+   es la versión. Lo ves en la pestaña **CI/CD** del componente de tu repositorio.
+3. Con la plantilla **Promote an application** llevas ese commit a **dev** (*From*: a commit of its repository).
+4. Cuando dev está bien, **dev → pre** y luego **pre → pro**, con la misma plantilla. Cada paso es una pull request a
+   `refresquito-services` que copia el tag de una etapa a la siguiente.
+
+**Se construye una vez y se despliega muchas.** Pre y pro no reconstruyen nada: reciben exactamente la imagen que se
+probó antes. Una etapa nunca cambia por promocionar otra: llevar algo a pre no toca dev ni pro.
+
+### Qué cambia entre etapas sin tocar el código
+
+| | Cómo llega a cada etapa |
+|---|---|
+| **Configuración** (cliente de Keycloak, buckets, sitios, Camunda, base de datos...) | Variables de entorno con los nombres de esa etapa. El código **no debe tener nada escrito a mano** que dependa de la etapa |
+| **Contenido de `platform/`** (procesos, dashboards, flujos) | Viaja dentro de la imagen: cada etapa tiene el de su versión. Si pro corre `c1`, tiene los procesos de `c1` |
+| **Base de datos** | Cada etapa tiene la suya; las migraciones se aplican solas al arrancar el API. Los datos no pasan de una etapa a otra |
+| **Personas** | Los grupos que declaras son los mismos en todas las etapas; los usuarios de prueba y los roles de dev y pre son propios |
+
+En el código, usa siempre las variables de entorno:
+
+| En lugar de escribir | Usa | Que vale en pre |
+|---|---|---|
+| `"orders-documents"` | `S3_BUCKET_DOCUMENTS` | `orders-pre-documents` |
+| `"orders-records"` | `ALFRESCO_SITE_RECORDS` | `orders-pre-records` |
+| `"orders-review"` | `CAMUNDA_KEY_PREFIX + "review"` | `orders-pre-review` |
+| la URL de un flujo | `ACTIVEPIECES_FLOW_<FLUJO>_URL` | la del proyecto `Orders (pre)` |
+
+Si un nombre está escrito a mano, en dev y pre falla: cada etapa solo tiene permiso sobre lo suyo.
+
+### Lo que crean los bloques: una copia por etapa
+
+Cada etapa tiene **su propia copia** de cada bloque, para que probar en dev nunca toque lo que usa pro: el proceso de
+Camunda (`orders-dev-review`), el sitio de Alfresco (`orders-dev-records`, que nace vacío), el bucket, los dashboards
+(sobre la base de datos de dev) y el proyecto de Activepieces (`Orders (dev)`, cuyas **conexiones hay que crear en cada
+proyecto**: las credenciales nunca van al repositorio). DataHub es la excepción: hay uno solo y el producto de datos es
+el de pro.
+
+**Lo que diseñas a mano en dev no se guarda solo en el repositorio.** Un proceso, un dashboard o un flujo hecho en la
+web de dev hay que exportarlo y guardarlo en `platform/` con un commit (sección *Lo que usa de la plataforma* de
+[Aplicación nueva](python-framework.md)); si no, se pierde cuando el provisioner vuelve a importar el del repositorio.
+
+### Migraciones compatibles hacia atrás
+
+Una versión pasa por dev y pre antes de llegar a pro, y cada etapa migra su base de datos al arrancar. Prefiere cambios
+que la versión anterior siga entendiendo: **añadir antes que borrar o renombrar** (una columna nueva primero; quitar la
+vieja en una versión posterior, cuando ninguna etapa la use).
+
+### Trabajo a medias y arreglos urgentes
+
+- **Mantén `main` promocionable.** Lo que tenga que entrar en `main` sin estar terminado, déjalo desactivado (una
+  variable de entorno o un *flag*) hasta que lo esté. Así cualquier commit de `main` puede llegar a pro.
+- **Un arreglo urgente en pro** se hace en `main` y se promociona dev → pre → pro como siempre (son minutos). Si `main`
+  tiene algo que no puede salir todavía, crea una rama desde el commit de pro (`git checkout -b hotfix/x <commit de pro>`)
+  y llévalo después también a `main`. Ojo: **el CI solo publica imágenes desde `main`**, así que una rama `hotfix/*` no
+  tiene imágenes que desplegar mientras su CI no lo permita (pídeselo al equipo de plataforma).
+
+## 10. Problemas frecuentes
 
 | Síntoma | Causa | Qué hacer |
 |---|---|---|
@@ -312,7 +384,7 @@ El código de la aplicación no cambia entre etapas. Cómo mover versiones: [Pro
 | Un proceso no se despliega | Su `id` no empieza por `<nombre>-` | Renombrarlo en el BPMN y publicar una versión nueva |
 | Una pasada del provisioner falla | Un servicio no responde o rechaza algo | El log del Job dice qué bloque y por qué; los demás bloques siguen funcionando |
 
-## 10. Lo que se espera de ti
+## 11. Lo que se espera de ti
 
 - **Los permisos los decide el API**, no la web: la web solo oculta lo que un rol no puede hacer.
 - **Cada cambio del API** se refleja en `backend/openapi.json`; el CI falla si no está al día.
