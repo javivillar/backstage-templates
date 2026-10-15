@@ -5,7 +5,8 @@ El **Python Framework** es la base de las aplicaciones de negocio de la platafor
 Keycloak. La plantilla **New application (Python Framework)** de *Create* te da una aplicación nueva ya funcionando.
 
 Cómo está descrito el framework en el catálogo, su política de soporte y qué se actualiza al publicar una versión:
-[El Python Framework en el catálogo](python-framework-catalog.md).
+[El Python Framework en el catálogo](python-framework-catalog.md). El recorrido completo, campo a campo y con todo lo
+que se crea (grupos, roles y usuarios incluidos): [Manual: crear una aplicación paso a paso](python-framework-manual.md).
 
 ## Qué te da
 
@@ -59,7 +60,7 @@ ejecutar ni pasadas del bootstrap.
 
 | Para | Qué se hace |
 |---|---|
-| Publicar una versión nueva | Cambiar `image.tag` en el fichero de la aplicación por el commit cuyas imágenes quieres, en una pull request |
+| Publicar una versión nueva | La plantilla [Promote an application](python-framework-promote.md), o cambiar `image.tag` (`stages.<etapa>.tag` si tiene etapas) por el commit cuyas imágenes quieres, en una pull request |
 | Llevarla a otro entorno | Añadir su `<zona>-<programa>` a `environments` |
 | Dar el rol de administrador a alguien | Añadirlo a `users` del rol `admin` |
 | Dejar de usar un bloque | Ponerlo a `enabled: false`: deja de gestionarse, y lo que creó se queda |
@@ -193,7 +194,7 @@ una línea por petición) y `audit` (quién hizo qué). Toda escritura (`POST`, 
 rechazada (401, 403) se audita sola, con el usuario, la ruta, el resultado y el `request_id`; lo que importe al
 negocio lo registras tú con `audit("<entidad>.<acción>", resource=...)`.
 
-En la plataforma cada flujo es un stream propio de Loki (`{namespace_name="<namespace>", log_type="audit"}`) y cada
+En la plataforma cada flujo es un stream propio de Loki (`{kubernetes_namespace_name="<namespace>", log_type="audit"}`) y cada
 evento cuenta en `audit_events_total{action, outcome}` del `/metrics`, que Prometheus ya rasca. En Grafana tienes los
 dos en el dashboard *Python Framework - Audit*. Nunca metas secretos ni datos personales innecesarios en un evento.
 
