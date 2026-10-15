@@ -9,7 +9,9 @@ Un cluster sirve las tres etapas de una aplicación del Python Framework, cada u
 | `pro` | `<zona>-<programa>-<nombre>-oneke` | `https://<nombre>.<dominio>` | cliente `<nombre>`, roles del realm |
 
 Los roles se llaman igual en todas las etapas, así que el código de la aplicación no cambia; un rol dado en dev no
-vale en pro. En dev y pre, de momento, solo está el bloque `sso`.
+vale en pro. Lo que cada bloque crea en un servicio compartido es de su etapa (`<nombre>-<etapa>-...`: buckets, sites,
+`/gateway/<nombre>-<etapa>/`, procesos de Camunda, dashboards, proyecto de Activepieces). **DataHub solo en pro**: hay
+un único DataHub y el data product de la aplicación es el de pro.
 
 Qué versión corre en cada etapa lo dice el fichero de la aplicación en refresquito-services
 (`bootstrap/app-of-apps/apps/<nombre>.yaml`):
