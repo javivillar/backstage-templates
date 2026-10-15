@@ -30,6 +30,7 @@ indiques. La entidad nace con nombre, categoría, estado y fecha de inicio: cám
 | Description | `Orders of the shop` | Una frase |
 | Entity, singular / plural | `order` / `orders` | La tabla y la clase (`Order`), y la ruta del API (`/api/orders`) |
 | Environments | `nato-sirtap` | Los clusters donde se despliega, como `<zona>-<programa>` |
+| Initial stage | `dev` | La etapa en la que nace: **dev** por defecto (`https://<nombre>-dev.<dominio>`, cliente `<nombre>-dev`). Pasa a pre y pro con la plantilla [Promote an application](python-framework-promote.md) |
 | Version of the Python Framework | `2.0` | Con qué versión del framework nace. Solo se ofrecen las mantenidas: la **2.0** (añade la traza de auditoría) y la **0.1** (mantenida hasta el 15-04-2027) |
 | Platform blocks | *Single sign-on* | Lo que usa de la plataforma. Hoy, el inicio de sesión con Keycloak (lo llevan todas), el almacenamiento de objetos, los documentos, el catálogo de datos, el gateway de APIs, los procesos de Camunda, los dashboards de Superset y los flujos de Activepieces (opcionales) |
 | Object storage - buckets | `documents` | Opcional. Un bucket `<name>-documents` en SeaweedFS, solo para la aplicación, con su clave de acceso ya en el entorno del API |
@@ -53,7 +54,8 @@ indiques. La entidad nace con nombre, categoría, estado y fecha de inicio: cám
 `refresquito-services` con dos ficheros: el de la aplicación (`bootstrap/app-of-apps/apps/<nombre>.yaml`: qué es, en qué
 entornos va, qué imágenes y qué bloques usa) y la definición de su API para el catálogo. Al terminar te da el enlace.
 
-**Fusionar esa pull request es lo que despliega**: Argo CD crea el namespace `<zona>-<programa>-<nombre>-oneke` y
+**Fusionar esa pull request es lo que despliega**, en la etapa elegida (dev por defecto, con `-dev` detrás del nombre en
+el namespace, la URL, el cliente y los usuarios de prueba): Argo CD crea el namespace `<zona>-<programa>-<nombre>-oneke` y
 arranca la web, el API y la base de datos. En unos minutos la aplicación responde en `https://<nombre>.<dominio>`, con
 su cliente de Keycloak, sus roles y los usuarios de prueba `<nombre>-admin` y `<nombre>-viewer`. No hay comandos que
 ejecutar ni pasadas del bootstrap.

@@ -59,7 +59,9 @@ La entidad nace con nombre, categoría, estado y fecha de inicio: cámbiala por 
 | **Environments** | `nato-sirtap` | Los clusters donde se despliega, como `<zona>-<programa>`. Se pueden añadir más después en el fichero de la aplicación |
 | **Version of the Python Framework** | `2.0` | La línea del framework con la que nace. Solo se ofrecen las **mantenidas**: **2.0** (la actual, con traza de auditoría) y **0.1** (en retirada, mantenida hasta el 15-04-2027). En el catálogo la aplicación dependerá de esa línea (`python-framework-2-0` o `python-framework-0-1`) |
 
-La aplicación nace en la etapa **pro**. Cómo tener además dev y pre: sección 8.
+| **Initial stage** | `dev` | La etapa en la que nace: **dev** por defecto (`<nombre>-dev`, su propio cliente de Keycloak y sus usuarios de prueba). Después pasa a pre y a pro con la plantilla **Promote an application**. Elige `pro` solo si debe nacer ya en producción. DataHub solo existe en pro |
+
+Lo que cambia según la etapa (nombres, Keycloak, DataHub): sección 8.
 
 ### Página 4 · Platform blocks
 
@@ -112,7 +114,9 @@ publica las imágenes del commit que la pull request despliega. Si haces merge a
 
 ## 5. Qué se crea, servicio por servicio
 
-En la tabla, `orders` es el nombre de la aplicación. Lo que **no** se crea (personas, grupos de personas, dominios de
+En la tabla, `orders` es el nombre de la aplicación y los nombres son los de **pro**. En dev y pre llevan la etapa
+detrás del nombre (`orders-dev-oneke`, `https://orders-dev.<dominio>`, cliente `orders-dev`, `app-orders-dev`...): la tabla
+completa está en la sección 8. Lo que **no** se crea (personas, grupos de personas, dominios de
 DataHub) aparece marcado como *debe existir*.
 
 ### Kubernetes (Argo CD)
@@ -280,8 +284,8 @@ repositorio (Backstage descubre cada 30 minutos los `catalog-info.yaml` de los r
 ## 8. Etapas: dev, pre y pro
 
 Un cluster puede tener las tres etapas de la aplicación, cada una en su namespace y con su versión. La aplicación nace
-solo en pro. La primera vez que llevas un commit a dev con la plantilla **Promote an application**, el fichero pasa a
-tener `stages:` y aparece `orders-dev`:
+en **dev** (campo *Initial stage*): su fichero tiene `stages: { dev: { tag: ... } }`. Con la plantilla **Promote an
+application** pasa a pre y a pro, y cada paso es una pull request que copia el tag de una etapa a la siguiente:
 
 | | pro | dev / pre |
 |---|---|---|

@@ -60,7 +60,7 @@ render(SKELETON, out, VERBATIM)
 print(f"rendered {values['name']} ({values['entityTitle']}/{values['entities']}) in {out}")
 if deploy:
     # what the template adds for the deployment pull request (its step "deploy")
-    values.update(tag=values.get("tag", "0000000"), fastapi=values.get("fastapi", f"{line}.0"), angular=values.get("angular", f"{line}.0"),
+    values.update(tag=values.get("tag", "0000000"), stage=values.get("stage", "dev"), fastapi=values.get("fastapi", f"{line}.0"), angular=values.get("angular", f"{line}.0"),
                   environments=values.get("environments", "nato-sirtap").split(","),
                   admins=[a for a in values.get("admins", "").split(",") if a],
                   buckets=[b for b in values.get("buckets", "").split(",") if b],

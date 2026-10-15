@@ -8,7 +8,13 @@ repository: ${{ values.owner }}/${{ values.name }}
 environments: ${{ values.environments | dump }}
 image:
   registry: ghcr.io/${{ values.owner }}
+{%- if values.stage == "pro" %}
   tag: "${{ values.tag }}"        # quoted: a commit made only of digits is still a text
+{%- else %}
+# its stages (dev, pre, pro), each a deployment of its own; the template Promote moves a tag on
+stages:
+  ${{ values.stage }}: { tag: "${{ values.tag }}" }
+{%- endif %}
 # versions of the framework it is built with (shown in the catalog)
 framework: { fastapi: ${{ values.fastapi }}, angular: ${{ values.angular }} }
 tier: bronze
