@@ -58,3 +58,8 @@ platform:
   dashboards:
     enabled: true
 {%- endif %}
+{%- if values.flows %}
+  flows:
+    enabled: true
+    groups: ${{ values.flowGroups | dump }}
+{%- endif %}

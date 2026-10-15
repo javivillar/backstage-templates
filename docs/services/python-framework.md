@@ -30,7 +30,7 @@ indiques. La entidad nace con nombre, categoría, estado y fecha de inicio: cám
 | Entity, singular / plural | `order` / `orders` | La tabla y la clase (`Order`), y la ruta del API (`/api/orders`) |
 | Environments | `nato-sirtap` | Los clusters donde se despliega, como `<zona>-<programa>` |
 | Version of the Python Framework | `0.1` | Con qué versión del framework nace. Solo se ofrecen las mantenidas |
-| Platform blocks | *Single sign-on* | Lo que usa de la plataforma. Hoy, el inicio de sesión con Keycloak (lo llevan todas), el almacenamiento de objetos, los documentos, el catálogo de datos, el gateway de APIs, los procesos de Camunda y los dashboards de Superset (opcionales); irán llegando los flujos |
+| Platform blocks | *Single sign-on* | Lo que usa de la plataforma. Hoy, el inicio de sesión con Keycloak (lo llevan todas), el almacenamiento de objetos, los documentos, el catálogo de datos, el gateway de APIs, los procesos de Camunda, los dashboards de Superset y los flujos de Activepieces (opcionales) |
 | Object storage - buckets | `documents` | Opcional. Un bucket `<name>-documents` en SeaweedFS, solo para la aplicación, con su clave de acceso ya en el entorno del API |
 | Documents (Alfresco) - sites | `records` | Opcional. Un sitio privado `<name>-records` en Alfresco, con un usuario propio de la aplicación y sus credenciales ya en el entorno del API |
 | Documents (Alfresco) - groups | `finance` | Grupos de Keycloak cuyos miembros entran en los sitios de la aplicación |
@@ -41,6 +41,8 @@ indiques. La entidad nace con nombre, categoría, estado y fecha de inicio: cám
 | Processes (Camunda) - deploy its processes | sí / no | Opcional. Los BPMN de `platform/processes/` se despliegan en Camunda con cada versión |
 | Processes (Camunda) - groups | `finance` | Grupos cuyos miembros inician los procesos y trabajan sus tareas en Tasklist |
 | Dashboards (Superset) - import its dashboards | sí / no | Opcional. El export de Superset de `platform/dashboards/` se importa en Superset con cada versión |
+| Flows (Activepieces) - import its flows | sí / no | Opcional. Los flujos de `platform/flows/` se importan en un proyecto propio de Activepieces y se publican |
+| Flows (Activepieces) - groups that edit them | `finance` | Grupos cuyos miembros editan los flujos en su proyecto de Activepieces |
 | People who get the role `<name>-admin` | `javi` | Usuarios del realm que serán administradores de la aplicación (deben existir) |
 | GitHub owner | `javivillar` | Dueño del repositorio |
 
@@ -166,6 +168,23 @@ Con cada versión desplegada se importan en Superset sobre **tu base de datos de
 que traiga el export, con un rol de **solo lectura** (`<nombre>_reader`): puede leer todas tus tablas, también las que
 creen migraciones futuras, y no puede escribir en ninguna. Los ven los grupos `superset-editor` y `superset-admin`.
 Tu aplicación no recibe nada en su entorno.
+
+### Flujos (Activepieces)
+
+Tus flujos también son parte de tu código. Créalos en Activepieces, expórtalos (menú del flujo, Export) y guarda cada uno
+en `platform/flows/<flujo>.json`: un flujo por fichero, y el nombre del fichero (minúsculas, dígitos y guiones) da nombre
+a su webhook. La aplicación nace con uno de ejemplo, `new-<entidad>.json`: un webhook que responde con un saludo.
+
+Con cada versión desplegada se importan en un **proyecto de Activepieces propio de tu aplicación** (con su título) los
+flujos cuyo fichero cambió, y se publican en cuanto están completos (activados la primera vez; después conservan el
+estado que les haya dado alguien). Lo que edites en Activepieces se pierde con el siguiente cambio del fichero: el
+flujo es el fichero. Un flujo que use conexiones (`{{connections['<nombre>']}}`) espera como borrador hasta que alguien
+cree esas conexiones en el proyecto, con esos nombres: las credenciales nunca van al repositorio. Los miembros de los
+grupos que indiques son editores del proyecto.
+
+Tu API recibe la URL de cada flujo que empieza con un webhook en `ACTIVEPIECES_FLOW_<FLUJO>_URL` (el nombre del fichero
+en mayúsculas, guiones como `_`): un POST lo arranca, y a `<url>/sync` espera su respuesta (la del paso *Return
+Response*). Llega tras la primera pasada del provisioner, que reinicia el API para dársela.
 
 ## Qué se espera de ti
 

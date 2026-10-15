@@ -54,6 +54,8 @@ PATHS = [
     ("platform/dashboards/dashboards/Petstore_1.yaml", "platform/dashboards/dashboards/overview.yaml"),
     ("platform/dashboards/charts/Pets_by_status_1.yaml", "platform/dashboards/charts/by_status.yaml"),
     ("platform/dashboards/charts/Pets_2.yaml", "platform/dashboards/charts/count.yaml"),
+    # the example flow: its file names its webhook (ACTIVEPIECES_FLOW_NEW_<ENTITY>_URL)
+    ("platform/flows/new-pet.json", f"platform/flows/new-{V('entity')}.json"),
 ]
 BINARY = (".ico", ".whl", ".tgz")
 # kept as they are: binaries, the lock file, and what has its own ${...} syntax
