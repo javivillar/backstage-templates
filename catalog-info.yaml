@@ -2264,7 +2264,7 @@ spec:
       description: >-
         The application is deployed by Argo CD from refresquito-services. This template does not
         touch any cluster: it opens a pull request there, and merging it is what deploys.
-      required: [environments, frameworkVersion]
+      required: [environments, initialStage, frameworkVersion]
       properties:
         environments:
           title: Environments
@@ -2280,6 +2280,16 @@ spec:
             enum: [nato-sirtap]
           default: [nato-sirtap]
           ui:widget: checkboxes
+        initialStage:
+          title: Initial stage
+          description: >-
+            The stage it starts in. dev (the default): namespace <zone>-<program>-<name>-dev-oneke,
+            https://<name>-dev.<domain>, its own Keycloak client <name>-dev and the test users <name>-dev-viewer and
+            <name>-dev-admin. It moves on to pre and pro with the template "Promote an application (Python Framework)".
+            The data catalog (DataHub) is only for pro.
+          type: string
+          enum: [dev, pre, pro]
+          default: dev
         frameworkVersion:
           title: Version of the Python Framework
           description: >-
@@ -2519,6 +2529,7 @@ spec:
           flowGroups: ${{ parameters.flowGroups }}
           # the commit just pushed: its CI builds the two images with that tag
           tag: ${{ steps['publish'].output.commitHash }}
+          stage: ${{ parameters.initialStage }}
           fastapi: ${{ parameters.frameworkVersion }}.0
           angular: ${{ parameters.frameworkVersion }}.0
     - id: deploy
@@ -2529,8 +2540,8 @@ spec:
         branchName: deploy-${{ parameters.name }}
         targetBranchName: main
         sourcePath: ./deploy
-        title: 'Deploy ${{ parameters.name }} (${{ parameters.title }}) in ${{ parameters.environments | join(", ") }}'
-        commitMessage: '${{ parameters.name }}: a new application of the Python Framework, deployed in ${{ parameters.environments | join(", ") }}'
+        title: 'Deploy ${{ parameters.name }} (${{ parameters.title }}) in ${{ parameters.environments | join(", ") }}, stage ${{ parameters.initialStage }}'
+        commitMessage: '${{ parameters.name }}: a new application of the Python Framework, deployed in ${{ parameters.environments | join(", ") }} (stage ${{ parameters.initialStage }})'
         description: |
           **${{ parameters.title }}**: ${{ parameters.description }}
 
@@ -2542,10 +2553,11 @@ spec:
           | | |
           |---|---|
           | Environments | ${{ parameters.environments | join(", ") }} |
-          | Namespace | `<zone>-<program>-${{ parameters.name }}-oneke` |
-          | URL | `https://${{ parameters.name }}.<domain>` |
+          | Stage | ${{ parameters.initialStage }} (it moves on with the template "Promote an application") |
+          | Namespace | `<zone>-<program>-${{ parameters.name if parameters.initialStage == 'pro' else (parameters.name + '-' + parameters.initialStage) }}-oneke` |
+          | URL | `https://${{ parameters.name if parameters.initialStage == 'pro' else (parameters.name + '-' + parameters.initialStage) }}.<domain>` |
           | Images | `ghcr.io/${{ parameters.owner }}/${{ parameters.name }}-api` and `-web`, tag of that commit (its CI must have finished) |
-          | Platform blocks | `sso`: client `${{ parameters.name }}`, roles `${{ parameters.name }}-viewer` and `${{ parameters.name }}-admin`, their test users{% if parameters.s3Buckets | length %}. `s3`: buckets ${{ parameters.s3Buckets | join(", ") }} (each one as `${{ parameters.name }}-<bucket>`){% endif %}{% if parameters.dmsSites | length %}. `dms`: Alfresco sites ${{ parameters.dmsSites | join(", ") }} (each one as `${{ parameters.name }}-<site>`){% endif %}{% if parameters.datahub %}. `datahub`: data product `${{ parameters.name }}` with the tables of its database{% endif %}{% if parameters.gateway %}. `gateway`: its API at `/gateway/${{ parameters.name }}/` in Gravitee{% endif %}{% if parameters.processes %}. `processes`: its BPMN of `platform/processes/` in Camunda{% endif %}{% if parameters.dashboards %}. `dashboards`: its Superset export of `platform/dashboards/`{% endif %}{% if parameters.flows %}. `flows`: its Activepieces flows of `platform/flows/`{% endif %} |
+          | Platform blocks | `sso`: client `${{ parameters.name if parameters.initialStage == 'pro' else (parameters.name + '-' + parameters.initialStage) }}`, roles `${{ parameters.name }}-viewer` and `${{ parameters.name }}-admin`, their test users{% if parameters.s3Buckets | length %}. `s3`: buckets ${{ parameters.s3Buckets | join(", ") }} (each one as `${{ parameters.name }}-<bucket>`){% endif %}{% if parameters.dmsSites | length %}. `dms`: Alfresco sites ${{ parameters.dmsSites | join(", ") }} (each one as `${{ parameters.name }}-<site>`){% endif %}{% if parameters.datahub %}. `datahub`: data product `${{ parameters.name }}` with the tables of its database{% endif %}{% if parameters.gateway %}. `gateway`: its API at `/gateway/${{ parameters.name }}/` in Gravitee{% endif %}{% if parameters.processes %}. `processes`: its BPMN of `platform/processes/` in Camunda{% endif %}{% if parameters.dashboards %}. `dashboards`: its Superset export of `platform/dashboards/`{% endif %}{% if parameters.flows %}. `flows`: its Activepieces flows of `platform/flows/`{% endif %} |
           | Python Framework | ${{ parameters.frameworkVersion }} |
 
           Files: `bootstrap/app-of-apps/apps/${{ parameters.name }}.yaml` (what it is and what it uses) and
@@ -2566,12 +2578,12 @@ spec:
 
           Its deployment is proposed in a **pull request of refresquito-services** (the link above). Once the CI of the
           application has finished, merging that pull request deploys it: Argo CD creates
-          `<zone>-<program>-${{ parameters.name }}-oneke` in ${{ parameters.environments | join(", ") }}, and within a few minutes
-          the application answers on `https://${{ parameters.name }}.<domain>` with its Keycloak client, its roles and the
-          test users `${{ parameters.name }}-admin` and `${{ parameters.name }}-viewer`.
+          `<zone>-<program>-${{ parameters.name if parameters.initialStage == 'pro' else (parameters.name + '-' + parameters.initialStage) }}-oneke` in ${{ parameters.environments | join(", ") }} (stage **${{ parameters.initialStage }}**), and
+          within a few minutes the application answers on `https://${{ parameters.name if parameters.initialStage == 'pro' else (parameters.name + '-' + parameters.initialStage) }}.<domain>` with its Keycloak client
+          `${{ parameters.name if parameters.initialStage == 'pro' else (parameters.name + '-' + parameters.initialStage) }}`, its roles and the test users `${{ parameters.name if parameters.initialStage == 'pro' else (parameters.name + '-' + parameters.initialStage) }}-admin` and `${{ parameters.name if parameters.initialStage == 'pro' else (parameters.name + '-' + parameters.initialStage) }}-viewer`.
 
-          Nothing else is needed: no command to run and no pass of the bootstrap. To roll out a later commit, change
-          `image.tag` in `bootstrap/app-of-apps/apps/${{ parameters.name }}.yaml`.
+          Nothing else is needed: no command to run and no pass of the bootstrap. To roll out a later commit, or to move it on
+          to pre and pro, use the template **Promote an application (Python Framework)**.
 ---
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template

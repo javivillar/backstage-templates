@@ -40,5 +40,5 @@ comentarios). Al hacer merge, Argo CD despliega esa versión en esa etapa en uno
 - Si la etapa de origen no tiene versión, no se abre ningún pull request y la plantilla lo dice.
 - El CI del pull request renderiza el stack completo: si algo no cuadra, falla antes del merge.
 
-El recorrido habitual: un commit → **dev**; lo pruebas en `https://<nombre>-dev.<dominio>` con los usuarios
+Las aplicaciones nacen en **dev** (plantilla *New application*, campo *Initial stage*). El recorrido habitual: un commit → **dev**; lo pruebas en `https://<nombre>-dev.<dominio>` con los usuarios
 `<nombre>-dev-admin` y `<nombre>-dev-viewer`; dev → **pre**; pre → **pro**.
