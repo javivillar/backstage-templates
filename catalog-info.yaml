@@ -2480,6 +2480,10 @@ spec:
       action: catalog:register
       input:
         repoContentsUrl: ${{ steps['publish'].output.repoContentsUrl }}
+        # The location is added first; then the action reads the file back from GitHub only to name the entity of
+        # the link "Open in the catalog". A dropped connection there (ECONNRESET) stopped the whole template before
+        # the deployment pull request. Optional: the template goes on, and the catalog reads the location by itself.
+        optional: true
         catalogInfoPath: '/catalog-info.yaml'
     # The deployment is GitOps: two files in refresquito-services (the file of the application and
     # the definition of its API), proposed as a pull request. Merging it is what deploys.
@@ -2554,7 +2558,7 @@ spec:
         url: ${{ steps['deploy'].output.remoteUrl }}
       - title: Open in the catalog
         icon: catalog
-        entityRef: ${{ steps['register'].output.entityRef }}
+        entityRef: ${{ steps['register'].output.entityRef or ('component:default/' + parameters.name) }}
     text:
       - title: Next - merge the deployment pull request
         content: |
