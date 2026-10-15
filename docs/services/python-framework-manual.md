@@ -256,6 +256,27 @@ Todo se hace con una pull request a `bootstrap/app-of-apps/apps/<nombre>.yaml` d
 **Nada se borra solo.** Quitar un bloque, un bucket, un sitio o una persona de una lista deja lo creado como estaba;
 borrarlo es una decisión a mano en el propio servicio.
 
+### Retirar una aplicación
+
+El catálogo recibe la aplicación por dos vías, y hay que cerrar las dos: el **componente** `<nombre>` viene de su
+repositorio (Backstage descubre cada 30 minutos los `catalog-info.yaml` de los repositorios del owner), y el **servicio**
+`<nombre>-oneke`, su API y sus recursos vienen del fichero de despliegue. En este orden:
+
+1. **El despliegue.** Una pull request a `refresquito-services` que borre `bootstrap/app-of-apps/apps/<nombre>.yaml`,
+   `catalog/apis/<nombre>.json` y su línea en `catalog/apis/README.md`. Al hacer merge, Argo CD elimina la aplicación y
+   sus objetos, y del catálogo desaparecen `<nombre>-oneke`, su API y sus recursos.
+2. **El namespace.** Argo CD no lo borra, y con él se queda el disco de la base de datos: `kubectl delete ns
+   <zona>-<programa>-<nombre>-oneke` borra los dos. **Los datos se pierden**: haz copia antes si los necesitas.
+3. **El repositorio.** Bórralo en GitHub (o archívalo y quítale `catalog-info.yaml`). Mientras exista con ese fichero,
+   el descubrimiento vuelve a meter el componente en el catálogo.
+4. **El componente.** En su ficha, menú ⋮, *Unregister entity*, *Unregister location*. Después del paso 3; antes,
+   vuelve a aparecer.
+5. **Lo de fuera, que nunca se borra solo.** En Keycloak, el cliente `<nombre>`, los roles `<nombre>-viewer` y
+   `<nombre>-admin` y los usuarios de prueba (plantillas *keycloak-delete-client* y *keycloak-delete-user* de *Create*;
+   los roles, en la consola de Keycloak). Lo de los demás bloques también tiene su plantilla de borrado:
+   *seaweedfs-delete-bucket*, *alfresco-delete-site*, *camunda-delete-process*, *activepieces-delete-project* y, en
+   DataHub, *datahub-deprecate-asset*. Opcional: las imágenes `<nombre>-api` y `<nombre>-web` en GitHub Packages.
+
 ## 8. Etapas: dev, pre y pro
 
 Un cluster puede tener las tres etapas de la aplicación, cada una en su namespace y con su versión. La aplicación nace
