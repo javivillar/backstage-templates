@@ -1,0 +1,77 @@
+{
+  "name": "New ${{ values.entity }}",
+  "type": "SHARED",
+  "summary": "",
+  "description": "",
+  "tags": [],
+  "blogUrl": "",
+  "metadata": {},
+  "author": "",
+  "categories": [],
+  "pieces": [
+    "@activepieces/piece-webhook"
+  ],
+  "flows": [
+    {
+      "displayName": "New ${{ values.entity }}",
+      "trigger": {
+        "name": "trigger",
+        "valid": true,
+        "displayName": "Catch Webhook",
+        "nextAction": {
+          "name": "step_1",
+          "type": "PIECE",
+          "valid": true,
+          "settings": {
+            "input": {
+              "fields": {
+                "body": {
+                  "message": "Welcome, {{trigger['output']['body']['name']}} the {{trigger['output']['body']['category']}}!"
+                },
+                "status": 200
+              },
+              "respond": "stop",
+              "responseType": "json"
+            },
+            "pieceName": "@activepieces/piece-webhook",
+            "actionName": "return_response",
+            "sampleData": {},
+            "pieceVersion": "0.1.42",
+            "propertySettings": {
+              "fields": {
+                "type": "MANUAL"
+              },
+              "respond": {
+                "type": "MANUAL"
+              },
+              "responseType": {
+                "type": "MANUAL"
+              }
+            }
+          },
+          "displayName": "Return Response",
+          "lastUpdatedDate": "2026-10-15T04:04:08.409Z"
+        },
+        "lastUpdatedDate": "2026-10-15T04:04:08.409Z",
+        "type": "PIECE_TRIGGER",
+        "settings": {
+          "propertySettings": {
+            "authType": {
+              "type": "MANUAL"
+            }
+          },
+          "pieceName": "@activepieces/piece-webhook",
+          "pieceVersion": "0.1.42",
+          "triggerName": "catch_webhook",
+          "input": {
+            "authType": "none"
+          }
+        }
+      },
+      "valid": true,
+      "schemaVersion": "22",
+      "notes": []
+    }
+  ],
+  "status": "PUBLISHED"
+}

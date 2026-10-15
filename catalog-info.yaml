@@ -2282,11 +2282,14 @@ spec:
           ui:widget: checkboxes
         frameworkVersion:
           title: Version of the Python Framework
-          description: The maintained versions. Its support policy says that only the latest one is, while it is 0.x.
+          description: >-
+            The maintained lines (its support policy: the latest major version, and the previous one for
+            6 months). 2.0 adds the audit trail, apart from the logs of the application, with its metrics
+            for Prometheus. 0.1 is maintained until 2027-04-15.
           type: string
-          enum: ['0.1']
-          enumNames: ['0.1 (refresquito-fastapi 0.1.0, refresquito-angular 0.1.0)']
-          default: '0.1'
+          enum: ['2.0', '0.1']
+          enumNames: ['2.0 (refresquito-fastapi 2.0.0, refresquito-angular 2.0.0) - audit trail', '0.1 (refresquito-fastapi 0.1.0, refresquito-angular 0.1.0)']
+          default: '2.0'
     - title: Platform blocks
       description: >-
         What the application uses of the platform. Each block is created when the application is
@@ -2443,7 +2446,8 @@ spec:
       name: Generate the application from the skeleton
       action: fetch:template
       input:
-        url: ./skeletons/python-framework-app
+        # one skeleton per line of the framework (tools/make-python-app-skeleton.py writes them)
+        url: ./skeletons/python-framework-app-${{ parameters.frameworkVersion }}
         targetPath: ./app
         # binaries, the lock file, and files with a ${...} syntax of their own
         copyWithoutTemplating:

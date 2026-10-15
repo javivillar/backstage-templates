@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- An example process of the application: a ${{ values.entity }} is reviewed by a person.
+     Its id starts with the name of the application (${{ values.name }}-), as every process of platform/processes/ must. -->
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  id="${{ values.name }}-review-definitions" targetNamespace="https://github.com/${{ values.owner }}/${{ values.name }}">
+  <bpmn:process id="${{ values.name }}-review" name="Review a ${{ values.entity }}" isExecutable="true" camunda:historyTimeToLive="180">
+    <bpmn:startEvent id="requested" name="Review requested">
+      <bpmn:outgoing>toReview</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="toReview" sourceRef="requested" targetRef="review"/>
+    <bpmn:userTask id="review" name="Review">
+      <bpmn:incoming>toReview</bpmn:incoming>
+      <bpmn:outgoing>toDone</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="toDone" sourceRef="review" targetRef="done"/>
+    <bpmn:endEvent id="done" name="Reviewed">
+      <bpmn:incoming>toDone</bpmn:incoming>
+    </bpmn:endEvent>
+  </bpmn:process>
+</bpmn:definitions>

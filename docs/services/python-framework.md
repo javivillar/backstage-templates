@@ -29,7 +29,7 @@ indiques. La entidad nace con nombre, categoría, estado y fecha de inicio: cám
 | Description | `Orders of the shop` | Una frase |
 | Entity, singular / plural | `order` / `orders` | La tabla y la clase (`Order`), y la ruta del API (`/api/orders`) |
 | Environments | `nato-sirtap` | Los clusters donde se despliega, como `<zona>-<programa>` |
-| Version of the Python Framework | `0.1` | Con qué versión del framework nace. Solo se ofrecen las mantenidas |
+| Version of the Python Framework | `2.0` | Con qué versión del framework nace. Solo se ofrecen las mantenidas: la **2.0** (añade la traza de auditoría) y la **0.1** (mantenida hasta el 15-04-2027) |
 | Platform blocks | *Single sign-on* | Lo que usa de la plataforma. Hoy, el inicio de sesión con Keycloak (lo llevan todas), el almacenamiento de objetos, los documentos, el catálogo de datos, el gateway de APIs, los procesos de Camunda, los dashboards de Superset y los flujos de Activepieces (opcionales) |
 | Object storage - buckets | `documents` | Opcional. Un bucket `<name>-documents` en SeaweedFS, solo para la aplicación, con su clave de acceso ya en el entorno del API |
 | Documents (Alfresco) - sites | `records` | Opcional. Un sitio privado `<name>-records` en Alfresco, con un usuario propio de la aplicación y sus credenciales ya en el entorno del API |
@@ -185,6 +185,17 @@ grupos que indiques son editores del proyecto.
 Tu API recibe la URL de cada flujo que empieza con un webhook en `ACTIVEPIECES_FLOW_<FLUJO>_URL` (el nombre del fichero
 en mayúsculas, guiones como `_`): un POST lo arranca, y a `<url>/sync` espera su respuesta (la del paso *Return
 Response*). Llega tras la primera pasada del provisioner, que reinicia el API para dársela.
+
+### Logs y auditoría (versión 2.0)
+
+Con la 2.0 tu API escribe dos flujos, ambos JSON por stdout y distinguidos por `log_type`: `application` (sus logs y
+una línea por petición) y `audit` (quién hizo qué). Toda escritura (`POST`, `PUT`, `PATCH`, `DELETE`) y toda petición
+rechazada (401, 403) se audita sola, con el usuario, la ruta, el resultado y el `request_id`; lo que importe al
+negocio lo registras tú con `audit("<entidad>.<acción>", resource=...)`.
+
+En la plataforma cada flujo es un stream propio de Loki (`{namespace_name="<namespace>", log_type="audit"}`) y cada
+evento cuenta en `audit_events_total{action, outcome}` del `/metrics`, que Prometheus ya rasca. En Grafana tienes los
+dos en el dashboard *Python Framework - Audit*. Nunca metas secretos ni datos personales innecesarios en un evento.
 
 ## Qué se espera de ti
 

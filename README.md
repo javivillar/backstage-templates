@@ -37,16 +37,20 @@ append a new `---`-separated document to `catalog-info.yaml` rather than
 creating a new file; a new file will not be picked up without also adding a
 `Location` entry for it.
 
-## The application skeleton (`skeletons/python-framework-app/`)
+## The application skeletons (`skeletons/python-framework-app-<line>/`)
 
 The template `python-framework-app` ("New application (Python Framework)") is the one template
 here that creates a repository. Its skeleton is **generated**, not written by hand: it is the
 [petstore](https://github.com/javivillar/petstore), the reference application of the framework,
-with its names turned into template values.
+with its names turned into template values. There is one per maintained line of the Python Framework (`LINES` in
+the generator: today 2.0 and 0.1), the same application on that line's `refresquito-fastapi` and `refresquito-angular`
+(their packages in `vendor/`, downloaded from their releases with `gh`); the form offers the lines and the step
+`fetch` takes `skeletons/python-framework-app-<line>`. A new line is a new entry in `LINES`, and in the `enum` of the
+form; a line that stops being maintained leaves both.
 
 ```bash
 python3 tools/make-python-app-skeleton.py ~/petstore      # regenerate after the petstore changes; commit the result
-python3 tools/render-python-app.py /tmp/orders            # render it as Backstage would (needs jinja2)...
+python3 tools/render-python-app.py /tmp/orders frameworkVersion=2.0   # render it as Backstage would (needs jinja2)...
 python3 tools/render-python-app.py /tmp/orders --deploy /tmp/orders-deploy   # ...and what it proposes to refresquito-services
 #   ...and run the tests of the application in /tmp/orders, as its README says
 ```

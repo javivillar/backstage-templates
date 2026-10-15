@@ -5,7 +5,7 @@
 
 The skeleton is NOT written by hand: it is the petstore (github.com/javivillar/petstore), the
 reference application of the framework, with its names turned into template values. Run this
-again when the petstore changes, and commit the result (skeletons/python-framework-app/).
+again when the petstore changes, and commit the result (skeletons/python-framework-app-<line>/).
 
     petstore, Petstore            ${{ values.name }}, ${{ values.title }}
     pet, Pet, pets, Pets          ${{ values.entity }}, ${{ values.entityTitle }}, ${{ values.entities }}, ${{ values.entitiesTitle }}
@@ -15,6 +15,11 @@ again when the petstore changes, and commit the result (skeletons/python-framewo
 What is not a plain copy is in tools/python-app-overrides/ (README, CI, catalog entry...), copied
 over the result.
 
+One skeleton per maintained line of the Python Framework (LINES below), skeletons/python-framework-app-<line>/:
+the same application, built on that line's refresquito-fastapi and refresquito-angular (their packages in
+vendor/, downloaded from their GitHub releases with gh when the petstore does not carry them). The template
+offers each line in its form.
+
 It also writes skeletons/python-framework-deploy/: the two files the template proposes to
 refresquito-services in a pull request to deploy the application (tools/python-app-deploy/: the
 file of the application; and the definition of its API, which is the openapi.json of the skeleton). Check a change with tools/render-python-app.py, which renders the skeleton the
@@ -23,7 +28,10 @@ way Backstage does and leaves an application whose tests can be run.
 import json, pathlib, re, shutil, subprocess, sys
 
 HERE = pathlib.Path(__file__).resolve().parent
-OUT = HERE.parent / "skeletons" / "python-framework-app"
+SKELETONS = HERE.parent / "skeletons"
+OUT = SKELETONS / "python-framework-app"          # built here first, then one copy per line
+# the maintained lines of the Python Framework (its SUPPORT.md): line -> (refresquito-fastapi, refresquito-angular)
+LINES = {"0.1": ("0.1.0", "0.1.0"), "2.0": ("2.0.0", "2.0.0")}
 OVERRIDES = HERE / "python-app-overrides"
 src = pathlib.Path(sys.argv[1]).expanduser().resolve() if len(sys.argv) > 1 else sys.exit(__doc__)
 
@@ -151,7 +159,80 @@ api = DEPLOY / "catalog" / "apis" / f"{V('name')}.json"
 api.parent.mkdir(parents=True)
 shutil.copyfile(OUT / "backend" / "openapi.json", api)
 
+# ---- one skeleton per line: the packages of the framework, and what names their versions
+import base64, hashlib, tempfile  # noqa: E401,E402
+
+
+def package(repo: str, name: str) -> bytes:
+    """A package of the framework: from the petstore's vendor/ if it has that version, else its GitHub release."""
+    local = src / "vendor" / name
+    if local.exists():
+        return local.read_bytes()
+    tag = "v" + re.search(r"(\d+\.\d+\.\d+)", name).group(1)
+    with tempfile.TemporaryDirectory() as tmp:
+        subprocess.run(["gh", "release", "download", tag, "-R", f"javivillar/{repo}", "-p", name, "-D", tmp], check=True)
+        return (pathlib.Path(tmp) / name).read_bytes()
+
+
+base_fastapi, base_angular = (re.search(r"refresquito-fastapi\[db\]~=([\d.]+)", (OUT / "backend/pyproject.toml").read_text()).group(1),
+                              json.loads((OUT / "frontend/package.json").read_text())["dependencies"]["refresquito-angular"].split("-")[-1][:-4])
+AUDIT_SECTION = """## Logs and the audit trail
+
+The API writes two streams, both JSON on stdout, told apart by `log_type`: `application` (its logs and one line per
+request) and `audit` (who did what). Every write (`POST`, `PUT`, `PATCH`, `DELETE`) and every refused request (401,
+403) is audited by itself, with the user, the route, the outcome and the request ID. What matters to the business is
+audited by the code:
+
+```python
+from refresquito_fastapi import audit
+
+audit("${{ values.entity }}.archive", resource=f"${{ values.entity }}/{item.id}")
+```
+
+On the platform each stream is its own in Loki (`{namespace_name="<namespace>", log_type="audit"}`), and every event
+counts in `audit_events_total{action, outcome}` on `/metrics`, scraped by Prometheus. Grafana has both in the
+dashboard *Python Framework - Audit*. Never put secrets or personal data you do not need in an event.
+
+"""
+for old_dir in SKELETONS.glob("python-framework-app-*"):
+    shutil.rmtree(old_dir)
+for line, (fastapi, angular) in LINES.items():
+    dest = SKELETONS / f"python-framework-app-{line}"
+    shutil.copytree(OUT, dest)
+    for old in (dest / "vendor").iterdir():
+        old.unlink()
+    wheel, tgz = f"refresquito_fastapi-{fastapi}-py3-none-any.whl", f"refresquito-angular-{angular}.tgz"
+    (dest / "vendor" / wheel).write_bytes(package("refresquito-fastapi", wheel))
+    tgz_bytes = package("refresquito-angular", tgz)
+    (dest / "vendor" / tgz).write_bytes(tgz_bytes)
+    edits = {
+        "backend/pyproject.toml": [(f"refresquito-fastapi[db]~={base_fastapi}", f"refresquito-fastapi[db]~={fastapi}")],
+        "frontend/package.json": [(f"refresquito-angular-{base_angular}.tgz", tgz)],
+        "README.md": [(f"`v{base_fastapi}` tags", f"`v{fastapi}` tags")],
+        "CHANGELOG.md": [(f"refresquito-fastapi {base_fastapi} and refresquito-angular {base_angular}",
+                          f"refresquito-fastapi {fastapi} and refresquito-angular {angular}")],
+    }
+    if line != "0.1":
+        # from 2.0 on, the audit trail of refresquito-fastapi (the 0.1 README stays as it was)
+        edits["README.md"].append(("## `vendor/`", AUDIT_SECTION + "## `vendor/`"))
+    for rel, pairs in edits.items():
+        path = dest / rel
+        text = path.read_text()
+        for old, new in pairs:
+            assert old in text, (line, rel, old)
+            text = text.replace(old, new)
+        path.write_text(text)
+    lock_path = dest / "frontend/package-lock.json"
+    lock = json.loads(lock_path.read_text())
+    lock["packages"][""]["dependencies"]["refresquito-angular"] = f"file:../vendor/{tgz}"
+    entry = lock["packages"]["node_modules/refresquito-angular"]
+    entry.update(version=angular, resolved=f"file:../vendor/{tgz}",
+                 integrity="sha512-" + base64.b64encode(hashlib.sha512(tgz_bytes).digest()).decode())
+    lock_path.write_text(json.dumps(lock, indent=2) + "\n")
+    print(f"skeleton of the line {line}: refresquito-fastapi {fastapi}, refresquito-angular {angular}")
+
 left = [str(p.relative_to(OUT)) for p in OUT.rglob("*") if p.is_file() and not str(p.relative_to(OUT)).startswith(VERBATIM)
         and p.suffix not in BINARY and "pet" in p.read_text(errors="ignore").lower().replace("perpetual", "")]
 print(f"{len(list(OUT.rglob('*')))} entries in {OUT.relative_to(HERE.parent)}")
 print("files that still say 'pet':", left or "none")
+shutil.rmtree(OUT)   # only the skeletons of the lines stay
