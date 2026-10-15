@@ -11,6 +11,7 @@ nav:
       - Activepieces (automatización): services/activepieces.md
       - DataHub (gobierno del dato): services/datahub.md
   - Aplicaciones:
+      - 'Manual: crear una aplicación paso a paso': services/python-framework-manual.md
       - Aplicación nueva (Python Framework): services/python-framework.md
       - El Python Framework en el catálogo: services/python-framework-catalog.md
       - Promocionar una aplicación (dev, pre, pro): services/python-framework-promote.md
