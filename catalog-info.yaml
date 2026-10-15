@@ -2568,3 +2568,156 @@ spec:
 
           Nothing else is needed: no command to run and no pass of the bootstrap. To roll out a later commit, change
           `image.tag` in `bootstrap/app-of-apps/apps/${{ parameters.name }}.yaml`.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: python-framework-promote
+  title: Promote an application (Python Framework)
+  description: >-
+    Moves a version of an application of the Python Framework to a stage (dev, pre or pro): the tag of one stage,
+    or a commit of its repository, becomes the tag of the stage you choose. It opens a pull request to
+    refresquito-services that changes only that line of the file of the application; merging it deploys that
+    version in that stage (each stage is a namespace of its own in the same cluster).
+  tags:
+    - python-framework
+    - promotion
+    - gitops
+spec:
+  owner: group:default/backstage-admin
+  type: service
+  parameters:
+    - title: What to promote
+      required:
+        - name
+        - source
+        - target
+      properties:
+        name:
+          title: Application
+          description: Its name, as in bootstrap/app-of-apps/apps/<name>.yaml of refresquito-services (e.g. orders).
+          type: string
+          pattern: ^[a-z][a-z0-9]{2,30}$
+          ui:autofocus: true
+        source:
+          title: From
+          description: The stage whose version moves on, or a commit of the application (to start a new version, usually in dev).
+          type: string
+          enum: [dev, pre, commit]
+          enumNames: ["the version of dev", "the version of pre", "a commit of its repository"]
+          default: dev
+        target:
+          title: To
+          description: The stage that takes that version. dev and pre are namespaces <zone>-<program>-<name>-<stage>-oneke on https://<name>-<stage>.<domain>; pro is the application itself.
+          type: string
+          enum: [dev, pre, pro]
+          default: pro
+      dependencies:
+        source:
+          oneOf:
+            - properties:
+                source: { enum: [commit] }
+                commit:
+                  title: Commit
+                  description: The commit of the application whose images to deploy (its CI must have published them).
+                  type: string
+                  pattern: ^[0-9a-f]{7,40}$
+              required: [commit]
+            - properties:
+                source: { enum: [dev, pre] }
+  steps:
+    - id: fetch
+      name: Read the file of the application
+      action: fetch:plain:file
+      input:
+        url: https://github.com/javivillar/refresquito-services/blob/main/bootstrap/app-of-apps/apps/${{ parameters.name }}.yaml
+        targetPath: ./promote/bootstrap/app-of-apps/apps/${{ parameters.name }}.yaml
+
+    - id: parse
+      name: Find the tag of each stage
+      action: roadiehq:utils:fs:parse
+      input:
+        path: ./promote/bootstrap/app-of-apps/apps/${{ parameters.name }}.yaml
+        parser: yaml
+
+    # Only the line of the stage changes: the file keeps its comments and its order.
+    - id: first-stage
+      name: Move it to stages (it had only pro, in image.tag)
+      if: ${{ not steps['parse'].output.content.stages and parameters.target != "pro" }}
+      action: roadiehq:utils:fs:replace
+      input:
+        files:
+          - file: ./promote/bootstrap/app-of-apps/apps/${{ parameters.name }}.yaml
+            matchRegex: true
+            find: '(\nimage:\n  registry: [^\n]*\n)  tag: "([^"]*)"[^\n]*\n'
+            replaceWith: "$1# its stages (dev, pre, pro), each a deployment of its own; the template Promote moves a tag on\nstages:\n  pro: { tag: \"$2\" }\n"
+
+    - id: set-image
+      name: Set the tag of pro (it has only pro, in image.tag)
+      if: ${{ not steps['parse'].output.content.stages and parameters.target == "pro" }}
+      action: roadiehq:utils:fs:replace
+      input:
+        files:
+          - file: ./promote/bootstrap/app-of-apps/apps/${{ parameters.name }}.yaml
+            matchRegex: true
+            find: '(\nimage:\n  registry: [^\n]*\n  tag: )"[^"]*"'
+            replaceWith: "$1\"${{ parameters.commit if parameters.source == 'commit' else '' }}\""
+
+    - id: set
+      name: Set the tag of ${{ parameters.target }}
+      if: ${{ steps['parse'].output.content.stages and steps['parse'].output.content.stages[parameters.target] }}
+      action: roadiehq:utils:fs:replace
+      input:
+        files:
+          - file: ./promote/bootstrap/app-of-apps/apps/${{ parameters.name }}.yaml
+            matchRegex: true
+            find: '(\n  ${{ parameters.target }}: \{ tag: )"[^"]*"'
+            replaceWith: "$1\"${{ parameters.commit if parameters.source == 'commit' else steps['parse'].output.content.stages[parameters.source].tag }}\""
+
+    - id: add
+      name: Add the stage ${{ parameters.target }}
+      if: ${{ (steps['parse'].output.content.stages and not steps['parse'].output.content.stages[parameters.target]) or (not steps['parse'].output.content.stages and parameters.target != "pro") }}
+      action: roadiehq:utils:fs:replace
+      input:
+        files:
+          - file: ./promote/bootstrap/app-of-apps/apps/${{ parameters.name }}.yaml
+            matchRegex: true
+            find: '(\nstages:\n)'
+            replaceWith: "$1  ${{ parameters.target }}: { tag: \"${{ parameters.commit if parameters.source == 'commit' else (steps['parse'].output.content.stages[parameters.source].tag if steps['parse'].output.content.stages else '') }}\" }\n"
+
+    - id: promote
+      name: Open the pull request in refresquito-services
+      # nothing to promote when the stage it moves from has no version
+      if: ${{ parameters.source == 'commit' or (steps['parse'].output.content.stages and steps['parse'].output.content.stages[parameters.source]) }}
+      action: publish:github:pull-request
+      input:
+        repoUrl: github.com?owner=javivillar&repo=refresquito-services
+        branchName: promote-${{ parameters.name }}-${{ parameters.target }}
+        targetBranchName: main
+        sourcePath: ./promote
+        update: true
+        title: >-
+          Promote ${{ parameters.name }} to ${{ parameters.target }}
+          (${{ ("commit " + parameters.commit | truncate(12, true, "")) if parameters.source == "commit" else ("the version of " + parameters.source) }})
+        commitMessage: >-
+          ${{ parameters.name }}: ${{ parameters.target }} takes
+          ${{ ("commit " + parameters.commit) if parameters.source == "commit" else ("the version of " + parameters.source) }}
+        description: |
+          **${{ parameters.name }}**: the stage **${{ parameters.target }}** takes
+          ${{ ("the commit `" + parameters.commit + "`") if parameters.source == "commit" else ("the version of **" + parameters.source + "**, commit `" + (steps["parse"].output.content.stages[parameters.source].tag if steps["parse"].output.content.stages else "?") + "`") }}.
+
+          Created with the Backstage template "Promote an application (Python Framework)". It changes only
+          `stages.${{ parameters.target }}.tag` in `bootstrap/app-of-apps/apps/${{ parameters.name }}.yaml`
+          (see *Stages* in `charts/python-app-oneke/INSTALL.md`). Merging it deploys that version: Argo CD rolls out
+          `${{ parameters.name if parameters.target == "pro" else (parameters.name + "-" + parameters.target) }}-oneke`
+          on `https://${{ parameters.name if parameters.target == "pro" else (parameters.name + "-" + parameters.target) }}.<domain>`.
+          The CI of this pull request renders the stack: it fails when the stage it moves from has no version.
+
+  output:
+    links:
+      - title: Promotion pull request
+        url: ${{ steps['promote'].output.remoteUrl }}
+    text:
+      - title: ${{ 'Next - review and merge the pull request' if steps['promote'].output.remoteUrl else 'Nothing was promoted' }}
+        content: |
+          ${{ ('Merging the pull request deploys the version in **' + parameters.target + '**; Argo CD does it within a few minutes, with no pass of the bootstrap. The tags of the other stages do not change.') if steps['promote'].output.remoteUrl else ('**' + parameters.name + '** has no version in **' + parameters.source + '**: no pull request was opened. Put a commit there first (From: a commit of its repository).') }}
