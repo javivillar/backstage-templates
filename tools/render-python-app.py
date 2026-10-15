@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """render-python-app.py — render the skeleton the way Backstage's fetch:template does, to test it.
 
-    python3 tools/render-python-app.py OUT_DIR [name=orders title=Orders entity=order entities=orders owner=javivillar]
+    python3 tools/render-python-app.py OUT_DIR [frameworkVersion=2.0 name=orders title=Orders entity=order entities=orders owner=javivillar]
     python3 tools/render-python-app.py OUT_DIR --deploy DEPLOY_DIR [... tag=<commit> environments=nato-sirtap admins=javi buckets=documents sites=records siteGroups=finance
                                               datahub=true dataOwners=ana dataOwnerGroups=finance
                                               gateway=true gatewayTeam=gravitee-team-alpha
@@ -16,7 +16,7 @@ import json, pathlib, shutil, sys
 import jinja2
 
 HERE = pathlib.Path(__file__).resolve().parent
-SKELETON = HERE.parent / "skeletons" / "python-framework-app"
+SKELETONS = HERE.parent / "skeletons"
 # the files the template lists in copyWithoutTemplating
 VERBATIM = ("vendor/", "frontend/package-lock.json", "frontend/public/favicon.ico", ".github/workflows/",
             "backend/migrations/script.py.mako")
@@ -30,6 +30,11 @@ out = pathlib.Path(argv[0]).expanduser().resolve()
 values = {"name": "orders", "title": "Orders", "description": "Orders of the shop", "entity": "order", "entities": "orders",
           "owner": "javivillar"}
 values.update(dict(a.split("=", 1) for a in argv[1:]))
+# the line of the Python Framework: its own skeleton, as the template's step fetch picks it
+line = values.setdefault("frameworkVersion", "2.0")
+SKELETON = SKELETONS / f"python-framework-app-{line}"
+if not SKELETON.is_dir():
+    sys.exit(f"no skeleton for the line {line} of the Python Framework: {', '.join(sorted(p.name for p in SKELETONS.glob('python-framework-app-*')))}")
 values["entityTitle"] = values["entity"].capitalize()
 values["entitiesTitle"] = values["entities"].capitalize()
 env = jinja2.Environment(variable_start_string="${{", variable_end_string="}}", undefined=jinja2.StrictUndefined,
@@ -55,7 +60,7 @@ render(SKELETON, out, VERBATIM)
 print(f"rendered {values['name']} ({values['entityTitle']}/{values['entities']}) in {out}")
 if deploy:
     # what the template adds for the deployment pull request (its step "deploy")
-    values.update(tag=values.get("tag", "0000000"), fastapi=values.get("fastapi", "0.1.0"), angular=values.get("angular", "0.1.0"),
+    values.update(tag=values.get("tag", "0000000"), fastapi=values.get("fastapi", f"{line}.0"), angular=values.get("angular", f"{line}.0"),
                   environments=values.get("environments", "nato-sirtap").split(","),
                   admins=[a for a in values.get("admins", "").split(",") if a],
                   buckets=[b for b in values.get("buckets", "").split(",") if b],
@@ -70,5 +75,5 @@ if deploy:
                   dashboards=values.get("dashboards", "") in ("true", "1", "yes"),
                   flows=values.get("flows", "") in ("true", "1", "yes"),
                   flowGroups=[g for g in values.get("flowGroups", "").split(",") if g])
-    render(SKELETON.parent / "python-framework-deploy", deploy)
+    render(SKELETONS / "python-framework-deploy", deploy)
     print(f"rendered its deployment (the pull request to refresquito-services) in {deploy}")

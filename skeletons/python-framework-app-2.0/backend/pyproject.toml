@@ -1,0 +1,39 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "${{ values.name }}"
+version = "0.1.0"
+description = "${{ values.title }} API: the example service of the Refresquito frameworks"
+requires-python = ">=3.12"
+dependencies = [
+    # installed from ../vendor (pip --find-links) while its repository is private: see the README
+    "refresquito-fastapi[db]~=2.0.0",
+    "uvicorn[standard]>=0.32",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-cov>=5", "anyio>=4", "ruff>=0.7"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/${{ values.name }}"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=${{ values.name }} --cov-report=term-missing --cov-fail-under=80"
+
+[tool.coverage.run]
+concurrency = ["greenlet", "thread"]   # SQLAlchemy async runs the driver in greenlets
+
+[tool.ruff]
+line-length = 125
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+# E501: the names given when the application was created can make a line too long
+ignore = ["B008", "E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"migrations/versions/*" = ["E501"]
