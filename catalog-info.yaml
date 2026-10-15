@@ -2405,6 +2405,24 @@ spec:
             read with a read-only role. The superset-editor and superset-admin groups see them.
           type: boolean
           default: false
+        flows:
+          title: Flows (Activepieces) - import its flows
+          description: >-
+            Optional. The flows in platform/flows/ of its repository (one exported flow per file; it starts
+            with an example, new-<entity>, a webhook) are imported in an Activepieces project of its own with
+            each version, and published once complete. The API gets the webhook of each one
+            (ACTIVEPIECES_FLOW_<FLOW>_URL).
+          type: boolean
+          default: false
+        flowGroups:
+          title: Flows (Activepieces) - groups that edit them
+          description: Keycloak groups (name or /path) whose members are editors of its project. Only used with flows.
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            pattern: '^/?[A-Za-z0-9][A-Za-z0-9 ._/-]*$'
+          default: []
         admins:
           title: People who get the role <name>-admin
           description: User names of the realm (they must exist; nobody is created). Empty, only the test user has it.
@@ -2489,6 +2507,8 @@ spec:
           processes: ${{ parameters.processes }}
           processGroups: ${{ parameters.processGroups }}
           dashboards: ${{ parameters.dashboards }}
+          flows: ${{ parameters.flows }}
+          flowGroups: ${{ parameters.flowGroups }}
           # the commit just pushed: its CI builds the two images with that tag
           tag: ${{ steps['publish'].output.commitHash }}
           fastapi: ${{ parameters.frameworkVersion }}.0
@@ -2517,7 +2537,7 @@ spec:
           | Namespace | `<zone>-<program>-${{ parameters.name }}-oneke` |
           | URL | `https://${{ parameters.name }}.<domain>` |
           | Images | `ghcr.io/${{ parameters.owner }}/${{ parameters.name }}-api` and `-web`, tag of that commit (its CI must have finished) |
-          | Platform blocks | `sso`: client `${{ parameters.name }}`, roles `${{ parameters.name }}-viewer` and `${{ parameters.name }}-admin`, their test users{% if parameters.s3Buckets | length %}. `s3`: buckets ${{ parameters.s3Buckets | join(", ") }} (each one as `${{ parameters.name }}-<bucket>`){% endif %}{% if parameters.dmsSites | length %}. `dms`: Alfresco sites ${{ parameters.dmsSites | join(", ") }} (each one as `${{ parameters.name }}-<site>`){% endif %}{% if parameters.datahub %}. `datahub`: data product `${{ parameters.name }}` with the tables of its database{% endif %}{% if parameters.gateway %}. `gateway`: its API at `/gateway/${{ parameters.name }}/` in Gravitee{% endif %}{% if parameters.processes %}. `processes`: its BPMN of `platform/processes/` in Camunda{% endif %}{% if parameters.dashboards %}. `dashboards`: its Superset export of `platform/dashboards/`{% endif %} |
+          | Platform blocks | `sso`: client `${{ parameters.name }}`, roles `${{ parameters.name }}-viewer` and `${{ parameters.name }}-admin`, their test users{% if parameters.s3Buckets | length %}. `s3`: buckets ${{ parameters.s3Buckets | join(", ") }} (each one as `${{ parameters.name }}-<bucket>`){% endif %}{% if parameters.dmsSites | length %}. `dms`: Alfresco sites ${{ parameters.dmsSites | join(", ") }} (each one as `${{ parameters.name }}-<site>`){% endif %}{% if parameters.datahub %}. `datahub`: data product `${{ parameters.name }}` with the tables of its database{% endif %}{% if parameters.gateway %}. `gateway`: its API at `/gateway/${{ parameters.name }}/` in Gravitee{% endif %}{% if parameters.processes %}. `processes`: its BPMN of `platform/processes/` in Camunda{% endif %}{% if parameters.dashboards %}. `dashboards`: its Superset export of `platform/dashboards/`{% endif %}{% if parameters.flows %}. `flows`: its Activepieces flows of `platform/flows/`{% endif %} |
           | Python Framework | ${{ parameters.frameworkVersion }} |
 
           Files: `bootstrap/app-of-apps/apps/${{ parameters.name }}.yaml` (what it is and what it uses) and

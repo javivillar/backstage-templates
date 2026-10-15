@@ -35,6 +35,10 @@ deniega. `backstage-admin` puede todo.
 3. Construye y **publica** el flujo en Activepieces.
 4. Para entrar en Activepieces necesitas el grupo `activepieces-user` en Keycloak; el alta es por invitación.
 
+Los flujos de una **aplicación del Python Framework** van por otro camino: viven en su repositorio (`platform/flows/`) y
+la plataforma los importa en un proyecto propio de la aplicación (con su título), que no aparece en
+`/activepieces-manager`. Ver [Aplicación nueva (Python Framework)](python-framework.md), "Flujos (Activepieces)".
+
 ## Qué garantías tienes
 
 - **Otro usuario no toca tus proyectos ni tus flujos.** Un flujo de otro proyecto y uno inexistente dan el mismo `403`, sin revelar si existe.
