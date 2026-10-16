@@ -32,7 +32,7 @@ indiques. La entidad nace con nombre, categoría, estado y fecha de inicio: cám
 | Environments | `nato-sirtap` | Los clusters donde se despliega, como `<zona>-<programa>` |
 | Initial stage | `dev` | La etapa en la que nace: **dev** por defecto (`https://<nombre>-dev.<dominio>`, cliente `<nombre>-dev`). Pasa a pre y pro con la plantilla [Promote an application](python-framework-promote.md) |
 | Version of the Python Framework | `2.0` | Con qué versión del framework nace. Solo se ofrecen las mantenidas: la **2.0** (añade la traza de auditoría) y la **0.1** (mantenida hasta el 15-04-2027) |
-| Platform blocks | *Single sign-on* | Lo que usa de la plataforma. Hoy, el inicio de sesión con Keycloak (lo llevan todas), el almacenamiento de objetos, los documentos, el catálogo de datos, el gateway de APIs, los procesos de Camunda, los dashboards de Superset y los flujos de Activepieces (opcionales) |
+| Platform blocks | *Single sign-on* | Lo que usa de la plataforma. Hoy, el inicio de sesión con Keycloak (lo llevan todas), el almacenamiento de objetos, los documentos, el catálogo de datos, el gateway de APIs, los procesos de Camunda, los dashboards de Superset, los flujos de Activepieces (opcionales) y la monitorización (marcada por defecto) |
 | Object storage - buckets | `documents` | Opcional. Un bucket `<name>-documents` en SeaweedFS, solo para la aplicación, con su clave de acceso ya en el entorno del API |
 | Documents (Alfresco) - sites | `records` | Opcional. Un sitio privado `<name>-records` en Alfresco, con un usuario propio de la aplicación y sus credenciales ya en el entorno del API |
 | Documents (Alfresco) - groups | `finance` | Grupos de Keycloak cuyos miembros entran en los sitios de la aplicación |
@@ -45,6 +45,7 @@ indiques. La entidad nace con nombre, categoría, estado y fecha de inicio: cám
 | Dashboards (Superset) - import its dashboards | sí / no | Opcional. El export de Superset de `platform/dashboards/` se importa en Superset con cada versión |
 | Flows (Activepieces) - import its flows | sí / no | Opcional. Los flujos de `platform/flows/` se importan en un proyecto propio de Activepieces y se publican |
 | Flows (Activepieces) - groups that edit them | `finance` | Grupos cuyos miembros editan los flujos en su proyecto de Activepieces |
+| Monitoring (Prometheus, Grafana) - its metrics and dashboards | **sí** / no | Marcada por defecto. Prometheus recoge las métricas de su API y Grafana recibe, en la carpeta `apps`, los dashboards *Logs* y *Performance* de cada etapa |
 | People who get the role `<name>-admin` | `javi` | Usuarios del realm que serán administradores de la aplicación (deben existir) |
 | GitHub owner | `javivillar` | Dueño del repositorio |
 
@@ -188,6 +189,24 @@ grupos que indiques son editores del proyecto.
 Tu API recibe la URL de cada flujo que empieza con un webhook en `ACTIVEPIECES_FLOW_<FLUJO>_URL` (el nombre del fichero
 en mayúsculas, guiones como `_`): un POST lo arranca, y a `<url>/sync` espera su respuesta (la del paso *Return
 Response*). Llega tras la primera pasada del provisioner, que reinicia el API para dársela.
+
+### Monitorización (Prometheus y Grafana)
+
+Marcada por defecto. Prometheus recoge las métricas de peticiones de tu API (`/metrics`: `http_requests_total` y
+`http_request_duration_seconds` por método, ruta y estado), y en Grafana, carpeta **apps**, tienes dos dashboards por
+cada etapa desplegada, hechos por la plataforma, sin escribir nada:
+
+- **`<título> - Logs`** (Loki): errores, avisos y respuestas 5xx del intervalo, líneas por nivel, peticiones fallidas
+  (4xx/5xx) por ruta, los errores más frecuentes y las líneas, filtrables por contenedor, nivel y texto (un
+  `request_id`, un usuario...).
+- **`<título> - Performance`** (Prometheus): peticiones por segundo, % de 5xx, latencia p50/p95/p99 y p95 por ruta,
+  errores por ruta, las rutas más lentas y las más usadas, y la CPU y memoria de cada pod frente a su límite.
+
+En dev y pre se llaman `<título> (dev) - Logs`... Si quieres uno propio, guarda su JSON de Grafana (el *JSON model* del
+dashboard) en `platform/monitoring/<nombre>.json`: usa `$namespace` en las consultas (es el namespace de esa etapa) y
+las variables `prometheus` y `loki` como fuentes de datos. Un `logs.json` o `performance.json` sustituye al estándar.
+Se vuelve a importar cuando cambia el fichero; lo que edites en Grafana se mantiene hasta entonces. Sin el bloque no se
+recoge nada de tu aplicación ni recibe dashboards.
 
 ### Logs y auditoría (versión 2.0)
 

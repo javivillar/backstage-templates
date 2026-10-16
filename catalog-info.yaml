@@ -2436,6 +2436,15 @@ spec:
             type: string
             pattern: '^/?[A-Za-z0-9][A-Za-z0-9 ._/-]*$'
           default: []
+        monitoring:
+          title: Monitoring (Prometheus, Grafana) - its metrics and dashboards
+          description: >-
+            Prometheus scrapes the metrics of its API, and Grafana gets in the folder apps the dashboards
+            <title> - Logs (levels, errors, failed requests, the lines) and <title> - Performance (traffic,
+            errors, latency per route, CPU and memory) of each stage, plus the ones in platform/monitoring/
+            of its repository. Off: nothing of it is scraped and it gets no dashboards.
+          type: boolean
+          default: true
         admins:
           title: People who get the role <name>-admin
           description: User names of the realm (they must exist; nobody is created). Empty, only the test user has it.
@@ -2527,6 +2536,7 @@ spec:
           dashboards: ${{ parameters.dashboards }}
           flows: ${{ parameters.flows }}
           flowGroups: ${{ parameters.flowGroups }}
+          monitoring: ${{ parameters.monitoring }}
           # the commit just pushed: its CI builds the two images with that tag
           tag: ${{ steps['publish'].output.commitHash }}
           stage: ${{ parameters.initialStage }}
@@ -2557,7 +2567,7 @@ spec:
           | Namespace | `<zone>-<program>-${{ parameters.name if parameters.initialStage == 'pro' else (parameters.name + '-' + parameters.initialStage) }}-oneke` |
           | URL | `https://${{ parameters.name if parameters.initialStage == 'pro' else (parameters.name + '-' + parameters.initialStage) }}.<domain>` |
           | Images | `ghcr.io/${{ parameters.owner }}/${{ parameters.name }}-api` and `-web`, tag of that commit (its CI must have finished) |
-          | Platform blocks | `sso`: client `${{ parameters.name if parameters.initialStage == 'pro' else (parameters.name + '-' + parameters.initialStage) }}`, roles `${{ parameters.name }}-viewer` and `${{ parameters.name }}-admin`, their test users{% if parameters.s3Buckets | length %}. `s3`: buckets ${{ parameters.s3Buckets | join(", ") }} (each one as `${{ parameters.name }}-<bucket>`){% endif %}{% if parameters.dmsSites | length %}. `dms`: Alfresco sites ${{ parameters.dmsSites | join(", ") }} (each one as `${{ parameters.name }}-<site>`){% endif %}{% if parameters.datahub %}. `datahub`: data product `${{ parameters.name }}` with the tables of its database{% endif %}{% if parameters.gateway %}. `gateway`: its API at `/gateway/${{ parameters.name }}/` in Gravitee{% endif %}{% if parameters.processes %}. `processes`: its BPMN of `platform/processes/` in Camunda{% endif %}{% if parameters.dashboards %}. `dashboards`: its Superset export of `platform/dashboards/`{% endif %}{% if parameters.flows %}. `flows`: its Activepieces flows of `platform/flows/`{% endif %} |
+          | Platform blocks | `sso`: client `${{ parameters.name if parameters.initialStage == 'pro' else (parameters.name + '-' + parameters.initialStage) }}`, roles `${{ parameters.name }}-viewer` and `${{ parameters.name }}-admin`, their test users{% if parameters.s3Buckets | length %}. `s3`: buckets ${{ parameters.s3Buckets | join(", ") }} (each one as `${{ parameters.name }}-<bucket>`){% endif %}{% if parameters.dmsSites | length %}. `dms`: Alfresco sites ${{ parameters.dmsSites | join(", ") }} (each one as `${{ parameters.name }}-<site>`){% endif %}{% if parameters.datahub %}. `datahub`: data product `${{ parameters.name }}` with the tables of its database{% endif %}{% if parameters.gateway %}. `gateway`: its API at `/gateway/${{ parameters.name }}/` in Gravitee{% endif %}{% if parameters.processes %}. `processes`: its BPMN of `platform/processes/` in Camunda{% endif %}{% if parameters.dashboards %}. `dashboards`: its Superset export of `platform/dashboards/`{% endif %}{% if parameters.flows %}. `flows`: its Activepieces flows of `platform/flows/`{% endif %}{% if parameters.monitoring %}. `monitoring`: its metrics in Prometheus, dashboards Logs and Performance in the Grafana folder `apps`{% endif %} |
           | Python Framework | ${{ parameters.frameworkVersion }} |
 
           Files: `bootstrap/app-of-apps/apps/${{ parameters.name }}.yaml` (what it is and what it uses) and
