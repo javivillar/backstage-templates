@@ -69,3 +69,7 @@ platform:
     enabled: true
     groups: ${{ values.flowGroups | dump }}
 {%- endif %}
+{%- if values.monitoring %}
+  monitoring:
+    enabled: true
+{%- endif %}
