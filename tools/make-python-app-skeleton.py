@@ -35,7 +35,7 @@ HERE = pathlib.Path(__file__).resolve().parent
 SKELETONS = HERE.parent / "skeletons"
 OUT = SKELETONS / "python-framework-app"          # built here first, then one copy per line
 # the maintained lines of the Python Framework (its SUPPORT.md): line -> (refresquito-fastapi, refresquito-angular)
-LINES = {"0.1": ("0.1.0", "0.1.0"), "2.0": ("2.0.0", "2.0.0"), "3.0": ("3.0.0", "3.0.0")}
+LINES = {"0.1": ("0.1.0", "0.1.0"), "2.0": ("2.0.0", "2.0.0"), "3.0": ("3.0.1", "3.0.0")}
 NEWEST = max(LINES, key=lambda line: tuple(int(n) for n in line.split(".")))
 OVERRIDES = HERE / "python-app-overrides"
 src = pathlib.Path(sys.argv[1]).expanduser().resolve() if len(sys.argv) > 1 else sys.exit(__doc__)
@@ -366,7 +366,7 @@ for line, (fastapi, angular) in LINES.items():
     edits = {
         "backend/pyproject.toml": [(f"]~={base_fastapi}", f"]~={fastapi}")],
         "frontend/package.json": [(f"refresquito-angular-{base_angular}.tgz", tgz)],
-        "README.md": [(f"`v{base_fastapi}` tags", f"`v{fastapi}` tags")],
+        "README.md": [],
         "CHANGELOG.md": [(f"refresquito-fastapi {base_fastapi} and refresquito-angular {base_angular}",
                           f"refresquito-fastapi {fastapi} and refresquito-angular {angular}")],
     }
