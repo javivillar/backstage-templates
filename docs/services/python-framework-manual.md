@@ -233,6 +233,16 @@ Los logs del API llegan a Loki y sus métricas a Prometheus sin hacer nada. Con 
 qué y qué peticiones se rechazaron) es un stream aparte, `{kubernetes_namespace_name="<namespace>", log_type="audit"}`,
 y se ve en el dashboard de Grafana *Python Framework - Audit*.
 
+### SBOM de las imágenes
+
+Al hacer merge en `main`, el CI genera el **SBOM** de cada imagen que publica (CycloneDX JSON, con
+[Syft](https://github.com/anchore/syft)): los paquetes del sistema operativo y de la aplicación, sea cual sea su
+lenguaje. Lo adjunta a la imagen en ghcr.io como artefacto OCI ligado a su digest, así que el SBOM viaja con el tag
+desplegado, y también lo guarda como artefacto del run (pestaña **CI/CD**, `<nombre>-api.cdx.json` y
+`<nombre>-web.cdx.json`). Para leerlo: `oras discover ghcr.io/<owner>/<nombre>-api:<commit>`. El framework
+(`refresquito-fastapi`, `refresquito-angular`) aparece en él con su versión y su licencia. Las vulnerabilidades de las
+imágenes las recoge Wazuh.
+
 ## 6. Comprobar que todo ha ido bien
 
 1. **Argo CD**: la aplicación `orders-oneke` está *Synced* y *Healthy* (en Backstage, pestaña de Kubernetes o de Argo CD
