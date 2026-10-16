@@ -123,6 +123,6 @@ dashboard *Python Framework - Audit*. Never put secrets or personal data you do 
 
 ## `vendor/`
 
-The two parts of the framework, as the packages their `v3.0.0` tags produce: neither can be
+The two parts of the framework, as the packages of their releases (the versions `backend/pyproject.toml` and `frontend/package.json` name): neither can be
 installed from a build without a token yet. Once they can, replace `--find-links ../vendor` and
 the `file:` dependency of `frontend/package.json` with the published packages, and delete it.
