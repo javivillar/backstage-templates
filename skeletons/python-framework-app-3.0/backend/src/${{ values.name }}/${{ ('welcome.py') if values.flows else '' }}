@@ -1,0 +1,18 @@
+"""Block flows: the flow new-${{ values.entity }} (platform/flows/new-${{ values.entity }}.json) welcomes a ${{ values.entity }}; the API waits for its answer."""
+
+from typing import Any
+
+from fastapi import APIRouter
+from refresquito_fastapi.db import SessionDep
+from refresquito_fastapi.platform.flows import FlowsDep
+
+from .api import Writer, find
+
+router = APIRouter(prefix="/api/${{ values.entities }}", tags=["welcome"])
+
+
+@router.post("/{${{ values.entity }}_id}/welcome")
+async def welcome(${{ values.entity }}_id: int, user: Writer, session: SessionDep, flows: FlowsDep) -> Any:
+    ${{ values.entity }} = await find(session, ${{ values.entity }}_id)
+    answer = await flows.trigger("new-${{ values.entity }}", {"name": ${{ values.entity }}.name, "category": ${{ values.entity }}.category}, wait=True)
+    return answer.body

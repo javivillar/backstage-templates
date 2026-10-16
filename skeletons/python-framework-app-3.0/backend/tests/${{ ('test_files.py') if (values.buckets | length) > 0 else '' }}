@@ -1,0 +1,23 @@
+"""The block s3 of the ${{ values.name }}: the files of a ${{ values.entity }}, in its bucket, downloaded with a presigned URL.
+Against the fake of refresquito_fastapi.testing."""
+
+import pytest
+from refresquito_fastapi.testing import assert_problem
+
+from .test_${{ values.entities }} import create
+
+pytestmark = pytest.mark.anyio
+
+
+async def test_files_of_a_${{ values.entity }}(client, admin, viewer, storage):
+    ${{ values.entity }} = await create(client, admin)
+    base = f"/api/${{ values.entities }}/{${{ values.entity }}['id']}/files"
+    added = await client.post(base, headers=admin, files={"file": ("../rex.png", b"\x89PNG", "image/png")})
+    assert added.json() == {"id": "rex.png", "name": "rex.png", "size": 4, "content_type": "image/png"}
+    assert await storage.bucket("${{ values.buckets[0] }}").exists(f"${{ values.entity }}/{${{ values.entity }}['id']}/rex.png")   # the path of the upload is dropped
+    assert [f["name"] for f in (await client.get(base, headers=viewer)).json()] == ["rex.png"]
+    download = (await client.get(f"{base}/rex.png", headers=viewer)).json()
+    assert download["url"].startswith(f"https://s3.test/${{ values.name }}-${{ values.buckets[0] }}/${{ values.entity }}/{${{ values.entity }}['id']}/rex.png")
+    assert_problem(await client.get(f"{base}/nothing.png", headers=viewer), 404)
+    assert (await client.delete(f"{base}/rex.png", headers=admin)).status_code == 204
+    assert (await client.get(base, headers=viewer)).json() == []

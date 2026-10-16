@@ -1,0 +1,24 @@
+import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core';
+import { RqDocumentList, RqFileUpload, RqHasRole } from 'refresquito-angular';
+import { ADMIN } from '../roles';
+
+/** Block dms: the documents of a ${{ values.entity }}, in its Alfresco site (the people of the site see them in Alfresco too). */
+@Component({
+  selector: 'app-${{ values.entity }}-documents',
+  imports: [RqDocumentList, RqFileUpload, RqHasRole],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <h2>Documents</h2>
+    <rq-document-list [path]="path()" [version]="version()" empty="No documents" />
+    <rq-file-upload *rqHasRole="admin" [path]="path()" label="Add a document" (uploaded)="version.set(version() + 1)" />
+  `,
+})
+export class ${{ values.entityTitle }}Documents {
+  readonly id = input.required<number>();
+  protected readonly admin = ADMIN;
+  protected readonly version = signal(0);
+
+  protected path(): string {
+    return `/api/${{ values.entities }}/${this.id()}/documents`;
+  }
+}

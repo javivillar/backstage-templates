@@ -74,21 +74,38 @@ the commit.
 
 ## On the platform
 
-The stack deploys it with a chart of its own, `charts/${{ values.name }}-oneke` of
-[`refresquito-services`](https://github.com/javivillar/refresquito-services). That chart, its
-Keycloak client and roles in the realm file and its place in the catalog are generated in that
-repository by one command, with the commit whose images to deploy:
+The application is one file in [`refresquito-services`](https://github.com/javivillar/refresquito-services):
+`bootstrap/app-of-apps/apps/${{ values.name }}.yaml`, proposed by the template in a pull request. It says where it
+runs, the commit of each stage (dev, pre, pro) and the platform blocks it uses; merging it deploys it. The template
+"Promote an application (Python Framework)" moves a commit on to the next stage.
+{%- if values.processes or values.flows or (values.buckets | length) or (values.sites | length) %}
 
-```bash
-python3 bootstrap/add-python-app.py ${{ values.name }} --title "${{ values.title }}" \
-  --entity ${{ values.entity }} --entities ${{ values.entities }} --tag <commit of main>
-```
+## Platform blocks
 
-Open a pull request with the result; once merged, a bootstrap pass with `${{ values.name }}-oneke` in
-`RQ_APPS` installs it. To roll out a later commit, set it as `image.tag` of the chart.
+The blocks marked when it was created come with example code, one file each (refresquito-fastapi 3.0 gives each
+declared block as a dependency; refresquito-angular 3.0 the components):
+
+| Block | API | Web |
+|---|---|---|
+{%- if values.processes %}
+| `processes` (Camunda) | `review.py`: `POST /api/${{ values.entities }}/{id}/review` starts `platform/processes/${{ values.name }}-review.bpmn`; `GET /api/tasks`, `POST /api/tasks/{id}/complete` | *Ask for a review*, *My tasks* |
+{%- endif %}
+{%- if values.flows %}
+| `flows` (Activepieces) | `welcome.py`: `POST /api/${{ values.entities }}/{id}/welcome`, the answer of `platform/flows/new-${{ values.entity }}.json` | *Welcome* |
+{%- endif %}
+{%- if values.buckets | length %}
+| `s3` (SeaweedFS) | `files.py`: `/api/${{ values.entities }}/{id}/files` in the bucket `${{ values.buckets[0] }}` (downloads with a presigned URL) | *Files* of a ${{ values.entity }} |
+{%- endif %}
+{%- if values.sites | length %}
+| `dms` (Alfresco) | `documents.py`: `/api/${{ values.entities }}/{id}/documents` in the site `${{ values.sites[0] }}` | *Documents* of a ${{ values.entity }} |
+{%- endif %}
+
+Locally no block is declared: those endpoints answer 500 `platform_block_not_declared`. The tests use the fakes of
+`refresquito_fastapi.testing`.
+{%- endif %}
 
 ## `vendor/`
 
-The two parts of the framework, as the packages their `v0.1.0` tags produce: neither can be
+The two parts of the framework, as the packages their `v3.0.0` tags produce: neither can be
 installed from a build without a token yet. Once they can, replace `--find-links ../vendor` and
 the `file:` dependency of `frontend/package.json` with the published packages, and delete it.
