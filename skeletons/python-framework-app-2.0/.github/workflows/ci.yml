@@ -73,14 +73,48 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
       - uses: docker/build-push-action@v6
+        id: api
         with:
           context: .
           file: backend/Dockerfile
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}-api:${{ github.sha }}
       - uses: docker/build-push-action@v6
+        id: web
         with:
           context: .
           file: frontend/Dockerfile
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}-web:${{ github.sha }}
+      # The SBOM of each image (CycloneDX JSON, by Syft: the packages of the image, whatever its language), attached to
+      # the image in ghcr.io (an OCI artifact that refers to its digest: `oras discover <image>` lists it) and kept as an
+      # artifact of the run.
+      - uses: anchore/sbom-action@v0
+        with:
+          image: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}-api@${{ steps.api.outputs.digest }}
+          format: cyclonedx-json
+          output-file: ${{ github.event.repository.name }}-api.cdx.json
+          artifact-name: ${{ github.event.repository.name }}-api.cdx.json
+      - uses: anchore/sbom-action@v0
+        with:
+          image: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}-web@${{ steps.web.outputs.digest }}
+          format: cyclonedx-json
+          output-file: ${{ github.event.repository.name }}-web.cdx.json
+          artifact-name: ${{ github.event.repository.name }}-web.cdx.json
+      - uses: oras-project/setup-oras@v1
+      - name: The SBOMs, attached to their images
+        env:
+          OWNER: ${{ github.repository_owner }}
+          NAME: ${{ github.event.repository.name }}
+          TOKEN: ${{ github.token }}
+          API: ${{ steps.api.outputs.digest }}
+          WEB: ${{ steps.web.outputs.digest }}
+        run: |
+          echo "$TOKEN" | oras login ghcr.io -u "${{ github.actor }}" --password-stdin
+          for image in api web; do
+            digest=$([ $image = api ] && echo "$API" || echo "$WEB")
+            oras attach --artifact-type application/vnd.cyclonedx+json \
+              --annotation "org.opencontainers.image.source=https://github.com/${{ github.repository }}" \
+              --annotation "org.opencontainers.image.revision=${{ github.sha }}" \
+              "ghcr.io/${OWNER}/${NAME}-${image}@${digest}" "${NAME}-${image}.cdx.json:application/vnd.cyclonedx+json"
+          done
