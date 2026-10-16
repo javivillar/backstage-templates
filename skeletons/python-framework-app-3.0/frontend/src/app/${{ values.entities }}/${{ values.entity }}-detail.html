@@ -1,0 +1,26 @@
+<section>
+  @if (${{ values.entity }}(); as p) {
+    <header class="toolbar">
+      <h1>{{ p.name }}</h1>
+      <ng-container *rqHasRole="admin">
+{%- if values.processes %}
+        <app-${{ values.entity }}-review [id]="p.id" />
+{%- endif %}
+{%- if values.flows %}
+        <app-${{ values.entity }}-welcome [id]="p.id" />
+{%- endif %}
+        <a class="button" [routerLink]="['/${{ values.entities }}', p.id, 'edit']">Edit</a>
+      </ng-container>
+    </header>
+    <p>{{ p.category }} · <span class="status status-{{ p.status }}">{{ p.status }}</span>
+      @if (p.start_date) { · born {{ p.start_date | date: 'mediumDate' }} }</p>
+{%- if (values.buckets | length) > 0 %}
+    <app-${{ values.entity }}-files [id]="p.id" />
+{%- endif %}
+{%- if (values.sites | length) > 0 %}
+    <app-${{ values.entity }}-documents [id]="p.id" />
+{%- endif %}
+  } @else {
+    <p class="empty">Loading…</p>
+  }
+</section>

@@ -1,0 +1,15 @@
+"""The block flows of the ${{ values.name }}: the welcome waits for the answer of the flow new-${{ values.entity }}.
+Against the fake of refresquito_fastapi.testing."""
+
+import pytest
+
+from .test_${{ values.entities }} import create
+
+pytestmark = pytest.mark.anyio
+
+
+async def test_welcome_waits_for_the_flow(client, admin, flows):
+    ${{ values.entity }} = await create(client, admin, name="Rex", category="tools")
+    answer = await client.post(f"/api/${{ values.entities }}/{${{ values.entity }}['id']}/welcome", headers=admin)
+    assert answer.json() == {"message": "Welcome!"}
+    assert flows.triggered == [("new-${{ values.entity }}", {"name": "Rex", "category": "tools"}, True)]
