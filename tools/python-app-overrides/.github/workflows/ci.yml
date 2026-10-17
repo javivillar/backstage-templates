@@ -100,7 +100,35 @@ jobs:
           image: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}-web@${{ steps.web.outputs.digest }}
           format: cyclonedx-json
           output-file: ${{ github.event.repository.name }}-web.cdx.json
-          artifact-name: ${{ github.event.repository.name }}-web.cdx.json
+          upload-artifact: false
+      # The web image serves the built application: its packages are inside the bundle, where Syft does not see them.
+      # The production packages of its lock file (frontend/package-lock.json) go into the same SBOM.
+      - uses: anchore/sbom-action@v0
+        with:
+          path: frontend
+          format: cyclonedx-json
+          output-file: ${{ github.event.repository.name }}-web-app.cdx.json
+          upload-artifact: false
+      - name: The SBOM of the web, with the packages of its application
+        env:
+          IMAGE_SBOM: ${{ github.event.repository.name }}-web.cdx.json
+          APP_SBOM: ${{ github.event.repository.name }}-web-app.cdx.json
+        run: |
+          python3 - "$IMAGE_SBOM" "$APP_SBOM" <<'EOF'
+          import json, sys
+          image_path, app_path = sys.argv[1], sys.argv[2]
+          image, app = json.load(open(image_path)), json.load(open(app_path))
+          have = {c.get("bom-ref") for c in image.get("components", [])}
+          image["components"] = image.get("components", []) + [c for c in app.get("components", []) if c.get("bom-ref") not in have]
+          refs = {c.get("bom-ref") for c in image["components"]}
+          image["dependencies"] = image.get("dependencies", []) + [d for d in app.get("dependencies", []) if d.get("ref") in refs]
+          json.dump(image, open(image_path, "w"))
+          print(f"{image_path}: {len(image['components'])} components")
+          EOF
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.repository.name }}-web.cdx.json
+          path: ${{ github.event.repository.name }}-web.cdx.json
       - uses: oras-project/setup-oras@v1
       - name: The SBOMs, attached to their images
         env:
