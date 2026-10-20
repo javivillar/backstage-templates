@@ -10,12 +10,18 @@ Created from the Backstage template "New application (Python Framework)": the ${
 - API (`/api/${{ values.entities }}`): list with filters and pages, read, create, update and delete, on PostgreSQL with migrations.
 - Web: the list, the form, sign in and out with Keycloak.
 - Roles: `${{ values.name }}-viewer` reads, `${{ values.name }}-admin` also writes.
-- Built with refresquito-fastapi 3.0.0 and refresquito-angular 3.0.0.
+- Built with refresquito-fastapi 3.1.0 and refresquito-angular 3.1.0.
 {%- if values.processes %}
 - Block `processes`: `POST /api/${{ values.entities }}/{id}/review` starts its process `review`; *My tasks* (`/api/tasks`).
 {%- endif %}
 {%- if values.flows %}
-- Block `flows`: `POST /api/${{ values.entities }}/{id}/welcome` waits for the flow `new-${{ values.entity }}`.
+- Block `flows`: `POST /api/${{ values.entities }}/{id}/welcome` waits for the flow `new-${{ values.entity }}`; creating a
+  ${{ values.entity }} publishes the event `${{ values.entity }}.created`, which starts it too; the runs of its flows
+  (`GET /api/flow-runs`, page *Flows*) and `POST /api/${{ values.entities }}/{id}/status` for its flows only.
+{%- endif %}
+{%- if values.dashboards %}
+- Block `dashboards`: its Superset dashboard embedded (page *Dashboard*, `GET /api/dashboards`) and the data of its
+  dataset `${{ values.entity }}` (`GET /api/stats/${{ values.entities }}-by-status`).
 {%- endif %}
 {%- if values.buckets | length %}
 - Block `s3`: the files of each ${{ values.entity }} in the bucket `${{ values.buckets[0] }}`.

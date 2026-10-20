@@ -1,0 +1,19 @@
+slice_name: ${{ values.entitiesTitle }} by status
+description: null
+certified_by: null
+certification_details: null
+viz_type: pie
+params:
+  viz_type: pie
+  datasource: 1__table
+  groupby:
+  - status
+  metric: count
+  row_limit: 100
+  show_legend: true
+  label_type: key_value
+query_context: null
+cache_timeout: null
+uuid: 195fcddc-51ad-4de8-a32d-f5fb10a389f0
+version: 1.0.0
+dataset_uuid: 796cde99-2f13-40e0-b09d-228e2cc59742

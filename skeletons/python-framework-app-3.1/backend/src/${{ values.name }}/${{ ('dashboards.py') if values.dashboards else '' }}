@@ -1,0 +1,27 @@
+"""Block dashboards: the Superset dashboard of the ${{ values.name }} (platform/dashboards/), embedded in its web, and the data of
+its dataset `${{ values.entity }}` as Superset computes it."""
+
+from typing import Any
+
+from fastapi import APIRouter
+from refresquito_fastapi.platform.dashboards import Dashboard, DashboardsDep, GuestToken
+
+from .api import Reader
+
+router = APIRouter(prefix="/api", tags=["dashboards"])
+
+
+@router.get("/dashboards")
+async def list_dashboards(user: Reader, dashboards: DashboardsDep) -> list[Dashboard]:
+    return dashboards.list()
+
+
+@router.get("/dashboards/{name}/guest-token")
+async def guest_token(name: str, user: Reader, dashboards: DashboardsDep) -> GuestToken:
+    """What <rq-dashboard> asks to embed the dashboard, for the user of the request."""
+    return await dashboards.guest_token(name, user)
+
+
+@router.get("/stats/${{ values.entities }}-by-status")
+async def ${{ values.entities }}_by_status(user: Reader, dashboards: DashboardsDep) -> list[dict[str, Any]]:
+    return await dashboards.data("${{ values.entity }}", columns=["status"], metrics=["count"], order_by=[("status", True)])

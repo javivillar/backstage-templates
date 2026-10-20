@@ -1,0 +1,45 @@
+"""The block flows of the ${{ values.name }}: the welcome waits for the answer of the flow new-${{ values.entity }}.
+Against the fake of refresquito_fastapi.testing."""
+
+import pytest
+
+from .test_${{ values.entities }} import create
+
+pytestmark = pytest.mark.anyio
+
+
+async def test_welcome_waits_for_the_flow(client, admin, flows):
+    ${{ values.entity }} = await create(client, admin, name="Rex", category="tools")
+    answer = await client.post(f"/api/${{ values.entities }}/{${{ values.entity }}['id']}/welcome", headers=admin)
+    assert answer.json() == {"message": "Welcome!"}
+    assert flows.triggered[-1] == ("new-${{ values.entity }}", {"name": "Rex", "category": "tools"}, True)
+
+
+async def test_a_new_${{ values.entity }}_starts_the_flow_and_its_run_is_listed(client, admin, viewer, flows):
+    ${{ values.entity }} = await create(client, admin, name="Kiwi", category="bird")
+    started = {"event": "${{ values.entity }}.created", "id": ${{ values.entity }}["id"], "name": "Kiwi", "category": "bird"}
+    assert flows.triggered == [("new-${{ values.entity }}", started, False)]
+    runs = (await client.get("/api/flow-runs", headers=viewer)).json()["items"]
+    assert [(r["flow"], r["event"], r["status"]) for r in runs] == [("new-${{ values.entity }}", "${{ values.entity }}.created", "started")]
+
+
+async def test_the_flow_tells_how_it_ended(client, admin, viewer, flows):
+    await create(client, admin, name="Kiwi", category="bird")
+    run = (await client.get("/api/flow-runs", headers=viewer)).json()["items"][0]["id"]
+    body = {"status": "succeeded", "detail": "Welcome, Kiwi the bird!"}
+    assert (await client.post(f"/api/flow-runs/{run}", json=body, headers=flows.headers())).status_code == 200
+    runs = (await client.get("/api/flow-runs", headers=viewer, params={"status": "succeeded"})).json()["items"]
+    assert [(r["status"], r["detail"]) for r in runs] == [("succeeded", "Welcome, Kiwi the bird!")]
+
+
+async def test_a_flow_sets_the_status_of_a_${{ values.entity }}(client, admin, flows):
+    ${{ values.entity }} = await create(client, admin, name="Rex", category="tools")
+    closed = await client.post(f"/api/${{ values.entities }}/{${{ values.entity }}['id']}/status", json={"status": "closed"}, headers=flows.headers())
+    assert closed.json()["status"] == "closed"
+
+
+async def test_only_its_flows_set_the_status(client, admin):
+    ${{ values.entity }} = await create(client, admin, name="Rex", category="tools")
+    wrong = await client.post(f"/api/${{ values.entities }}/{${{ values.entity }}['id']}/status", json={"status": "closed"}, headers={"X-Flow-Key": "nope"})
+    assert wrong.status_code == 401
+    assert (await client.post(f"/api/${{ values.entities }}/{${{ values.entity }}['id']}/status", json={"status": "closed"}, headers=admin)).status_code == 401

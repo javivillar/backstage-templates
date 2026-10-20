@@ -78,12 +78,12 @@ The application is one file in [`refresquito-services`](https://github.com/javiv
 `bootstrap/app-of-apps/apps/${{ values.name }}.yaml`, proposed by the template in a pull request. It says where it
 runs, the commit of each stage (dev, pre, pro) and the platform blocks it uses; merging it deploys it. The template
 "Promote an application (Python Framework)" moves a commit on to the next stage.
-{%- if values.processes or values.flows or (values.buckets | length) or (values.sites | length) %}
+{%- if values.processes or values.flows or values.dashboards or (values.buckets | length) or (values.sites | length) %}
 
 ## Platform blocks
 
-The blocks marked when it was created come with example code, one file each (refresquito-fastapi 3.0 gives each
-declared block as a dependency; refresquito-angular 3.0 the components):
+The blocks marked when it was created come with example code, one file each (refresquito-fastapi 3.1 gives each
+declared block as a dependency; refresquito-angular 3.1 the components):
 
 | Block | API | Web |
 |---|---|---|
@@ -91,7 +91,10 @@ declared block as a dependency; refresquito-angular 3.0 the components):
 | `processes` (Camunda) | `review.py`: `POST /api/${{ values.entities }}/{id}/review` starts `platform/processes/${{ values.name }}-review.bpmn`; `GET /api/tasks`, `POST /api/tasks/{id}/complete` | *Ask for a review*, *My tasks* |
 {%- endif %}
 {%- if values.flows %}
-| `flows` (Activepieces) | `welcome.py`: `POST /api/${{ values.entities }}/{id}/welcome`, the answer of `platform/flows/new-${{ values.entity }}.json` | *Welcome* |
+| `flows` (Activepieces) | `welcome.py`: `POST /api/${{ values.entities }}/{id}/welcome`, the answer of `platform/flows/new-${{ values.entity }}.json`; the event `${{ values.entity }}.created` (`api.py`); the runs of its flows, `GET /api/flow-runs` (table `flow_run`) | *Welcome*, *Flows* |
+{%- endif %}
+{%- if values.dashboards %}
+| `dashboards` (Superset) | `dashboards.py`: `GET /api/dashboards`, `GET /api/dashboards/{name}/guest-token` (the export of `platform/dashboards/`) and `GET /api/stats/${{ values.entities }}-by-status` (the rows of its dataset) | *Dashboard* (`<rq-dashboard>`) |
 {%- endif %}
 {%- if values.buckets | length %}
 | `s3` (SeaweedFS) | `files.py`: `/api/${{ values.entities }}/{id}/files` in the bucket `${{ values.buckets[0] }}` (downloads with a presigned URL) | *Files* of a ${{ values.entity }} |

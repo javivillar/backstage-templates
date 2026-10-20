@@ -1,0 +1,19 @@
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { RqFlowRuns } from 'refresquito-angular';
+
+/** Block flows: the latest runs of the flows of the ${{ values.name }} (a new ${{ values.entity }} starts new-${{ values.entity }}), as each flow told how it ended. */
+@Component({
+  selector: 'app-flows',
+  imports: [RqFlowRuns],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <section>
+      <h1>Flows</h1>
+      <p><button type="button" (click)="version.set(version() + 1)">Refresh</button></p>
+      <rq-flow-runs [version]="version()" empty="No flow has run yet: create a ${{ values.entity }}" />
+    </section>
+  `,
+})
+export class Flows {
+  protected readonly version = signal(0);
+}

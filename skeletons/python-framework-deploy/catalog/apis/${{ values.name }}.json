@@ -45,6 +45,41 @@
         "type": "object"
       },
 {%- endif %}
+{%- if (values.dashboards) %}
+      "Dashboard": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          },
+          "uuid": {
+            "title": "Uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "title",
+          "id",
+          "uuid",
+          "url"
+        ],
+        "title": "Dashboard",
+        "type": "object"
+      },
+{%- endif %}
 {%- if ((values.sites | length) > 0) %}
       "Document": {
         "properties": {
@@ -194,6 +229,180 @@
         "type": "object"
       },
 {%- endif %}
+{%- if (values.flows) %}
+      "FlowRunOut": {
+        "properties": {
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "event": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "flow": {
+            "title": "Flow",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "started_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started By"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "flow",
+          "event",
+          "status",
+          "detail",
+          "started_by",
+          "started_at",
+          "finished_at"
+        ],
+        "title": "FlowRunOut",
+        "type": "object"
+      },
+{%- endif %}
+{%- if (values.flows) %}
+      "FlowRunReport": {
+        "properties": {
+          "detail": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "status": {
+            "enum": [
+              "succeeded",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "FlowRunReport",
+        "type": "object"
+      },
+{%- endif %}
+{%- if (values.dashboards) %}
+      "GuestToken": {
+        "properties": {
+          "expires_in": {
+            "default": 300,
+            "title": "Expires In",
+            "type": "integer"
+          },
+          "superset_url": {
+            "title": "Superset Url",
+            "type": "string"
+          },
+          "token": {
+            "title": "Token",
+            "type": "string"
+          },
+          "uuid": {
+            "title": "Uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "uuid",
+          "superset_url"
+        ],
+        "title": "GuestToken",
+        "type": "object"
+      },
+{%- endif %}
+{%- if (values.flows) %}
+      "Page_FlowRunOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FlowRunOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "size": {
+            "title": "Size",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "size"
+        ],
+        "title": "Page[FlowRunOut]",
+        "type": "object"
+      },
+{%- endif %}
 {%- if (values.processes) %}
       "ReviewIn": {
         "properties": {
@@ -237,6 +446,20 @@
           "business_key"
         ],
         "title": "ReviewOut",
+        "type": "object"
+      },
+{%- endif %}
+{%- if (values.flows) %}
+      "StatusIn": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/${{ values.entityTitle }}Status"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "StatusIn",
         "type": "object"
       },
 {%- endif %}
@@ -720,6 +943,61 @@
       }
     },
 {%- endif %}
+{%- if (values.flows) %}
+    "/api/${{ values.entities }}/{${{ values.entity }}_id}/status": {
+      "post": {
+        "description": "The status of a ${{ values.entity }}, set by a flow of the ${{ values.name }}.",
+        "operationId": "set_status_api_${{ values.entities }}__${{ values.entity }}_id__status_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "${{ values.entity }}_id",
+            "required": true,
+            "schema": {
+              "title": "${{ values.entityTitle }} Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/${{ values.entityTitle }}Out"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Status",
+        "tags": [
+          "welcome"
+        ]
+      }
+    },
+{%- endif %}
 {%- if ((values.buckets | length) > 0) %}
     "/api/${{ values.entities }}/{${{ values.entity }}_id}/files": {
       "get": {
@@ -1140,6 +1418,284 @@
         "summary": "Download Document",
         "tags": [
           "documents"
+        ]
+      }
+    },
+{%- endif %}
+{%- if (values.dashboards) %}
+    "/api/dashboards": {
+      "get": {
+        "operationId": "list_dashboards_api_dashboards_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Dashboard"
+                  },
+                  "title": "Response List Dashboards Api Dashboards Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Dashboards",
+        "tags": [
+          "dashboards"
+        ]
+      }
+    },
+{%- endif %}
+{%- if (values.dashboards) %}
+    "/api/dashboards/{name}/guest-token": {
+      "get": {
+        "description": "What <rq-dashboard> asks to embed the dashboard, for the user of the request.",
+        "operationId": "guest_token_api_dashboards__name__guest_token_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestToken"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Guest Token",
+        "tags": [
+          "dashboards"
+        ]
+      }
+    },
+{%- endif %}
+{%- if (values.dashboards) %}
+    "/api/stats/${{ values.entities }}-by-status": {
+      "get": {
+        "operationId": "${{ values.entities }}_by_status_api_stats_${{ values.entities }}_by_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response ${{ values.entitiesTitle }} By Status Api Stats ${{ values.entitiesTitle }} By Status Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "${{ values.entitiesTitle }} By Status",
+        "tags": [
+          "dashboards"
+        ]
+      }
+    },
+{%- endif %}
+{%- if (values.flows) %}
+    "/api/flow-runs": {
+      "get": {
+        "operationId": "list_flow_runs_api_flow_runs_get",
+        "parameters": [
+          {
+            "description": "Only the runs of this flow",
+            "in": "query",
+            "name": "flow",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only the runs of this flow",
+              "title": "Flow"
+            }
+          },
+          {
+            "description": "Only the runs in this status",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "started",
+                    "succeeded",
+                    "failed"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only the runs in this status",
+              "title": "Status"
+            }
+          },
+          {
+            "description": "Page number, from 1",
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "description": "Page number, from 1",
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Items per page",
+            "in": "query",
+            "name": "size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "description": "Items per page",
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Size",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_FlowRunOut_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Flow Runs",
+        "tags": [
+          "flow runs"
+        ]
+      }
+    },
+{%- endif %}
+{%- if (values.flows) %}
+    "/api/flow-runs/{run_id}": {
+      "post": {
+        "description": "How a run ended, told by the flow itself (its last step).",
+        "operationId": "report_flow_run_api_flow_runs__run_id__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FlowRunReport"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlowRunOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Report Flow Run",
+        "tags": [
+          "flow runs"
         ]
       }
     },

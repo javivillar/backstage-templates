@@ -1,0 +1,24 @@
+import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core';
+import { RqDocumentList, RqFileUpload, RqHasRole } from 'refresquito-angular';
+import { ADMIN } from '../roles';
+
+/** Block s3: the files of a ${{ values.entity }}, in its bucket (downloaded straight from S3 with a presigned URL). */
+@Component({
+  selector: 'app-${{ values.entity }}-files',
+  imports: [RqDocumentList, RqFileUpload, RqHasRole],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <h2>Files</h2>
+    <rq-document-list [path]="path()" [version]="version()" empty="No files" />
+    <rq-file-upload *rqHasRole="admin" [path]="path()" label="Add a file" (uploaded)="version.set(version() + 1)" />
+  `,
+})
+export class ${{ values.entityTitle }}Files {
+  readonly id = input.required<number>();
+  protected readonly admin = ADMIN;
+  protected readonly version = signal(0);
+
+  protected path(): string {
+    return `/api/${{ values.entities }}/${this.id()}/files`;
+  }
+}

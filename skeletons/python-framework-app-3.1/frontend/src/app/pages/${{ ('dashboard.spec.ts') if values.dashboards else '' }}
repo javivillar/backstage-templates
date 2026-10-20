@@ -1,0 +1,28 @@
+import { HttpTestingController } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { RQ_SUPERSET_EMBED } from 'refresquito-angular';
+import { provideRefresquitoTesting } from 'refresquito-angular/testing';
+import { VIEWER } from '../roles';
+import { request } from '../testing';
+import { Dashboard } from './dashboard';
+
+describe('Dashboard', () => {
+  it('shows the ${{ values.entities }} by status and embeds the dashboard main', async () => {
+    const embedded: string[] = [];
+    TestBed.configureTestingModule({
+      providers: [
+        provideRefresquitoTesting({ user: { roles: [VIEWER] } }),
+        { provide: RQ_SUPERSET_EMBED, useValue: async (o: { id: string }) => embedded.push(o.id) },
+      ],
+    });
+    const fixture = TestBed.createComponent(Dashboard);
+    fixture.detectChanges();
+    (await request('GET', 'http://api.test/api/stats/${{ values.entities }}-by-status')).flush([{ status: 'active', count: 2 }]);
+    (await request('GET', 'http://api.test/api/dashboards/main/guest-token')).flush({ token: 't', uuid: 'u-main', superset_url: 'https://s' });
+    for (let i = 0; i < 20 && !embedded.length; i++) await new Promise((r) => setTimeout(r));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.stats li')?.textContent).toContain('active 2');
+    expect(embedded).toEqual(['u-main']);
+    TestBed.inject(HttpTestingController).verify();
+  });
+});
