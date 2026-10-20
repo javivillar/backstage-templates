@@ -1,0 +1,148 @@
+# Backend tests against a real PostgreSQL, frontend tests, the contract between the two
+# (backend/openapi.json must be what the API publishes; the web generates its types from it),
+# and the two images pushed to ghcr.io with the commit as tag once the tests of main pass.
+# Nothing here names the application: the same file serves every application of the framework.
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: app_test
+        ports: ["55432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U app" --health-interval 3s --health-retries 20
+    env:
+      RQ_TEST_DATABASE_URL: postgresql+asyncpg://app:app@localhost:55432/app_test
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install --find-links ../vendor -e '.[dev]'
+      - run: ruff check .
+      - run: pytest
+      - name: openapi.json is what the API publishes
+        run: |
+          module=$(basename "$(dirname src/*/openapi.py)")
+          python -m "$module.openapi" > /tmp/openapi.json
+          python - <<'PY'
+          import json, sys
+          if json.load(open("openapi.json")) != json.load(open("/tmp/openapi.json")):
+              sys.exit("::error::backend/openapi.json is out of date: run 'python -m <module>.openapi > openapi.json' in backend/ and commit it")
+          PY
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+  images:
+    if: github.event_name == 'push'
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - uses: docker/build-push-action@v6
+        id: api
+        with:
+          context: .
+          file: backend/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}-api:${{ github.sha }}
+      - uses: docker/build-push-action@v6
+        id: web
+        with:
+          context: .
+          file: frontend/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}-web:${{ github.sha }}
+      # The SBOM of each image (CycloneDX JSON, by Syft: the packages of the image, whatever its language), attached to
+      # the image in ghcr.io (an OCI artifact that refers to its digest: `oras discover <image>` lists it) and kept as an
+      # artifact of the run.
+      - uses: anchore/sbom-action@v0
+        with:
+          image: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}-api@${{ steps.api.outputs.digest }}
+          format: cyclonedx-json
+          output-file: ${{ github.event.repository.name }}-api.cdx.json
+          artifact-name: ${{ github.event.repository.name }}-api.cdx.json
+      - uses: anchore/sbom-action@v0
+        with:
+          image: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}-web@${{ steps.web.outputs.digest }}
+          format: cyclonedx-json
+          output-file: ${{ github.event.repository.name }}-web.cdx.json
+          upload-artifact: false
+      # The web image serves the built application: its packages are inside the bundle, where Syft does not see them.
+      # The production packages of its lock file (frontend/package-lock.json) go into the same SBOM.
+      - uses: anchore/sbom-action@v0
+        with:
+          path: frontend
+          format: cyclonedx-json
+          output-file: ${{ github.event.repository.name }}-web-app.cdx.json
+          upload-artifact: false
+      - name: The SBOM of the web, with the packages of its application
+        env:
+          IMAGE_SBOM: ${{ github.event.repository.name }}-web.cdx.json
+          APP_SBOM: ${{ github.event.repository.name }}-web-app.cdx.json
+        run: |
+          python3 - "$IMAGE_SBOM" "$APP_SBOM" <<'EOF'
+          import json, sys
+          image_path, app_path = sys.argv[1], sys.argv[2]
+          image, app = json.load(open(image_path)), json.load(open(app_path))
+          have = {c.get("bom-ref") for c in image.get("components", [])}
+          image["components"] = image.get("components", []) + [c for c in app.get("components", []) if c.get("bom-ref") not in have]
+          refs = {c.get("bom-ref") for c in image["components"]}
+          image["dependencies"] = image.get("dependencies", []) + [d for d in app.get("dependencies", []) if d.get("ref") in refs]
+          json.dump(image, open(image_path, "w"))
+          print(f"{image_path}: {len(image['components'])} components")
+          EOF
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.repository.name }}-web.cdx.json
+          path: ${{ github.event.repository.name }}-web.cdx.json
+      - uses: oras-project/setup-oras@v1
+      - name: The SBOMs, attached to their images
+        env:
+          OWNER: ${{ github.repository_owner }}
+          NAME: ${{ github.event.repository.name }}
+          TOKEN: ${{ github.token }}
+          API: ${{ steps.api.outputs.digest }}
+          WEB: ${{ steps.web.outputs.digest }}
+        run: |
+          echo "$TOKEN" | oras login ghcr.io -u "${{ github.actor }}" --password-stdin
+          for image in api web; do
+            digest=$([ $image = api ] && echo "$API" || echo "$WEB")
+            oras attach --artifact-type application/vnd.cyclonedx+json \
+              --annotation "org.opencontainers.image.source=https://github.com/${{ github.repository }}" \
+              --annotation "org.opencontainers.image.revision=${{ github.sha }}" \
+              "ghcr.io/${OWNER}/${NAME}-${image}@${digest}" "${NAME}-${image}.cdx.json:application/vnd.cyclonedx+json"
+          done

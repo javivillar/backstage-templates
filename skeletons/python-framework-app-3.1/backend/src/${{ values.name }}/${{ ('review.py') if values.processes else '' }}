@@ -1,0 +1,47 @@
+"""Block processes: a person reviews a ${{ values.entity }} (platform/processes/${{ values.name }}-review.bpmn), and everyone works the tasks of
+the processes of the ${{ values.name }} that are theirs. The process is named without the application: "review"."""
+
+from typing import Annotated, Any
+
+from fastapi import APIRouter, Body
+from pydantic import BaseModel
+from refresquito_fastapi import NotFoundError
+from refresquito_fastapi.db import SessionDep
+from refresquito_fastapi.platform.processes import ProcessesDep, Task
+
+from .api import Reader, Writer, find
+
+router = APIRouter(prefix="/api", tags=["review"])
+
+
+class ReviewIn(BaseModel):
+    reviewer: str | None = None   # who reviews it (default: who asks)
+
+
+class ReviewOut(BaseModel):
+    process: str
+    business_key: str | None
+
+
+@router.post("/${{ values.entities }}/{${{ values.entity }}_id}/review", status_code=202)
+async def ask_for_review(${{ values.entity }}_id: int, user: Writer, session: SessionDep, processes: ProcessesDep,
+                         body: Annotated[ReviewIn | None, Body()] = None) -> ReviewOut:
+    ${{ values.entity }} = await find(session, ${{ values.entity }}_id)
+    reviewer = (body.reviewer if body and body.reviewer else None) or user.username
+    instance = await processes.start("review", business_key=f"${{ values.entity }}-{${{ values.entity }}.id}",
+                                     variables={"${{ values.entity }}": ${{ values.entity }}.name, "requestedBy": user.username, "reviewer": reviewer})
+    return ReviewOut(process=instance.id, business_key=instance.business_key)
+
+
+@router.get("/tasks")
+async def my_tasks(user: Reader, processes: ProcessesDep) -> list[Task]:
+    """The open tasks of the user: assigned to them, or offered to them or to their groups."""
+    return await processes.tasks(candidate_user=user.username)
+
+
+@router.post("/tasks/{task_id}/complete", status_code=204)
+async def complete_task(task_id: str, user: Reader, processes: ProcessesDep,
+                        variables: Annotated[dict[str, Any] | None, Body()] = None) -> None:
+    if not any(t.id == task_id for t in await processes.tasks(candidate_user=user.username)):
+        raise NotFoundError(f"Task {task_id} is not one of yours")   # only the tasks of the user
+    await processes.complete(task_id, variables or {})

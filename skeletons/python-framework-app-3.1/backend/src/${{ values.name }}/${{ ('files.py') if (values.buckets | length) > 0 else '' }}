@@ -1,0 +1,58 @@
+"""Block s3: the files of a ${{ values.entity }} (photos...), in the bucket `files` of the ${{ values.name }}, under ${{ values.entity }}/<id>/. They are uploaded
+through the API and downloaded straight from S3 with a presigned URL."""
+
+import os
+
+from fastapi import APIRouter, UploadFile
+from pydantic import BaseModel
+from refresquito_fastapi import NotFoundError
+from refresquito_fastapi.db import SessionDep
+from refresquito_fastapi.platform.s3 import StorageDep
+
+from .api import Reader, Writer, find
+
+router = APIRouter(prefix="/api/${{ values.entities }}/{${{ values.entity }}_id}/files", tags=["files"])
+BUCKET = "${{ values.buckets[0] }}"
+
+
+class FileOut(BaseModel):
+    id: str            # its name: the path to download it
+    name: str
+    size: int | None = None
+    content_type: str | None = None
+
+
+class DownloadOut(BaseModel):
+    url: str           # presigned, for a few minutes
+
+
+def key(${{ values.entity }}_id: int, name: str) -> str:
+    return f"${{ values.entity }}/{${{ values.entity }}_id}/{name}"
+
+
+@router.get("")
+async def list_files(${{ values.entity }}_id: int, user: Reader, session: SessionDep, storage: StorageDep) -> list[FileOut]:
+    ${{ values.entity }} = await find(session, ${{ values.entity }}_id)
+    objects = await storage.bucket(BUCKET).list(key(${{ values.entity }}.id, ""))
+    return [FileOut(id=o.key.rsplit("/", 1)[-1], name=o.key.rsplit("/", 1)[-1], size=o.size) for o in objects]
+
+
+@router.post("", status_code=201)
+async def add_file(${{ values.entity }}_id: int, file: UploadFile, user: Writer, session: SessionDep, storage: StorageDep) -> FileOut:
+    ${{ values.entity }} = await find(session, ${{ values.entity }}_id)
+    name = os.path.basename(file.filename or "file")
+    info = await storage.bucket(BUCKET).put(key(${{ values.entity }}.id, name), await file.read(), content_type=file.content_type)
+    return FileOut(id=name, name=name, size=info.size, content_type=info.content_type)
+
+
+@router.get("/{name}")
+async def download_file(${{ values.entity }}_id: int, name: str, user: Reader, storage: StorageDep) -> DownloadOut:
+    bucket = storage.bucket(BUCKET)
+    if not await bucket.exists(key(${{ values.entity }}_id, name)):
+        raise NotFoundError(f"${{ values.entityTitle }} {${{ values.entity }}_id} has no file {name}")
+    return DownloadOut(url=bucket.download_url(key(${{ values.entity }}_id, name), filename=name))
+
+
+@router.delete("/{name}", status_code=204)
+async def delete_file(${{ values.entity }}_id: int, name: str, user: Writer, storage: StorageDep) -> None:
+    await storage.bucket(BUCKET).delete(key(${{ values.entity }}_id, name))

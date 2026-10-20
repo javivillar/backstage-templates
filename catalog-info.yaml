@@ -2294,13 +2294,14 @@ spec:
           title: Version of the Python Framework
           description: >-
             The maintained lines (its support policy: the latest major version, and the previous one for
-            6 months). 3.0 uses the platform blocks in its code (example code for each block marked
+            6 months). 3.1 adds the dashboards (Superset embedded in the web, the data of its dataset)
+            and the runs of its flows. 3.0 uses the platform blocks in its code (example code for each block marked
             below) and refuses tokens not issued for the application. 2.0 adds the audit trail, apart
             from the logs, with its metrics. 0.1 is maintained until 2027-04-15.
           type: string
-          enum: ['3.0', '2.0', '0.1']
-          enumNames: ['3.0 (refresquito-fastapi 3.0.0, refresquito-angular 3.0.0) - platform blocks in the code', '2.0 (refresquito-fastapi 2.0.0, refresquito-angular 2.0.0) - audit trail', '0.1 (refresquito-fastapi 0.1.0, refresquito-angular 0.1.0)']
-          default: '3.0'
+          enum: ['3.1', '3.0', '2.0', '0.1']
+          enumNames: ['3.1 (refresquito-fastapi 3.1.0, refresquito-angular 3.1.0) - dashboards and flow runs', '3.0 (refresquito-fastapi 3.0.1, refresquito-angular 3.0.0) - platform blocks in the code', '2.0 (refresquito-fastapi 2.0.0, refresquito-angular 2.0.0) - audit trail', '0.1 (refresquito-fastapi 0.1.0, refresquito-angular 0.1.0)']
+          default: '3.1'
     - title: Platform blocks
       description: >-
         What the application uses of the platform. Each block is created when the application is
@@ -2416,7 +2417,9 @@ spec:
           description: >-
             Optional. The Superset export in platform/dashboards/ of its repository (it starts with an
             example over its main table) is imported in Superset with each version, over its own database,
-            read with a read-only role. The superset-editor and superset-admin groups see them.
+            read with a read-only role. The superset-editor and superset-admin groups see them. From the
+            line 3.1 the application also comes with its page Dashboard (the dashboard embedded) and the data
+            of its dataset in its API (dashboards.py).
           type: boolean
           default: false
         flows:
@@ -2490,6 +2493,8 @@ spec:
           flows: ${{ parameters.flows }}
           buckets: ${{ parameters.s3Buckets }}
           sites: ${{ parameters.dmsSites }}
+          # 3.1: its dashboard embedded (page Dashboard, dashboards.py)
+          dashboards: ${{ parameters.dashboards }}
     - id: publish
       name: Create the repository
       action: publish:github
@@ -2546,7 +2551,7 @@ spec:
           # the commit just pushed: its CI builds the two images with that tag
           tag: ${{ steps['publish'].output.commitHash }}
           stage: ${{ parameters.initialStage }}
-          fastapi: ${{ parameters.frameworkVersion }}.0
+          fastapi: ${{ '3.0.1' if parameters.frameworkVersion == '3.0' else (parameters.frameworkVersion + '.0') }}
           angular: ${{ parameters.frameworkVersion }}.0
     - id: deploy
       name: Open the deployment pull request in refresquito-services

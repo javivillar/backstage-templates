@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """render-python-app.py — render the skeleton the way Backstage's fetch:template does, to test it.
 
-    python3 tools/render-python-app.py OUT_DIR [frameworkVersion=3.0 name=orders title=Orders entity=order entities=orders owner=javivillar]
-                                              [processes=true flows=true buckets=files sites=documents]   (3.0: the example code of each block)
+    python3 tools/render-python-app.py OUT_DIR [frameworkVersion=3.1 name=orders title=Orders entity=order entities=orders owner=javivillar]
+                                              [processes=true flows=true buckets=files sites=documents dashboards=true]   (3.0: the example code of each block; dashboards from 3.1)
     python3 tools/render-python-app.py OUT_DIR --deploy DEPLOY_DIR [... tag=<commit> environments=nato-sirtap admins=javi buckets=documents sites=records siteGroups=finance
                                               datahub=true dataOwners=ana dataOwnerGroups=finance
                                               gateway=true gatewayTeam=gravitee-team-alpha
@@ -32,7 +32,7 @@ values = {"name": "orders", "title": "Orders", "description": "Orders of the sho
           "owner": "javivillar"}
 values.update(dict(a.split("=", 1) for a in argv[1:]))
 # the line of the Python Framework: its own skeleton, as the template's step fetch picks it
-line = values.setdefault("frameworkVersion", "3.0")
+line = values.setdefault("frameworkVersion", "3.1")
 SKELETON = SKELETONS / f"python-framework-app-{line}"
 if not SKELETON.is_dir():
     sys.exit(f"no skeleton for the line {line} of the Python Framework: {', '.join(sorted(p.name for p in SKELETONS.glob('python-framework-app-*')))}")
@@ -64,7 +64,8 @@ def render(skeleton, out, verbatim=()):
 values.update(buckets=[b for b in values.get("buckets", "").split(",") if b] if isinstance(values.get("buckets", ""), str) else values["buckets"],
               sites=[s for s in values.get("sites", "").split(",") if s] if isinstance(values.get("sites", ""), str) else values["sites"],
               processes=values.get("processes", "") in ("true", "1", "yes", True),
-              flows=values.get("flows", "") in ("true", "1", "yes", True))
+              flows=values.get("flows", "") in ("true", "1", "yes", True),
+              dashboards=values.get("dashboards", "") in ("true", "1", "yes", True))
 render(SKELETON, out, VERBATIM)
 print(f"rendered {values['name']} ({values['entityTitle']}/{values['entities']}) in {out}")
 if deploy:
@@ -80,7 +81,8 @@ if deploy:
                   gateway=values.get("gateway", "") in ("true", "1", "yes"), gatewayTeam=values.get("gatewayTeam", ""),
 
                   processGroups=[g for g in values.get("processGroups", "").split(",") if g],
-                  dashboards=values.get("dashboards", "") in ("true", "1", "yes"),
+                  dashboards=values.get("dashboards", "") in ("true", "1", "yes", True),
+                  monitoring=values.get("monitoring", "true") in ("true", "1", "yes"),
 
                   flowGroups=[g for g in values.get("flowGroups", "").split(",") if g])
     render(SKELETONS / "python-framework-deploy", deploy)

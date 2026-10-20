@@ -31,7 +31,7 @@ indiques. La entidad nace con nombre, categoría, estado y fecha de inicio: cám
 | Entity, singular / plural | `order` / `orders` | La tabla y la clase (`Order`), y la ruta del API (`/api/orders`) |
 | Environments | `nato-sirtap` | Los clusters donde se despliega, como `<zona>-<programa>` |
 | Initial stage | `dev` | La etapa en la que nace: **dev** por defecto (`https://<nombre>-dev.<dominio>`, cliente `<nombre>-dev`). Pasa a pre y pro con la plantilla [Promote an application](python-framework-promote.md) |
-| Version of the Python Framework | `3.0` | Con qué versión del framework nace. Solo se ofrecen las mantenidas: la **3.0** (usa los bloques de la plataforma en su código y rechaza tokens de otras aplicaciones), la **2.0** (añade la traza de auditoría) y la **0.1** (mantenida hasta el 15-04-2027) |
+| Version of the Python Framework | `3.1` | Con qué versión del framework nace. Solo se ofrecen las mantenidas: la **3.1** (añade los dashboards de Superset embebidos y las ejecuciones de sus flujos), la **3.0** (usa los bloques de la plataforma en su código y rechaza tokens de otras aplicaciones), la **2.0** (añade la traza de auditoría) y la **0.1** (mantenida hasta el 15-04-2027) |
 | Platform blocks | *Single sign-on* | Lo que usa de la plataforma. Hoy, el inicio de sesión con Keycloak (lo llevan todas), el almacenamiento de objetos, los documentos, el catálogo de datos, el gateway de APIs, los procesos de Camunda, los dashboards de Superset, los flujos de Activepieces (opcionales) y la monitorización (marcada por defecto) |
 | Object storage - buckets | `documents` | Opcional. Un bucket `<name>-documents` en SeaweedFS, solo para la aplicación, con su clave de acceso ya en el entorno del API |
 | Documents (Alfresco) - sites | `records` | Opcional. Un sitio privado `<name>-records` en Alfresco, con un usuario propio de la aplicación y sus credenciales ya en el entorno del API |
@@ -208,21 +208,23 @@ las variables `prometheus` y `loki` como fuentes de datos. Un `logs.json` o `per
 Se vuelve a importar cuando cambia el fichero; lo que edites en Grafana se mantiene hasta entonces. Sin el bloque no se
 recoge nada de tu aplicación ni recibe dashboards.
 
-### Código de ejemplo de cada bloque (versión 3.0)
+### Código de ejemplo de cada bloque (versiones 3.0 y 3.1)
 
-Con la 3.0 la aplicación nace **usando** los bloques que marques, no solo con ellos creados. Cada bloque trae su
+Desde la 3.0 la aplicación nace **usando** los bloques que marques, no solo con ellos creados. Cada bloque trae su
 código, en un fichero propio en el API y otro en la web, y nada de los que no marques:
 
 | Bloque | API | Web |
 |---|---|---|
 | Procesos (Camunda) | `review.py`: `POST /api/<entidades>/{id}/review` arranca el proceso `review`; `GET /api/tasks` y `POST /api/tasks/{id}/complete` | botón *Ask for a review* y página *My tasks* |
-| Flujos (Activepieces) | `welcome.py`: `POST /api/<entidades>/{id}/welcome` espera la respuesta del flujo `new-<entidad>` | botón *Welcome* |
+| Flujos (Activepieces) | `welcome.py`: `POST /api/<entidades>/{id}/welcome` espera la respuesta del flujo `new-<entidad>`. Desde la 3.1, además, crear un registro publica el evento `<entidad>.created` y las ejecuciones de sus flujos quedan en la tabla `flow_run` (`GET /api/flow-runs`) | botón *Welcome*; desde la 3.1, página *Flows* |
+| Dashboards (Superset), desde la 3.1 | `dashboards.py`: `GET /api/dashboards`, `GET /api/dashboards/{name}/guest-token` y `GET /api/stats/<entidades>-by-status` (los datos de su dataset, calculados por Superset) | página *Dashboard*, con su dashboard embebido (`<rq-dashboard>`) |
 | Almacenamiento (S3) | `files.py`: ficheros de cada registro en el primer bucket que declares, descarga con URL prefirmada | sección *Files* |
 | Documentos (Alfresco) | `documents.py`: documentos de cada registro en el primer sitio que declares, una carpeta por registro | sección *Documents* |
 
-El framework te da cada bloque como dependencia (`ProcessesDep`, `FlowsDep`, `StorageDep`, `DocumentsDep`) y sus
-dobles para los tests (`FakeProcesses`, `FakeFlows`, `FakeStorage`, `FakeDocuments`); la web, los componentes
-`<rq-file-upload>`, `<rq-document-list>` y `<rq-task-inbox>`. Todo lo que el bloque escribe queda auditado.
+El framework te da cada bloque como dependencia (`ProcessesDep`, `FlowsDep`, `StorageDep`, `DocumentsDep` y, desde la 3.1,
+`DashboardsDep`) y sus dobles para los tests (`FakeProcesses`, `FakeFlows`, `FakeStorage`, `FakeDocuments`,
+`FakeDashboards`); la web, los componentes `<rq-file-upload>`, `<rq-document-list>`, `<rq-task-inbox>` y, desde la 3.1,
+`<rq-dashboard>` y `<rq-flow-runs>`. Todo lo que el bloque escribe queda auditado.
 
 ### Logs y auditoría (versión 2.0)
 

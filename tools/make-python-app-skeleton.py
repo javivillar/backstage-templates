@@ -35,7 +35,7 @@ HERE = pathlib.Path(__file__).resolve().parent
 SKELETONS = HERE.parent / "skeletons"
 OUT = SKELETONS / "python-framework-app"          # built here first, then one copy per line
 # the maintained lines of the Python Framework (its SUPPORT.md): line -> (refresquito-fastapi, refresquito-angular)
-LINES = {"0.1": ("0.1.0", "0.1.0"), "2.0": ("2.0.0", "2.0.0"), "3.0": ("3.0.1", "3.0.0")}
+LINES = {"0.1": ("0.1.0", "0.1.0"), "2.0": ("2.0.0", "2.0.0"), "3.0": ("3.0.1", "3.0.0"), "3.1": ("3.1.0", "3.1.0")}
 NEWEST = max(LINES, key=lambda line: tuple(int(n) for n in line.split(".")))
 OVERRIDES = HERE / "python-app-overrides"
 src = pathlib.Path(sys.argv[1]).expanduser().resolve() if len(sys.argv) > 1 else sys.exit(__doc__)
@@ -72,7 +72,7 @@ PATHS = [
 ]
 # ---- the platform blocks in the code (3.0): the template value that marks each one
 BLOCKS = {"processes": "values.processes", "flows": "values.flows", "s3": "(values.buckets | length) > 0",
-          "dms": "(values.sites | length) > 0"}
+          "dms": "(values.sites | length) > 0", "dashboards": "values.dashboards"}
 # the files of one block, by their path in the petstore
 BLOCK_FILES = {
     "backend/src/petstore/review.py": "processes", "backend/tests/test_review.py": "processes",
@@ -84,6 +84,10 @@ BLOCK_FILES = {
     "frontend/src/app/pets/pet-files.ts": "s3", "frontend/src/app/pets/pet-files.spec.ts": "s3",
     "backend/src/petstore/documents.py": "dms", "backend/tests/test_documents.py": "dms",
     "frontend/src/app/pets/pet-documents.ts": "dms", "frontend/src/app/pets/pet-documents.spec.ts": "dms",
+    # 3.1: the runs of its flows (a page), and the block dashboards (its dashboard embedded, the data of its dataset)
+    "frontend/src/app/pages/flows.ts": "flows", "frontend/src/app/pages/flows.spec.ts": "flows",
+    "backend/src/petstore/dashboards.py": "dashboards", "backend/tests/test_dashboards.py": "dashboards",
+    "frontend/src/app/pages/dashboard.ts": "dashboards", "frontend/src/app/pages/dashboard.spec.ts": "dashboards",
 }
 # the lines of one block in the files they share: (file, text of the line, block). A line that is only a comment
 # naming the block ("// block processes: ...") takes the next line with it.
@@ -115,6 +119,17 @@ BLOCK_LINES = [
     ("frontend/src/app/app.routes.ts", "from './pages/tasks'", "processes"),
     ("frontend/src/app/app.routes.ts", "// block processes", "processes"),
     ("frontend/src/app/app.html", 'routerLink="/tasks"', "processes"),
+    # 3.1
+    ("backend/src/petstore/main.py", "from .dashboards import", "dashboards"),
+    ("backend/src/petstore/main.py", "# block dashboards", "dashboards"),
+    ("backend/src/petstore/api.py", "# block flows", "flows"),
+    ("backend/tests/conftest.py", "# block dashboards", "dashboards"),
+    ("frontend/src/app/app.routes.ts", "from './pages/dashboard'", "dashboards"),
+    ("frontend/src/app/app.routes.ts", "from './pages/flows'", "flows"),
+    ("frontend/src/app/app.routes.ts", "// block dashboards", "dashboards"),
+    ("frontend/src/app/app.routes.ts", "// block flows", "flows"),
+    ("frontend/src/app/app.html", 'routerLink="/dashboard"', "dashboards"),
+    ("frontend/src/app/app.html", 'routerLink="/flows"', "flows"),
 ]
 # the names a block uses that the template asks for: the first bucket and the first site declared
 BLOCK_NAMES = [
@@ -124,6 +139,9 @@ BLOCK_NAMES = [
     ("backend/tests/conftest.py", 'FakeDocuments(["documents"],', 'FakeDocuments(["${{ values.sites[0] if values.sites | length else \'documents\' }}"],'),
     ("backend/tests/test_files.py", "/petstore-files/", "/petstore-${{ values.buckets[0] }}/"),
     ("backend/tests/test_files.py", 'storage.bucket("files")', 'storage.bucket("${{ values.buckets[0] }}")'),
+    # 3.1: the block flows in the code the blocks share (the event of a new entity, the page of the runs of its flows)
+    ("backend/src/petstore/api.py", ", flows: FlowsDep) -> PetOut:", "{% if values.flows %}, flows: FlowsDep{% endif %}) -> PetOut:"),
+    ("backend/src/petstore/main.py", "from .api import ADMIN, VIEWER, router", "from .api import {% if values.flows %}ADMIN, VIEWER, {% endif %}router"),
     ("backend/pyproject.toml", '"refresquito-fastapi[db,s3]', '"refresquito-fastapi[db${{ \',s3\' if values.buckets | length else \'\' }}]'),
 ]
 
@@ -165,7 +183,7 @@ VERBATIM = ("vendor/", "frontend/package-lock.json", "backend/migrations/script.
 DROP = ("frontend/src/app/api/schema.ts", "README.md", "CHANGELOG.md", "catalog-info.yaml", ".github/workflows/ci.yml")
 
 
-ROUTERS = {"processes": "review", "flows": "welcome", "s3": "files", "dms": "documents"}
+ROUTERS = {"processes": "review", "flows": "welcome", "s3": "files", "dms": "documents", "dashboards": "dashboards"}
 
 
 def openapi_of(blocks: list[str]) -> dict:
@@ -174,10 +192,11 @@ def openapi_of(blocks: list[str]) -> dict:
         "import json, importlib, sys\n"
         "from refresquito_fastapi import Settings, create_app\n"
         "from petstore import __version__\n"
-        "from petstore.api import router\n"
+        "from petstore.api import ADMIN, VIEWER, router\n"
         "routers = [router] + [importlib.import_module(f'petstore.{m}').router for m in sys.argv[1:]]\n"
         "app = create_app(Settings(app_name='petstore', log_level='ERROR'), title='Petstore API', version=__version__,\n"
-        "                 routers=routers, docs_url='/api/docs', openapi_url='/api/openapi.json')\n"
+        "                 routers=routers, docs_url='/api/docs', openapi_url='/api/openapi.json',\n"
+        "                 flow_runs=(VIEWER, ADMIN) if 'welcome' in sys.argv[1:] else None)\n"
         "print(json.dumps(app.openapi()))\n")
     python = src / "backend/.venv/bin/python"
     out = subprocess.run([str(python), "-c", code, *(ROUTERS[b] for b in blocks)], cwd=src / "backend",

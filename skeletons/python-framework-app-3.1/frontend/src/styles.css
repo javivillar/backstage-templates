@@ -1,0 +1,64 @@
+/* ${{ values.title }}: plain CSS, light and dark from the system. */
+:root {
+  color-scheme: light dark;
+  --bg: light-dark(#f6f7f9, #14161a);
+  --surface: light-dark(#ffffff, #1d2026);
+  --text: light-dark(#1b1f24, #e6e8eb);
+  --muted: light-dark(#5c6670, #9aa4ae);
+  --line: light-dark(#dfe3e8, #30353d);
+  --accent: light-dark(#0b6bcb, #5aa9f5);
+  --accent-text: light-dark(#ffffff, #0b1520);
+  --danger: light-dark(#b42318, #ff8a80);
+  --ok: light-dark(#1a7f37, #6fdd8b);
+  font-family: system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); line-height: 1.45; }
+main { max-width: 60rem; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+h1 { font-size: 1.5rem; margin: 0 0 1rem; }
+a { color: var(--accent); }
+
+.topbar { display: flex; align-items: center; gap: 1.5rem; padding: 0.75rem 1rem; background: var(--surface); border-bottom: 1px solid var(--line); }
+.topbar .brand { font-weight: 700; font-size: 1.1rem; text-decoration: none; color: var(--text); }
+.topbar nav { flex: 1; display: flex; gap: 1rem; }
+.topbar .session { display: flex; align-items: center; gap: 0.75rem; }
+.topbar .user { color: var(--muted); }
+
+button, .button, input, select { font: inherit; padding: 0.45rem 0.8rem; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--text); }
+button, .button { cursor: pointer; text-decoration: none; display: inline-block; }
+button:disabled { opacity: 0.5; cursor: default; }
+.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+button.link { border: 0; background: none; padding: 0; color: var(--accent); text-decoration: underline; }
+.danger { color: var(--danger); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 1.25rem; }
+.hero { text-align: center; padding: 3rem 1.25rem; }
+.toolbar { display: flex; justify-content: space-between; align-items: center; }
+.filters { display: flex; flex-wrap: wrap; gap: 1rem; align-items: end; margin-bottom: 1rem; }
+label { display: grid; gap: 0.25rem; font-size: 0.9rem; color: var(--muted); }
+label input, label select { color: var(--text); }
+form.card { display: grid; gap: 1rem; max-width: 28rem; }
+.form-actions { display: flex; justify-content: flex-end; gap: 0.75rem; }
+.field-error { color: var(--danger); }
+
+table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+th, td { text-align: left; padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--line); }
+th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+tbody tr:last-child td { border-bottom: 0; }
+td.actions { text-align: right; white-space: nowrap; }
+td.actions > * + * { margin-left: 0.75rem; }
+.status { font-size: 0.85rem; padding: 0.1rem 0.5rem; border-radius: 999px; border: 1px solid var(--line); }
+.status-active { color: var(--ok); }
+.status-closed { color: var(--muted); }
+.pager { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; color: var(--muted); }
+.empty { color: var(--muted); padding: 2rem 0; text-align: center; }
+@media (max-width: 40rem) { table { display: block; overflow-x: auto; } }
+
+.notifications { position: fixed; right: 1rem; bottom: 1rem; display: grid; gap: 0.5rem; z-index: 10; max-width: min(26rem, calc(100vw - 2rem)); }
+.rq-notification { display: flex; align-items: baseline; gap: 0.75rem; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 6px; padding: 0.6rem 0.75rem; box-shadow: 0 4px 14px rgb(0 0 0 / 0.15); }
+.rq-notification-error { border-left-color: var(--danger); }
+.rq-notification-success { border-left-color: var(--ok); }
+.rq-notification-message { flex: 1; }
+.rq-notification-reference { color: var(--muted); }
+.rq-notification-dismiss { border: 0; background: none; padding: 0 0.25rem; font-size: 1.1rem; }

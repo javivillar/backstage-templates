@@ -1,0 +1,24 @@
+"""The block dms of the ${{ values.name }}: the documents of a ${{ values.entity }}, in its Alfresco site.
+Against the fake of refresquito_fastapi.testing."""
+
+import pytest
+from refresquito_fastapi.testing import assert_problem
+
+from .test_${{ values.entities }} import create
+
+pytestmark = pytest.mark.anyio
+
+
+async def test_documents_of_a_${{ values.entity }}(client, admin, viewer, documents):
+    ${{ values.entity }} = await create(client, admin)
+    base = f"/api/${{ values.entities }}/{${{ values.entity }}['id']}/documents"
+    added = await client.post(base, headers=admin, files={"file": ("vet.pdf", b"%PDF-1.4", "application/pdf")})
+    assert added.status_code == 201 and added.json()["folder"] == f"${{ values.entity }}/{${{ values.entity }}['id']}"
+    assert [d["name"] for d in (await client.get(base, headers=viewer)).json()] == ["vet.pdf"]
+    got = await client.get(f"{base}/{added.json()['id']}", headers=viewer)
+    assert got.content == b"%PDF-1.4" and 'filename="vet.pdf"' in got.headers["content-disposition"]
+    other = await create(client, admin, name="Other")
+    assert_problem(await client.get(f"/api/${{ values.entities }}/{other['id']}/documents/{added.json()['id']}", headers=viewer), 404)
+    assert_problem(await client.post(base, headers=viewer, files={"file": ("x.txt", b"x", "text/plain")}), 403)
+    assert (await client.delete(f"{base}/{added.json()['id']}", headers=admin)).status_code == 204
+    assert (await client.get(base, headers=viewer)).json() == []
