@@ -252,7 +252,9 @@ el resumen de los jobs `backend` y `frontend`; en `main` se adjunta a las dos im
 artefacto `application/vnd.refresquito.quality.v1+json`). La cobertura bajo su umbral y ruff hacen fallar el CI; mypy
 y eslint de momento solo informan. En Backstage, la pestaña **Quality & Security** del componente `<nombre>-oneke`
 muestra el scorecard de la aplicación (catálogo, SBOM, vulnerabilidades, línea del framework e informe de calidad),
-y *Tools → Quality & Security* el de todas.
+y *Tools → Quality & Security* el de todas. Debajo del scorecard, la tarjeta **Tests & coverage** enseña el detalle
+del último run: cada test con su resultado y su tiempo (los fallidos primero, con el motivo) y la cobertura de cada
+fichero con las líneas que ningún test ejecuta.
 
 ## 6. Comprobar que todo ha ido bien
 
