@@ -35,7 +35,7 @@ HERE = pathlib.Path(__file__).resolve().parent
 SKELETONS = HERE.parent / "skeletons"
 OUT = SKELETONS / "python-framework-app"          # built here first, then one copy per line
 # the maintained lines of the Python Framework (its SUPPORT.md): line -> (refresquito-fastapi, refresquito-angular)
-LINES = {"0.1": ("0.1.0", "0.1.0"), "2.0": ("2.0.0", "2.0.0"), "3.0": ("3.0.1", "3.0.0"), "3.1": ("3.1.0", "3.1.0")}
+LINES = {"0.1": ("0.1.0", "0.1.0"), "2.0": ("2.0.0", "2.0.0"), "3.0": ("3.0.1", "3.0.0"), "3.1": ("3.1.1", "3.1.1")}
 NEWEST = max(LINES, key=lambda line: tuple(int(n) for n in line.split(".")))
 OVERRIDES = HERE / "python-app-overrides"
 src = pathlib.Path(sys.argv[1]).expanduser().resolve() if len(sys.argv) > 1 else sys.exit(__doc__)
@@ -386,9 +386,13 @@ for line, (fastapi, angular) in LINES.items():
         "backend/pyproject.toml": [(f"]~={base_fastapi}", f"]~={fastapi}")],
         "frontend/package.json": [(f"refresquito-angular-{base_angular}.tgz", tgz)],
         "README.md": [],
-        "CHANGELOG.md": [(f"refresquito-fastapi {base_fastapi} and refresquito-angular {base_angular}",
-                          f"refresquito-fastapi {fastapi} and refresquito-angular {angular}")],
     }
+    # the versions it is built with (the CHANGELOG comes from python-app-overrides/, whatever version it names)
+    changelog = dest / "CHANGELOG.md"
+    text, count = re.subn(r"refresquito-fastapi \d+\.\d+\.\d+ and refresquito-angular \d+\.\d+\.\d+",
+                          f"refresquito-fastapi {fastapi} and refresquito-angular {angular}", changelog.read_text())
+    assert count == 1, (line, "CHANGELOG.md", count)
+    changelog.write_text(text)
     # the audit trail of refresquito-fastapi (since 2.0)
     edits["README.md"].append(("## `vendor/`", AUDIT_SECTION + "## `vendor/`"))
     for rel, pairs in edits.items():
