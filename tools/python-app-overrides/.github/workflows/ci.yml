@@ -74,14 +74,15 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p ../quality
-          npm test 2>&1 | tee ../quality/karma.log
+          KARMA_SPECS=../quality/specs.json npm test 2>&1 | tee ../quality/karma.log
       # The quality report (.github/quality.py): tests, coverage and eslint. eslint only reports for now.
       - name: Quality report of the frontend
         run: |
           npx eslint src -f json -o ../quality/eslint.json || true
           npx eslint src || true
           python3 ../.github/quality.py frontend ../quality/quality-frontend.json \
-            --karma ../quality/karma.log --coverage coverage/frontend/coverage-summary.json --eslint ../quality/eslint.json
+            --karma ../quality/karma.log --specs ../quality/specs.json --eslint ../quality/eslint.json \
+            --coverage coverage/frontend/coverage-summary.json --coverage-final coverage/frontend/coverage-final.json
       - uses: actions/upload-artifact@v4
         with:
           name: quality-frontend
