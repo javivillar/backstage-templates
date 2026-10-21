@@ -2300,7 +2300,7 @@ spec:
             from the logs, with its metrics. 0.1 is maintained until 2027-04-15.
           type: string
           enum: ['3.1', '3.0', '2.0', '0.1']
-          enumNames: ['3.1 (refresquito-fastapi 3.1.0, refresquito-angular 3.1.0) - dashboards and flow runs', '3.0 (refresquito-fastapi 3.0.1, refresquito-angular 3.0.0) - platform blocks in the code', '2.0 (refresquito-fastapi 2.0.0, refresquito-angular 2.0.0) - audit trail', '0.1 (refresquito-fastapi 0.1.0, refresquito-angular 0.1.0)']
+          enumNames: ['3.1 (refresquito-fastapi 3.1.1, refresquito-angular 3.1.1) - dashboards and flow runs', '3.0 (refresquito-fastapi 3.0.1, refresquito-angular 3.0.0) - platform blocks in the code', '2.0 (refresquito-fastapi 2.0.0, refresquito-angular 2.0.0) - audit trail', '0.1 (refresquito-fastapi 0.1.0, refresquito-angular 0.1.0)']
           default: '3.1'
     - title: Platform blocks
       description: >-
@@ -2552,8 +2552,9 @@ spec:
           # the commit just pushed: its CI builds the two images with that tag
           tag: ${{ steps['publish'].output.commitHash }}
           stage: ${{ parameters.initialStage }}
-          fastapi: ${{ '3.0.1' if parameters.frameworkVersion == '3.0' else (parameters.frameworkVersion + '.0') }}
-          angular: ${{ parameters.frameworkVersion }}.0
+          # the versions in vendor/ of the skeleton of that line (tools/make-python-app-skeleton.py, LINES)
+          fastapi: ${{ '3.1.1' if parameters.frameworkVersion == '3.1' else ('3.0.1' if parameters.frameworkVersion == '3.0' else (parameters.frameworkVersion + '.0')) }}
+          angular: ${{ '3.1.1' if parameters.frameworkVersion == '3.1' else (parameters.frameworkVersion + '.0') }}
     - id: deploy
       name: Open the deployment pull request in refresquito-services
       action: publish:github:pull-request

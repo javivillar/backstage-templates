@@ -1,5 +1,8 @@
 """The application: uvicorn ${{ values.name }}.main:app"""
 
+from typing import Any
+
+from fastapi import FastAPI
 from refresquito_fastapi import Settings, create_app
 
 from . import __version__
@@ -21,7 +24,8 @@ from .welcome import router as welcome_router
 {%- endif %}
 
 
-def build(settings: Settings | None = None, **options: object):
+def build(settings: Settings | None = None, **options: Any) -> FastAPI:
+    # options: the other keyword arguments of create_app (the tests pass a verifier or a platform)
     settings = settings or Settings(app_name="${{ values.name }}")
     return create_app(
         settings,

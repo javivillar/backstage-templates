@@ -10,7 +10,7 @@ Created from the Backstage template "New application (Python Framework)": the ${
 - API (`/api/${{ values.entities }}`): list with filters and pages, read, create, update and delete, on PostgreSQL with migrations.
 - Web: the list, the form, sign in and out with Keycloak.
 - Roles: `${{ values.name }}-viewer` reads, `${{ values.name }}-admin` also writes.
-- Built with refresquito-fastapi 3.1.0 and refresquito-angular 3.1.0.
+- Built with refresquito-fastapi 3.1.1 and refresquito-angular 3.1.1.
 {%- if values.processes %}
 - Block `processes`: `POST /api/${{ values.entities }}/{id}/review` starts its process `review`; *My tasks* (`/api/tasks`).
 {%- endif %}
