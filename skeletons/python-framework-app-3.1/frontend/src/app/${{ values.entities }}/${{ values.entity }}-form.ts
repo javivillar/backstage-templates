@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, OnInit, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { NotificationService, RqHttpError } from 'refresquito-angular';
@@ -10,7 +10,7 @@ import { ${{ values.entityTitle }}Api, ${{ values.entityTitle }}Input, ${{ value
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './${{ values.entity }}-form.html',
 })
-export class ${{ values.entityTitle }}Form {
+export class ${{ values.entityTitle }}Form implements OnInit {
   /** Route parameter: the ${{ values.entity }} to edit; without it, a new one. */
   readonly id = input<string>();
 

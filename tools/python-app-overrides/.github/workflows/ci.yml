@@ -33,7 +33,21 @@ jobs:
           cache: pip
       - run: pip install --find-links ../vendor -e '.[dev]'
       - run: ruff check .
-      - run: pytest
+      - run: mkdir -p ../quality
+      - run: pytest --junitxml=../quality/junit.xml --cov-report=json:../quality/coverage.json
+      # The quality report (.github/quality.py): tests, coverage, ruff and mypy. mypy only reports for now: its errors
+      # are in the report and the scorecard of Backstage, they do not fail the job.
+      - name: Quality report of the backend
+        run: |
+          ruff check . --output-format json > ../quality/ruff.json || true
+          mypy src > ../quality/mypy.txt || true
+          cat ../quality/mypy.txt
+          python3 ../.github/quality.py backend ../quality/quality-backend.json \
+            --junit ../quality/junit.xml --coverage ../quality/coverage.json --ruff ../quality/ruff.json --mypy ../quality/mypy.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: quality-backend
+          path: quality/quality-backend.json
       - name: openapi.json is what the API publishes
         run: |
           module=$(basename "$(dirname src/*/openapi.py)")
@@ -56,7 +70,22 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
-      - run: npm test
+      - name: Tests
+        run: |
+          set -o pipefail
+          mkdir -p ../quality
+          npm test 2>&1 | tee ../quality/karma.log
+      # The quality report (.github/quality.py): tests, coverage and eslint. eslint only reports for now.
+      - name: Quality report of the frontend
+        run: |
+          npx eslint src -f json -o ../quality/eslint.json || true
+          npx eslint src || true
+          python3 ../.github/quality.py frontend ../quality/quality-frontend.json \
+            --karma ../quality/karma.log --coverage coverage/frontend/coverage-summary.json --eslint ../quality/eslint.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: quality-frontend
+          path: quality/quality-frontend.json
       - run: npm run build
   images:
     if: github.event_name == 'push'
@@ -129,8 +158,20 @@ jobs:
         with:
           name: ${{ github.event.repository.name }}-web.cdx.json
           path: ${{ github.event.repository.name }}-web.cdx.json
+      # The quality report of this commit (the two parts the test jobs left), attached to both images like the SBOM.
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: quality-*
+          path: quality
+          merge-multiple: true
+      - name: The quality report
+        run: python3 .github/quality.py merge quality.json quality/quality-backend.json quality/quality-frontend.json --revision "${{ github.sha }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: quality.json
+          path: quality.json
       - uses: oras-project/setup-oras@v1
-      - name: The SBOMs, attached to their images
+      - name: The SBOMs and the quality report, attached to their images
         env:
           OWNER: ${{ github.repository_owner }}
           NAME: ${{ github.event.repository.name }}
@@ -145,4 +186,8 @@ jobs:
               --annotation "org.opencontainers.image.source=https://github.com/${{ github.repository }}" \
               --annotation "org.opencontainers.image.revision=${{ github.sha }}" \
               "ghcr.io/${OWNER}/${NAME}-${image}@${digest}" "${NAME}-${image}.cdx.json:application/vnd.cyclonedx+json"
+            oras attach --artifact-type application/vnd.refresquito.quality.v1+json \
+              --annotation "org.opencontainers.image.source=https://github.com/${{ github.repository }}" \
+              --annotation "org.opencontainers.image.revision=${{ github.sha }}" \
+              "ghcr.io/${OWNER}/${NAME}-${image}@${digest}" "quality.json:application/vnd.refresquito.quality.v1+json"
           done
