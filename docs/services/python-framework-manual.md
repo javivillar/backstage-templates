@@ -244,6 +244,16 @@ desplegado, y también lo guarda como artefacto del run (pestaña **CI/CD**, `<n
 (`refresquito-fastapi`, `refresquito-angular`) aparece en él con su versión y su licencia. Las vulnerabilidades de las
 imágenes las recoge Wazuh. En Backstage se ve en la pestaña **SBOM** del componente `<nombre>-oneke` de cada etapa.
 
+### Informe de calidad
+
+Desde la línea 3.1, cada run del CI escribe además el **informe de calidad** `quality.json` (`.github/quality.py`):
+tests y cobertura del backend y del frontend, avisos de ruff, errores de tipos de mypy y de eslint. Sus tablas salen en
+el resumen de los jobs `backend` y `frontend`; en `main` se adjunta a las dos imágenes junto a su SBOM (tipo de
+artefacto `application/vnd.refresquito.quality.v1+json`). La cobertura bajo su umbral y ruff hacen fallar el CI; mypy
+y eslint de momento solo informan. En Backstage, la pestaña **Quality & Security** del componente `<nombre>-oneke`
+muestra el scorecard de la aplicación (catálogo, SBOM, vulnerabilidades, línea del framework e informe de calidad),
+y *Tools → Quality & Security* el de todas.
+
 ## 6. Comprobar que todo ha ido bien
 
 1. **Argo CD**: la aplicación `orders-oneke` está *Synced* y *Healthy* (en Backstage, pestaña de Kubernetes o de Argo CD

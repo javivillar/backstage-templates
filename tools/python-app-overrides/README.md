@@ -51,6 +51,16 @@ The backend tests use the schema the migrations create, and tokens signed by
 `refresquito_fastapi.testing`, so they need no Keycloak. The frontend tests use
 `refresquito-angular/testing` the same way.
 
+Linters: `cd backend && .venv/bin/ruff check . && .venv/bin/mypy` and `cd frontend && npm run lint` (eslint).
+
+### Quality report
+
+Each run of the CI writes the quality report `quality.json` (`.github/quality.py`): tests and coverage of both parts,
+ruff and mypy of the backend, eslint of the frontend. Its tables are in the summary of the jobs `backend` and
+`frontend`; on `main` it is attached to both images next to their SBOM (artifact type
+`application/vnd.refresquito.quality.v1+json`). The scorecard *Quality & Security* of Backstage reads it from the
+image deployed. Coverage below its threshold and ruff fail the CI; mypy and eslint only report for now.
+
 ## The contract between web and API
 
 `backend/openapi.json` is the OpenAPI document of the API. The web generates its types from it

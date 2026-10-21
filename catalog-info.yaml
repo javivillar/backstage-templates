@@ -2478,6 +2478,7 @@ spec:
           - frontend/package-lock.json
           - frontend/public/favicon.ico
           - .github/workflows/**
+          - .github/quality.py
           - backend/migrations/script.py.mako
         values:
           name: ${{ parameters.name }}

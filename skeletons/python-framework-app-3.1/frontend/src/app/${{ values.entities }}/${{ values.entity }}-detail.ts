@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, input, numberAttribute, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, numberAttribute, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { RqHasRole } from 'refresquito-angular';
 import { ${{ values.entityTitle }}, ${{ values.entityTitle }}Api } from '../api/${{ values.entities }}';
@@ -40,7 +40,7 @@ import { ${{ values.entityTitle }}Welcome } from './${{ values.entity }}-welcome
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './${{ values.entity }}-detail.html',
 })
-export class ${{ values.entityTitle }}Detail {
+export class ${{ values.entityTitle }}Detail implements OnInit {
   /** From the route: ${{ values.entities }}/:id */
   readonly id = input.required({ transform: numberAttribute });
   private readonly api = inject(${{ values.entityTitle }}Api);

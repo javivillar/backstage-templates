@@ -28,7 +28,9 @@ module.exports = function (config) {
       subdir: '.',
       reporters: [
         { type: 'html' },
-        { type: 'text-summary' }
+        { type: 'text-summary' },
+        // read by the quality report of the CI (.github/quality.py)
+        { type: 'json-summary' }
       ],
       check: {
         global: { statements: 70, branches: 60, functions: 70, lines: 70 }
