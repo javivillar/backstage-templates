@@ -1816,9 +1816,11 @@ spec:
       properties:
         entity:
           title: Entity, singular
-          description: Lowercase letters only, e.g. order. It names the table and the class (Order).
+          description: >-
+            Lowercase letters only, e.g. order. It names the table and the class (Order). Not a name of a built-in type of
+            TypeScript (record, map, set, date, error, event, promise, ...): the web would not compile.
           type: string
-          pattern: '^[a-z]{2,30}$'
+          pattern: '^(?!(?:record|partial|required|readonly|pick|omit|exclude|extract|map|set|weakmap|weakset|date|error|object|array|promise|string|number|boolean|symbol|function|event|node|element|response|request|headers|file|blob|document|window|location|history|storage|image|option|text|comment|range|selection|notification|worker|iterator|proxy|reflect|math|json|intl|regexp|uint)$)[a-z]{2,30}$'
         entities:
           title: Entity, plural
           description: Lowercase letters only, e.g. orders. It names the API path (/api/orders) and the page.
