@@ -5,7 +5,7 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Body
 from pydantic import BaseModel
-from refresquito_fastapi import NotFoundError
+from refresquito_fastapi import NotFoundError, lineage
 from refresquito_fastapi.db import SessionDep
 from refresquito_fastapi.platform.processes import ProcessesDep, Task
 
@@ -23,7 +23,8 @@ class ReviewOut(BaseModel):
     business_key: str | None
 
 
-@router.post("/${{ values.entities }}/{${{ values.entity }}_id}/review", status_code=202)
+@router.post("/${{ values.entities }}/{${{ values.entity }}_id}/review", status_code=202,
+             openapi_extra=lineage.source("table:${{ values.entity }}") | lineage.target("process:review"))
 async def ask_for_review(${{ values.entity }}_id: int, user: Writer, session: SessionDep, processes: ProcessesDep,
                          body: Annotated[ReviewIn | None, Body()] = None) -> ReviewOut:
     ${{ values.entity }} = await find(session, ${{ values.entity }}_id)
@@ -33,13 +34,13 @@ async def ask_for_review(${{ values.entity }}_id: int, user: Writer, session: Se
     return ReviewOut(process=instance.id, business_key=instance.business_key)
 
 
-@router.get("/tasks")
+@router.get("/tasks", openapi_extra=lineage.source("process:review"))
 async def my_tasks(user: Reader, processes: ProcessesDep) -> list[Task]:
     """The open tasks of the user: assigned to them, or offered to them or to their groups."""
     return await processes.tasks(candidate_user=user.username)
 
 
-@router.post("/tasks/{task_id}/complete", status_code=204)
+@router.post("/tasks/{task_id}/complete", status_code=204, openapi_extra=lineage.target("process:review"))
 async def complete_task(task_id: str, user: Reader, processes: ProcessesDep,
                         variables: Annotated[dict[str, Any] | None, Body()] = None) -> None:
     if not any(t.id == task_id for t in await processes.tasks(candidate_user=user.username)):

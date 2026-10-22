@@ -797,6 +797,12 @@
         "summary": "Ask For Review",
         "tags": [
           "review"
+        ],
+        "x-refresquito-source": [
+          "table:${{ values.entity }}"
+        ],
+        "x-refresquito-target": [
+          "process:review"
         ]
       }
     },
@@ -830,6 +836,9 @@
         "summary": "My Tasks",
         "tags": [
           "review"
+        ],
+        "x-refresquito-source": [
+          "process:review"
         ]
       }
     },
@@ -890,6 +899,9 @@
         "summary": "Complete Task",
         "tags": [
           "review"
+        ],
+        "x-refresquito-target": [
+          "process:review"
         ]
       }
     },
@@ -939,6 +951,12 @@
         "summary": "Welcome",
         "tags": [
           "welcome"
+        ],
+        "x-refresquito-source": [
+          "table:${{ values.entity }}"
+        ],
+        "x-refresquito-target": [
+          "flow:new-${{ values.entity }}"
         ]
       }
     },
@@ -994,6 +1012,9 @@
         "summary": "Set Status",
         "tags": [
           "welcome"
+        ],
+        "x-refresquito-target": [
+          "table:${{ values.entity }}"
         ]
       }
     },
@@ -1047,6 +1068,9 @@
         "summary": "List Files",
         "tags": [
           "files"
+        ],
+        "x-refresquito-source": [
+          "bucket:files"
         ]
       },
       "post": {
@@ -1102,6 +1126,9 @@
         "summary": "Add File",
         "tags": [
           "files"
+        ],
+        "x-refresquito-target": [
+          "bucket:files"
         ]
       }
     },
@@ -1153,6 +1180,9 @@
         "summary": "Delete File",
         "tags": [
           "files"
+        ],
+        "x-refresquito-target": [
+          "bucket:files"
         ]
       },
       "get": {
@@ -1207,6 +1237,9 @@
         "summary": "Download File",
         "tags": [
           "files"
+        ],
+        "x-refresquito-source": [
+          "bucket:files"
         ]
       }
     },
@@ -1260,6 +1293,9 @@
         "summary": "List Documents",
         "tags": [
           "documents"
+        ],
+        "x-refresquito-source": [
+          "site:documents"
         ]
       },
       "post": {
@@ -1315,6 +1351,9 @@
         "summary": "Add Document",
         "tags": [
           "documents"
+        ],
+        "x-refresquito-target": [
+          "site:documents"
         ]
       }
     },
@@ -1366,6 +1405,9 @@
         "summary": "Delete Document",
         "tags": [
           "documents"
+        ],
+        "x-refresquito-target": [
+          "site:documents"
         ]
       },
       "get": {
@@ -1418,6 +1460,9 @@
         "summary": "Download Document",
         "tags": [
           "documents"
+        ],
+        "x-refresquito-source": [
+          "site:documents"
         ]
       }
     },
@@ -1533,6 +1578,9 @@
         "summary": "${{ values.entitiesTitle }} By Status",
         "tags": [
           "dashboards"
+        ],
+        "x-refresquito-source": [
+          "table:${{ values.entity }}"
         ]
       }
     },
@@ -1641,6 +1689,9 @@
         "summary": "List Flow Runs",
         "tags": [
           "flow runs"
+        ],
+        "x-refresquito-source": [
+          "table:flow_run"
         ]
       }
     },
@@ -1696,6 +1747,9 @@
         "summary": "Report Flow Run",
         "tags": [
           "flow runs"
+        ],
+        "x-refresquito-target": [
+          "table:flow_run"
         ]
       }
     },
@@ -1798,6 +1852,9 @@
         "summary": "List ${{ values.entitiesTitle }}",
         "tags": [
           "${{ values.entities }}"
+        ],
+        "x-refresquito-source": [
+          "table:${{ values.entity }}"
         ]
       },
       "post": {
@@ -1842,6 +1899,9 @@
         "summary": "Create ${{ values.entityTitle }}",
         "tags": [
           "${{ values.entities }}"
+        ],
+        "x-refresquito-target": [
+          "table:${{ values.entity }}"
         ]
       }
     },
@@ -1882,6 +1942,9 @@
         "summary": "Delete ${{ values.entityTitle }}",
         "tags": [
           "${{ values.entities }}"
+        ],
+        "x-refresquito-target": [
+          "table:${{ values.entity }}"
         ]
       },
       "get": {
@@ -1927,6 +1990,9 @@
         "summary": "Get ${{ values.entityTitle }}",
         "tags": [
           "${{ values.entities }}"
+        ],
+        "x-refresquito-source": [
+          "table:${{ values.entity }}"
         ]
       },
       "put": {
@@ -1982,6 +2048,9 @@
         "summary": "Update ${{ values.entityTitle }}",
         "tags": [
           "${{ values.entities }}"
+        ],
+        "x-refresquito-target": [
+          "table:${{ values.entity }}"
         ]
       }
     }

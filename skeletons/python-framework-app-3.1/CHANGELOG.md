@@ -12,7 +12,7 @@ Created from the Backstage template "New application (Python Framework)": the ${
 - Roles: `${{ values.name }}-viewer` reads, `${{ values.name }}-admin` also writes.
 - Data catalog: `platform/datahub.yaml` (what it declares for DataHub) and `platform/datahub-exceptions.yaml`
   (classification exceptions, approved by the data stewards: `.github/CODEOWNERS`).
-- Built with refresquito-fastapi 3.1.1 and refresquito-angular 3.1.1.
+- Built with refresquito-fastapi 3.1.2 and refresquito-angular 3.1.1.
 {%- if values.processes %}
 - Block `processes`: `POST /api/${{ values.entities }}/{id}/review` starts its process `review`; *My tasks* (`/api/tasks`).
 {%- endif %}

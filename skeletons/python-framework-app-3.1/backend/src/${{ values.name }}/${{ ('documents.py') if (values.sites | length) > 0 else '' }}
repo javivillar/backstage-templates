@@ -4,7 +4,7 @@ The people of the site see the same documents in Alfresco."""
 import os
 
 from fastapi import APIRouter, Response, UploadFile
-from refresquito_fastapi import NotFoundError
+from refresquito_fastapi import NotFoundError, lineage
 from refresquito_fastapi.db import SessionDep
 from refresquito_fastapi.platform.dms import Document, DocumentsDep
 
@@ -14,14 +14,14 @@ router = APIRouter(prefix="/api/${{ values.entities }}/{${{ values.entity }}_id}
 SITE = "${{ values.sites[0] }}"
 
 
-@router.get("")
+@router.get("", openapi_extra=lineage.source(f"site:{SITE}"))
 async def list_documents(${{ values.entity }}_id: int, user: Reader, session: SessionDep, documents: DocumentsDep) -> list[Document]:
     ${{ values.entity }} = await find(session, ${{ values.entity }}_id)
     site = documents.site(SITE)
     return await site.list(site.folder("${{ values.entity }}", ${{ values.entity }}.id))
 
 
-@router.post("", status_code=201)
+@router.post("", status_code=201, openapi_extra=lineage.target(f"site:{SITE}"))
 async def add_document(${{ values.entity }}_id: int, file: UploadFile, user: Writer, session: SessionDep,
                        documents: DocumentsDep) -> Document:
     ${{ values.entity }} = await find(session, ${{ values.entity }}_id)
@@ -30,7 +30,7 @@ async def add_document(${{ values.entity }}_id: int, file: UploadFile, user: Wri
                              folder=site.folder("${{ values.entity }}", ${{ values.entity }}.id), content_type=file.content_type)
 
 
-@router.get("/{document_id}")
+@router.get("/{document_id}", openapi_extra=lineage.source(f"site:{SITE}"))
 async def download_document(${{ values.entity }}_id: int, document_id: str, user: Reader, documents: DocumentsDep) -> Response:
     site = documents.site(SITE)
     stored = await site.content(document_id)
@@ -40,7 +40,7 @@ async def download_document(${{ values.entity }}_id: int, document_id: str, user
                     headers={"Content-Disposition": f'attachment; filename="{stored.document.name}"'})
 
 
-@router.delete("/{document_id}", status_code=204)
+@router.delete("/{document_id}", status_code=204, openapi_extra=lineage.target(f"site:{SITE}"))
 async def delete_document(${{ values.entity }}_id: int, document_id: str, user: Writer, documents: DocumentsDep) -> None:
     site = documents.site(SITE)
     if (await site.get(document_id)).folder != site.folder("${{ values.entity }}", ${{ values.entity }}_id):
