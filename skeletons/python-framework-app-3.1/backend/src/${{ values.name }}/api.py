@@ -3,7 +3,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
-from refresquito_fastapi import ConflictError, NotFoundError, Page, PageParamsDep, User, require_roles
+from refresquito_fastapi import ConflictError, NotFoundError, Page, PageParamsDep, User, lineage, require_roles
 from refresquito_fastapi.db import SessionDep, paginate
 {%- if values.flows %}
 from refresquito_fastapi.platform.flows import FlowsDep  # block flows
@@ -34,7 +34,7 @@ async def check_name_is_free(session: AsyncSession, name: str, except_id: int | 
         raise ConflictError(f"There is already a ${{ values.entity }} called {name}", code="${{ values.entity }}_name_taken")
 
 
-@router.get("")
+@router.get("", openapi_extra=lineage.source("table:${{ values.entity }}"))
 async def list_${{ values.entities }}(
     user: Reader,
     session: SessionDep,
@@ -50,12 +50,12 @@ async def list_${{ values.entities }}(
     return await paginate(session, statement, params)
 
 
-@router.get("/{${{ values.entity }}_id}")
+@router.get("/{${{ values.entity }}_id}", openapi_extra=lineage.source("table:${{ values.entity }}"))
 async def get_${{ values.entity }}(${{ values.entity }}_id: int, user: Reader, session: SessionDep) -> ${{ values.entityTitle }}Out:
     return ${{ values.entityTitle }}Out.model_validate(await find(session, ${{ values.entity }}_id))
 
 
-@router.post("", status_code=201)
+@router.post("", status_code=201, openapi_extra=lineage.target("table:${{ values.entity }}"))
 async def create_${{ values.entity }}(body: ${{ values.entityTitle }}In, user: Writer, session: SessionDep{% if values.flows %}, flows: FlowsDep{% endif %}) -> ${{ values.entityTitle }}Out:
     await check_name_is_free(session, body.name)
     ${{ values.entity }} = ${{ values.entityTitle }}(**body.model_dump(), created_by=user.username)
@@ -68,7 +68,7 @@ async def create_${{ values.entity }}(body: ${{ values.entityTitle }}In, user: W
     return ${{ values.entityTitle }}Out.model_validate(${{ values.entity }})
 
 
-@router.put("/{${{ values.entity }}_id}")
+@router.put("/{${{ values.entity }}_id}", openapi_extra=lineage.target("table:${{ values.entity }}"))
 async def update_${{ values.entity }}(${{ values.entity }}_id: int, body: ${{ values.entityTitle }}In, user: Writer, session: SessionDep) -> ${{ values.entityTitle }}Out:
     ${{ values.entity }} = await find(session, ${{ values.entity }}_id)
     await check_name_is_free(session, body.name, except_id=${{ values.entity }}_id)
@@ -78,6 +78,6 @@ async def update_${{ values.entity }}(${{ values.entity }}_id: int, body: ${{ va
     return ${{ values.entityTitle }}Out.model_validate(${{ values.entity }})
 
 
-@router.delete("/{${{ values.entity }}_id}", status_code=204)
+@router.delete("/{${{ values.entity }}_id}", status_code=204, openapi_extra=lineage.target("table:${{ values.entity }}"))
 async def delete_${{ values.entity }}(${{ values.entity }}_id: int, user: Writer, session: SessionDep) -> None:
     await session.delete(await find(session, ${{ values.entity }}_id))

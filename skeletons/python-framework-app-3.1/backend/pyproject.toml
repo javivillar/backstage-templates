@@ -9,7 +9,7 @@ description = "${{ values.title }} API: the example service of the Refresquito f
 requires-python = ">=3.12"
 dependencies = [
     # installed from ../vendor (pip --find-links) while its repository is private: see the README
-    "refresquito-fastapi[db${{ ',s3' if values.buckets | length else '' }}]~=3.1.1",
+    "refresquito-fastapi[db${{ ',s3' if values.buckets | length else '' }}]~=3.1.2",
     "uvicorn[standard]>=0.32",
     "python-multipart>=0.0.9",   # file uploads (documents, files)
 ]

@@ -4,6 +4,7 @@ its dataset `${{ values.entity }}` as Superset computes it."""
 from typing import Any
 
 from fastapi import APIRouter
+from refresquito_fastapi import lineage
 from refresquito_fastapi.platform.dashboards import Dashboard, DashboardsDep, GuestToken
 
 from .api import Reader
@@ -22,6 +23,6 @@ async def guest_token(name: str, user: Reader, dashboards: DashboardsDep) -> Gue
     return await dashboards.guest_token(name, user)
 
 
-@router.get("/stats/${{ values.entities }}-by-status")
+@router.get("/stats/${{ values.entities }}-by-status", openapi_extra=lineage.source("table:${{ values.entity }}"))
 async def ${{ values.entities }}_by_status(user: Reader, dashboards: DashboardsDep) -> list[dict[str, Any]]:
     return await dashboards.data("${{ values.entity }}", columns=["status"], metrics=["count"], order_by=[("status", True)])

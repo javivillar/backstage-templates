@@ -35,7 +35,7 @@ HERE = pathlib.Path(__file__).resolve().parent
 SKELETONS = HERE.parent / "skeletons"
 OUT = SKELETONS / "python-framework-app"          # built here first, then one copy per line
 # the maintained lines of the Python Framework (its SUPPORT.md): line -> (refresquito-fastapi, refresquito-angular)
-LINES = {"0.1": ("0.1.0", "0.1.0"), "2.0": ("2.0.0", "2.0.0"), "3.0": ("3.0.1", "3.0.0"), "3.1": ("3.1.1", "3.1.1")}
+LINES = {"0.1": ("0.1.0", "0.1.0"), "2.0": ("2.0.0", "2.0.0"), "3.0": ("3.0.1", "3.0.0"), "3.1": ("3.1.2", "3.1.1")}
 NEWEST = max(LINES, key=lambda line: tuple(int(n) for n in line.split(".")))
 OVERRIDES = HERE / "python-app-overrides"
 src = pathlib.Path(sys.argv[1]).expanduser().resolve() if len(sys.argv) > 1 else sys.exit(__doc__)
@@ -130,6 +130,11 @@ BLOCK_LINES = [
     ("frontend/src/app/app.routes.ts", "// block flows", "flows"),
     ("frontend/src/app/app.html", 'routerLink="/dashboard"', "dashboards"),
     ("frontend/src/app/app.html", 'routerLink="/flows"', "flows"),
+    # 3.1.2: the lineage of each operation in the OpenAPI, one line per block
+    ("backend/tests/test_lineage.py", '{pet_id}/review"', "processes"),
+    ("backend/tests/test_lineage.py", '{pet_id}/welcome"', "flows"),
+    ("backend/tests/test_lineage.py", '{pet_id}/files"', "s3"),
+    ("backend/tests/test_lineage.py", '{pet_id}/documents"', "dms"),
 ]
 # the names a block uses that the template asks for: the first bucket and the first site declared
 BLOCK_NAMES = [
@@ -142,6 +147,8 @@ BLOCK_NAMES = [
     # 3.1: the block flows in the code the blocks share (the event of a new entity, the page of the runs of its flows)
     ("backend/src/petstore/api.py", ", flows: FlowsDep) -> PetOut:", "{% if values.flows %}, flows: FlowsDep{% endif %}) -> PetOut:"),
     ("backend/src/petstore/main.py", "from .api import ADMIN, VIEWER, router", "from .api import {% if values.flows %}ADMIN, VIEWER, {% endif %}router"),
+    ("backend/tests/test_lineage.py", '["bucket:files"]', '["bucket:${{ values.buckets[0] }}"]'),
+    ("backend/tests/test_lineage.py", '["site:documents"]', '["site:${{ values.sites[0] }}"]'),
     ("backend/pyproject.toml", '"refresquito-fastapi[db,s3]', '"refresquito-fastapi[db${{ \',s3\' if values.buckets | length else \'\' }}]'),
 ]
 
