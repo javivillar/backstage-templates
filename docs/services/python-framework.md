@@ -36,7 +36,8 @@ indiques. La entidad nace con nombre, categoría, estado y fecha de inicio: cám
 | Object storage - buckets | `documents` | Opcional. Un bucket `<name>-documents` en SeaweedFS, solo para la aplicación, con su clave de acceso ya en el entorno del API |
 | Documents (Alfresco) - sites | `records` | Opcional. Un sitio privado `<name>-records` en Alfresco, con un usuario propio de la aplicación y sus credenciales ya en el entorno del API |
 | Documents (Alfresco) - groups | `finance` | Grupos de Keycloak cuyos miembros entran en los sitios de la aplicación |
-| Data catalog (DataHub) - register its data | sí / no | Opcional. Un producto de datos `<name>` en DataHub con las tablas de su base de datos |
+| Data catalog (DataHub) - register its data | sí (por defecto) / no | Un producto de datos `<programa>-<name>` en DataHub con sus tablas, bucket, API, procesos, flujos, sitios y dashboards. Solo en pro: en dev y pre espera a que se promueva |
+| Data catalog (DataHub) - classification / releasability | `NATO UNCLASSIFIED` / `NATO` | La clasificación de sus datos (escala de la zona, hasta el techo del clúster) y a quién se pueden ceder. Todo lo de la aplicación la hereda |
 | Data catalog (DataHub) - people / groups who own its data | `ana` / `finance` | Responsables de negocio de sus datos. Tu equipo es siempre el responsable técnico |
 | API gateway (Gravitee) - publish its API | sí / no | Opcional. Su API en el gateway, en `/gateway/<name>/`, pública en el portal de desarrolladores |
 | API gateway (Gravitee) - team | `gravitee-team-alpha` | Opcional. El grupo cuyos miembros ven la API en Backstage |

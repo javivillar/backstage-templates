@@ -4,7 +4,7 @@
     python3 tools/render-python-app.py OUT_DIR [frameworkVersion=3.1 name=orders title=Orders entity=order entities=orders owner=javivillar dataStewards=@javivillar]
                                               [processes=true flows=true buckets=files sites=documents dashboards=true]   (3.0: the example code of each block; dashboards from 3.1)
     python3 tools/render-python-app.py OUT_DIR --deploy DEPLOY_DIR [... tag=<commit> environments=nato-sirtap admins=javi buckets=documents sites=records siteGroups=finance
-                                              datahub=true dataOwners=ana dataOwnerGroups=finance
+                                              datahub=true 'dataClassification=NATO RESTRICTED' dataReleasability=NATO dataOwners=ana dataOwnerGroups=finance
                                               gateway=true gatewayTeam=gravitee-team-alpha
                                               processes=true processGroups=finance dashboards=true
                                               flows=true flowGroups=finance]
@@ -75,7 +75,8 @@ if deploy:
                   admins=[a for a in values.get("admins", "").split(",") if a],
 
                   siteGroups=[g for g in values.get("siteGroups", "").split(",") if g],
-                  datahub=values.get("datahub", "") in ("true", "1", "yes"),
+                  datahub=values.get("datahub", "true") in ("true", "1", "yes"),
+                  dataClassification=values.get("dataClassification", "NATO UNCLASSIFIED"), dataReleasability=values.get("dataReleasability", "NATO"),
                   dataOwners=[u for u in values.get("dataOwners", "").split(",") if u],
                   dataOwnerGroups=[g for g in values.get("dataOwnerGroups", "").split(",") if g],
                   gateway=values.get("gateway", "") in ("true", "1", "yes"), gatewayTeam=values.get("gatewayTeam", ""),

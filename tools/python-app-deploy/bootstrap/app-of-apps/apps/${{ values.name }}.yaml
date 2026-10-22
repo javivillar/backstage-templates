@@ -46,6 +46,10 @@ platform:
 {%- if values.datahub %}
   datahub:
     enabled: true
+    classification: ${{ values.dataClassification | dump }}
+{%- if values.dataReleasability %}
+    releasability: ${{ values.dataReleasability | dump }}
+{%- endif %}
     owners: { users: ${{ values.dataOwners | dump }}, groups: ${{ values.dataOwnerGroups | dump }} }
 {%- endif %}
 {%- if values.gateway %}

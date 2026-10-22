@@ -1614,442 +1614,6 @@ spec:
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: datahub-new-data-product
-  title: New data product (declare your data before coding)
-  description: >-
-    Declare who owns your data, its domain, classification, retention, legal basis
-    and where it comes from and goes to. Registers the data product, its datasets,
-    processes and PLANNED lineage in DataHub. Domains, glossary terms and tags must
-    already exist (stewards manage them). Safe to re-run: nothing is duplicated, and
-    assets DataHub already has that Backstage did not create are never touched.
-  tags: [datahub, governance, data]
-spec:
-  owner: group:default/backstage-admin
-  type: datahub-governance
-  parameters:
-    - title: Product
-      required: [name, slug, description, domain, businessOwner]
-      properties:
-        name:
-          title: Name
-          type: string
-        slug:
-          title: Slug
-          description: Lowercase letters/digits and dashes. It becomes urn:li:dataProduct:<slug>.
-          type: string
-          pattern: '^[a-z0-9]+(-[a-z0-9]+)*$'
-        description:
-          title: Description
-          type: string
-        domain:
-          title: Domain
-          description: Id of an EXISTING DataHub domain (e.g. sales, finance, customer).
-          type: string
-        businessOwner:
-          title: Business owner
-          description: Keycloak group name (e.g. sales-analytics) or a person's email.
-          type: string
-        technicalOwner:
-          title: Technical owner (optional)
-          description: Defaults to you.
-          type: string
-        steward:
-          title: Data steward (optional)
-          description: Required from Confidential up; defaults to datahub-admin if left empty.
-          type: string
-        glossaryTerms:
-          title: Glossary terms (optional)
-          description: Ids of EXISTING terms (e.g. customer, net-revenue).
-          type: array
-          items:
-            type: string
-        tags:
-          title: Tags (optional)
-          description: Ids of EXISTING tags (e.g. gold, certified).
-          type: array
-          items:
-            type: string
-        backstageEntity:
-          title: Backstage entity (optional)
-          description: e.g. system:default/pedidos-web — recorded on every asset.
-          type: string
-    - title: Data stores
-      required: [stores]
-      properties:
-        stores:
-          title: Data stores
-          description: >-
-            Databases, topics, S3 prefixes or Alfresco sites this product owns.
-            Each becomes a dataset in DataHub with the governance you declare here.
-          type: array
-          minItems: 1
-          items:
-            type: object
-            required: [kind, classification, retentionDays]
-            properties:
-              kind:
-                title: Kind
-                type: string
-                enum: [postgres, kafka, s3, alfresco-site]
-              database:
-                title: Database (postgres only)
-                type: string
-              schema:
-                title: Schema (postgres only)
-                type: string
-                default: public
-              table:
-                title: Table (postgres only)
-                type: string
-              name:
-                title: Name (kafka topic / S3 bucket/prefix / Alfresco site shortName)
-                type: string
-              description:
-                title: Description
-                type: string
-              classification:
-                title: Data classification
-                type: string
-                enum: [Public, Internal, Confidential, Restricted]
-              retentionDays:
-                title: Retention (days)
-                type: integer
-                minimum: 1
-              lawfulBasis:
-                title: Lawful basis (GDPR) — required if any column is personal data
-                type: string
-                enum: [Consent, Contract, Legal obligation, Legitimate interest, Not personal data]
-              freshnessSlaHours:
-                title: Freshness SLA (hours, optional)
-                type: integer
-                minimum: 1
-              columns:
-                title: Columns (databases)
-                type: array
-                items:
-                  type: object
-                  required: [name, type]
-                  properties:
-                    name:
-                      title: Column
-                      type: string
-                    type:
-                      title: Type
-                      type: string
-                    description:
-                      title: Description
-                      type: string
-                    personal:
-                      title: Personal data?
-                      type: boolean
-                      default: false
-
-    - title: Processes and lineage
-      properties:
-        processes:
-          title: Processes (optional)
-          description: >-
-            Camunda / Argo / Activepieces processes. What each task reads and writes
-            becomes the PLANNED lineage. Refer to a store above as
-            `postgres:<db>.<schema>.<table>`, `kafka:<topic>`, `s3:<bucket/prefix>` or
-            `alfresco-site:<shortName>`, or paste an existing dataset URN.
-          type: array
-          items:
-            type: object
-            required: [engine, id, name]
-            properties:
-              engine:
-                title: Engine
-                type: string
-                enum: [camunda, argo, activepieces]
-              id:
-                title: Process id
-                type: string
-              name:
-                title: Name
-                type: string
-              tasks:
-                title: Tasks
-                type: array
-                items:
-                  type: object
-                  required: [id, name]
-                  properties:
-                    id:
-                      title: Task id
-                      type: string
-                    name:
-                      title: Name
-                      type: string
-                    reads:
-                      title: Reads
-                      type: array
-                      items:
-                        type: string
-                    writes:
-                      title: Writes
-                      type: array
-                      items:
-                        type: string
-
-        dryRun:
-          title: Validate only
-          description: Check the brief against DataHub and show what would be created, without writing anything.
-          type: boolean
-          default: true
-    - title: Backstage catalog (optional)
-      properties:
-        repoUrl:
-          title: Repository for the catalog entities
-          description: >-
-            Publishes a repo with the product's catalog-info.yaml (a System, a Resource per data store and a Component
-            per process, each annotated with its DataHub URN and with a DataHub link) and registers it in the Backstage
-            catalog, so the DataHub card and the Data governance tab appear on them. Leave empty to skip. Ignored while
-            "Validate only" is on.
-          type: string
-          ui:field: RepoUrlPicker
-          ui:options:
-            allowedHosts:
-              - github.com
-  steps:
-    - id: register
-      name: Register in DataHub
-      action: datahub:register-data-product
-      input:
-        dryRun: ${{ parameters.dryRun }}
-        brief:
-          slug: ${{ parameters.slug }}
-          name: ${{ parameters.name }}
-          description: ${{ parameters.description }}
-          domain: ${{ parameters.domain }}
-          businessOwner: ${{ parameters.businessOwner }}
-          technicalOwner: ${{ parameters.technicalOwner }}
-          steward: ${{ parameters.steward }}
-          terms: ${{ parameters.glossaryTerms }}
-          tags: ${{ parameters.tags }}
-          backstageEntity: ${{ parameters.backstageEntity }}
-          stores: ${{ parameters.stores }}
-          processes: ${{ parameters.processes }}
-    - id: catalog-info
-      name: Generate the Backstage catalog entities
-      action: datahub:write-catalog-info
-      input:
-        brief:
-          slug: ${{ parameters.slug }}
-          name: ${{ parameters.name }}
-          description: ${{ parameters.description }}
-          domain: ${{ parameters.domain }}
-          businessOwner: ${{ parameters.businessOwner }}
-          technicalOwner: ${{ parameters.technicalOwner }}
-          steward: ${{ parameters.steward }}
-          terms: ${{ parameters.glossaryTerms }}
-          tags: ${{ parameters.tags }}
-          backstageEntity: ${{ parameters.backstageEntity }}
-          stores: ${{ parameters.stores }}
-          processes: ${{ parameters.processes }}
-    - id: publish
-      name: Publish the repository
-      if: ${{ not parameters.dryRun and parameters.repoUrl }}
-      action: publish:github
-      input:
-        description: ${{ parameters.name }} - data product registered in DataHub
-        repoUrl: ${{ parameters.repoUrl }}
-        defaultBranch: main
-        repoVisibility: private
-        gitCommitMessage: 'Register data product ${{ parameters.slug }} (catalog-info.yaml)'
-    - id: catalog
-      name: Register in the Backstage catalog
-      if: ${{ not parameters.dryRun and parameters.repoUrl }}
-      action: catalog:register
-      input:
-        repoContentsUrl: ${{ steps['publish'].output.repoContentsUrl }}
-        catalogInfoPath: '/catalog-info.yaml'
-  output:
-    links:
-      - title: Open the data product in DataHub
-        url: ${{ steps['register'].output.productUrl }}
-    text:
-      - title: Result
-        content: |
-          ${{ 'Validated only — nothing was written.' if steps['register'].output.dryRun else 'Registered in DataHub.' }}
-
-          Created: ${{ steps['register'].output.created | join(', ') }}
-
-          Updated: ${{ steps['register'].output.updated | join(', ') }}
-
-          ${{ steps['register'].output.warnings | join(' · ') }}
-
-          ${{ ('Catalog: repository ' ~ steps['publish'].output.remoteUrl ~ ' published and registered.') if (steps['publish'] and steps['publish'].output.remoteUrl) else 'Catalog: nothing published (no repository chosen, or validate-only).' }}
----
-apiVersion: scaffolder.backstage.io/v1beta3
-kind: Template
-metadata:
-  name: datahub-register-asset
-  title: Register data assets in an existing data product
-  description: >-
-    Adds databases, topics, S3 prefixes, Alfresco sites and processes to a data product
-    Backstage already manages. Only the product's asset list is merged: nothing else of
-    the product is rewritten. You must own the product (or be a steward / backstage-admin).
-  tags: [datahub, governance, data]
-spec:
-  owner: group:default/backstage-admin
-  type: datahub-governance
-  parameters:
-    - title: Product
-      required: [productSlug]
-      properties:
-        productSlug:
-          title: Data product slug
-          description: The slug of an existing product created from Backstage.
-          type: string
-    - title: Data stores
-      required: [stores]
-      properties:
-        stores:
-          title: Data stores
-          description: >-
-            Databases, topics, S3 prefixes or Alfresco sites this product owns.
-            Each becomes a dataset in DataHub with the governance you declare here.
-          type: array
-          minItems: 1
-          items:
-            type: object
-            required: [kind, classification, retentionDays]
-            properties:
-              kind:
-                title: Kind
-                type: string
-                enum: [postgres, kafka, s3, alfresco-site]
-              database:
-                title: Database (postgres only)
-                type: string
-              schema:
-                title: Schema (postgres only)
-                type: string
-                default: public
-              table:
-                title: Table (postgres only)
-                type: string
-              name:
-                title: Name (kafka topic / S3 bucket/prefix / Alfresco site shortName)
-                type: string
-              description:
-                title: Description
-                type: string
-              classification:
-                title: Data classification
-                type: string
-                enum: [Public, Internal, Confidential, Restricted]
-              retentionDays:
-                title: Retention (days)
-                type: integer
-                minimum: 1
-              lawfulBasis:
-                title: Lawful basis (GDPR) — required if any column is personal data
-                type: string
-                enum: [Consent, Contract, Legal obligation, Legitimate interest, Not personal data]
-              freshnessSlaHours:
-                title: Freshness SLA (hours, optional)
-                type: integer
-                minimum: 1
-              columns:
-                title: Columns (databases)
-                type: array
-                items:
-                  type: object
-                  required: [name, type]
-                  properties:
-                    name:
-                      title: Column
-                      type: string
-                    type:
-                      title: Type
-                      type: string
-                    description:
-                      title: Description
-                      type: string
-                    personal:
-                      title: Personal data?
-                      type: boolean
-                      default: false
-
-    - title: Processes and lineage
-      properties:
-        processes:
-          title: Processes (optional)
-          description: >-
-            Camunda / Argo / Activepieces processes. What each task reads and writes
-            becomes the PLANNED lineage. Refer to a store above as
-            `postgres:<db>.<schema>.<table>`, `kafka:<topic>`, `s3:<bucket/prefix>` or
-            `alfresco-site:<shortName>`, or paste an existing dataset URN.
-          type: array
-          items:
-            type: object
-            required: [engine, id, name]
-            properties:
-              engine:
-                title: Engine
-                type: string
-                enum: [camunda, argo, activepieces]
-              id:
-                title: Process id
-                type: string
-              name:
-                title: Name
-                type: string
-              tasks:
-                title: Tasks
-                type: array
-                items:
-                  type: object
-                  required: [id, name]
-                  properties:
-                    id:
-                      title: Task id
-                      type: string
-                    name:
-                      title: Name
-                      type: string
-                    reads:
-                      title: Reads
-                      type: array
-                      items:
-                        type: string
-                    writes:
-                      title: Writes
-                      type: array
-                      items:
-                        type: string
-
-        dryRun:
-          title: Validate only
-          type: boolean
-          default: true
-  steps:
-    - id: register
-      name: Register in DataHub
-      action: datahub:register-asset
-      input:
-        productSlug: ${{ parameters.productSlug }}
-        dryRun: ${{ parameters.dryRun }}
-        stores: ${{ parameters.stores }}
-        processes: ${{ parameters.processes }}
-  output:
-    links:
-      - title: Open the data product in DataHub
-        url: ${{ steps['register'].output.productUrl }}
-    text:
-      - title: Result
-        content: |
-          ${{ 'Validated only — nothing was written.' if steps['register'].output.dryRun else 'Registered in DataHub.' }}
-
-          Created: ${{ steps['register'].output.created | join(', ') }}
-
-          ${{ steps['register'].output.warnings | join(' · ') }}
----
-apiVersion: scaffolder.backstage.io/v1beta3
-kind: Template
-metadata:
   name: datahub-deprecate-asset
   title: Deprecate a data asset
   description: >-
@@ -2147,7 +1711,7 @@ spec:
           type: string
         property:
           title: Structured property (only for "allowed value")
-          description: e.g. refresquito.lawful_basis or refresquito.data_classification
+          description: e.g. refresquito.lawful_basis or refresquito.classification
           type: string
         description:
           title: Definition
@@ -2358,11 +1922,28 @@ spec:
         datahub:
           title: Data catalog (DataHub) - register its data
           description: >-
-            Optional. A data product <name> in DataHub with one dataset per table of its database, read
-            from its schema every few minutes (migrations show up by themselves). Its team is the
-            technical owner. The application gets nothing in its environment.
+            A data product <program>-<name> in DataHub with one dataset per table of its database, read
+            from its schema every hour (migrations show up by themselves), and its bucket, API, processes, flows,
+            sites and dashboards inside it. Its team is the technical owner. Only in pro: in dev and pre it waits
+            until the application is promoted to pro. Without it, its objects in the services go to the domain
+            Plataforma, not to the application.
           type: boolean
-          default: false
+          default: true
+        dataClassification:
+          title: Data catalog (DataHub) - classification of its data
+          description: >-
+            The classification of the data of the application, on the scale of the zone nato (lowest first), up to
+            the ceiling of the cluster (NATO RESTRICTED in sirtap). Its tables, bucket, API, processes, flows and
+            sites inherit it; platform/datahub.yaml can raise a table or a column. Only used with the data catalog.
+          type: string
+          enum: [INTERNAL, CONFIDENTIAL, NATO UNCLASSIFIED, NATO RESTRICTED]
+          default: NATO UNCLASSIFIED
+        dataReleasability:
+          title: Data catalog (DataHub) - releasability
+          description: Who its data may be released to, e.g. NATO, REL TO ESP, ESP ONLY. Empty = not declared. Only used with the data catalog.
+          type: string
+          pattern: '^[A-Z][A-Z0-9 ,/-]*$'
+          default: NATO
         dataOwners:
           title: Data catalog (DataHub) - people who own its data
           description: User names of the realm, business owners of its data product. Only used with the data catalog.
@@ -2550,6 +2131,8 @@ spec:
           sites: ${{ parameters.dmsSites }}
           siteGroups: ${{ parameters.dmsGroups }}
           datahub: ${{ parameters.datahub }}
+          dataClassification: ${{ parameters.dataClassification }}
+          dataReleasability: ${{ parameters.dataReleasability }}
           dataOwners: ${{ parameters.dataOwners }}
           dataOwnerGroups: ${{ parameters.dataOwnerGroups }}
           gateway: ${{ parameters.gateway }}
@@ -2591,7 +2174,7 @@ spec:
           | Namespace | `<zone>-<program>-${{ parameters.name if parameters.initialStage == 'pro' else (parameters.name + '-' + parameters.initialStage) }}-oneke` |
           | URL | `https://${{ parameters.name if parameters.initialStage == 'pro' else (parameters.name + '-' + parameters.initialStage) }}.<domain>` |
           | Images | `ghcr.io/${{ parameters.owner }}/${{ parameters.name }}-api` and `-web`, tag of that commit (its CI must have finished) |
-          | Platform blocks | `sso`: client `${{ parameters.name if parameters.initialStage == 'pro' else (parameters.name + '-' + parameters.initialStage) }}`, roles `${{ parameters.name }}-viewer` and `${{ parameters.name }}-admin`, their test users{% if parameters.s3Buckets | length %}. `s3`: buckets ${{ parameters.s3Buckets | join(", ") }} (each one as `${{ parameters.name }}-<bucket>`){% endif %}{% if parameters.dmsSites | length %}. `dms`: Alfresco sites ${{ parameters.dmsSites | join(", ") }} (each one as `${{ parameters.name }}-<site>`){% endif %}{% if parameters.datahub %}. `datahub`: data product `${{ parameters.name }}` with the tables of its database{% endif %}{% if parameters.gateway %}. `gateway`: its API at `/gateway/${{ parameters.name }}/` in Gravitee{% endif %}{% if parameters.processes %}. `processes`: its BPMN of `platform/processes/` in Camunda{% endif %}{% if parameters.dashboards %}. `dashboards`: its Superset export of `platform/dashboards/`{% endif %}{% if parameters.flows %}. `flows`: its Activepieces flows of `platform/flows/`{% endif %}{% if parameters.monitoring %}. `monitoring`: its metrics in Prometheus, dashboards Logs and Performance in the Grafana folder `apps`{% endif %} |
+          | Platform blocks | `sso`: client `${{ parameters.name if parameters.initialStage == 'pro' else (parameters.name + '-' + parameters.initialStage) }}`, roles `${{ parameters.name }}-viewer` and `${{ parameters.name }}-admin`, their test users{% if parameters.s3Buckets | length %}. `s3`: buckets ${{ parameters.s3Buckets | join(", ") }} (each one as `${{ parameters.name }}-<bucket>`){% endif %}{% if parameters.dmsSites | length %}. `dms`: Alfresco sites ${{ parameters.dmsSites | join(", ") }} (each one as `${{ parameters.name }}-<site>`){% endif %}{% if parameters.datahub %}. `datahub`: data product with the tables of its database, ${{ parameters.dataClassification }}{% if parameters.initialStage != 'pro' %} (only once it is in pro){% endif %}{% endif %}{% if parameters.gateway %}. `gateway`: its API at `/gateway/${{ parameters.name }}/` in Gravitee{% endif %}{% if parameters.processes %}. `processes`: its BPMN of `platform/processes/` in Camunda{% endif %}{% if parameters.dashboards %}. `dashboards`: its Superset export of `platform/dashboards/`{% endif %}{% if parameters.flows %}. `flows`: its Activepieces flows of `platform/flows/`{% endif %}{% if parameters.monitoring %}. `monitoring`: its metrics in Prometheus, dashboards Logs and Performance in the Grafana folder `apps`{% endif %} |
           | Python Framework | ${{ parameters.frameworkVersion }} |
 
           Files: `bootstrap/app-of-apps/apps/${{ parameters.name }}.yaml` (what it is and what it uses) and
@@ -2662,6 +2245,26 @@ spec:
           type: string
           enum: [dev, pre, pro]
           default: pro
+        datahub:
+          title: Data catalog (DataHub) - register its data
+          description: >-
+            Only when it goes to pro and its file has no block datahub yet: adds it, so its tables, bucket, API,
+            processes, flows, sites and dashboards go to its data product in DataHub (without it they go to the domain
+            Plataforma). An application that already has the block keeps it as it is.
+          type: boolean
+          default: true
+        dataClassification:
+          title: Data catalog (DataHub) - classification of its data
+          description: On the scale of the zone nato, up to the ceiling of the cluster (NATO RESTRICTED in sirtap). Only used when the block is added.
+          type: string
+          enum: [INTERNAL, CONFIDENTIAL, NATO UNCLASSIFIED, NATO RESTRICTED]
+          default: NATO UNCLASSIFIED
+        dataReleasability:
+          title: Data catalog (DataHub) - releasability
+          description: Who its data may be released to, e.g. NATO, REL TO ESP. Empty = not declared. Only used when the block is added.
+          type: string
+          pattern: '^([A-Z][A-Z0-9 ,/-]*)?$'
+          default: NATO
       dependencies:
         source:
           oneOf:
@@ -2735,6 +2338,18 @@ spec:
             find: '(\nstages:\n)'
             replaceWith: "$1  ${{ parameters.target }}: { tag: \"${{ parameters.commit if parameters.source == 'commit' else (steps['parse'].output.content.stages[parameters.source].tag if steps['parse'].output.content.stages else '') }}\" }\n"
 
+    # pro without the block datahub: it gets one, so its data is in DataHub as part of the application
+    - id: datahub
+      name: Add the block datahub (it goes to pro without it)
+      if: ${{ parameters.target == "pro" and parameters.datahub and not (steps['parse'].output.content.platform and steps['parse'].output.content.platform.datahub) }}
+      action: roadiehq:utils:fs:replace
+      input:
+        files:
+          - file: ./promote/bootstrap/app-of-apps/apps/${{ parameters.name }}.yaml
+            matchRegex: true
+            find: '(\nplatform:\n)'
+            replaceWith: "$1  datahub:\n    enabled: true\n    classification: \"${{ parameters.dataClassification }}\"\n    releasability: \"${{ parameters.dataReleasability }}\"\n"
+
     - id: promote
       name: Open the pull request in refresquito-services
       # nothing to promote when the stage it moves from has no version
@@ -2756,8 +2371,8 @@ spec:
           **${{ parameters.name }}**: the stage **${{ parameters.target }}** takes
           ${{ ("the commit `" + parameters.commit + "`") if parameters.source == "commit" else ("the version of **" + parameters.source + "**, commit `" + (steps["parse"].output.content.stages[parameters.source].tag if steps["parse"].output.content.stages else "?") + "`") }}.
 
-          Created with the Backstage template "Promote an application (Python Framework)". It changes only
-          `stages.${{ parameters.target }}.tag` in `bootstrap/app-of-apps/apps/${{ parameters.name }}.yaml`
+          Created with the Backstage template "Promote an application (Python Framework)". It changes
+          `stages.${{ parameters.target }}.tag` in `bootstrap/app-of-apps/apps/${{ parameters.name }}.yaml`${{ (", and adds the block `datahub` (classification " + parameters.dataClassification + ") if it had none") if (parameters.target == "pro" and parameters.datahub) else "" }}
           (see *Stages* in `charts/python-app-oneke/INSTALL.md`). Merging it deploys that version: Argo CD rolls out
           `${{ parameters.name if parameters.target == "pro" else (parameters.name + "-" + parameters.target) }}-oneke`
           on `https://${{ parameters.name if parameters.target == "pro" else (parameters.name + "-" + parameters.target) }}.<domain>`.

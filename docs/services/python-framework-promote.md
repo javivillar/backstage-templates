@@ -11,7 +11,9 @@ Un cluster sirve las tres etapas de una aplicación del Python Framework, cada u
 Los roles se llaman igual en todas las etapas, así que el código de la aplicación no cambia; un rol dado en dev no
 vale en pro. Lo que cada bloque crea en un servicio compartido es de su etapa (`<nombre>-<etapa>-...`: buckets, sites,
 `/gateway/<nombre>-<etapa>/`, procesos de Camunda, dashboards, proyecto de Activepieces). **DataHub solo en pro**: hay
-un único DataHub y el data product de la aplicación es el de pro.
+un único DataHub y el data product de la aplicación es el de pro. Si llevas a pro una aplicación cuyo fichero no tiene el bloque `datahub`, Promote
+lo añade (opción *Data catalog (DataHub) - register its data*, marcada por defecto) con la clasificación y la releasability
+que elijas; si ya lo tiene, no lo toca.
 
 Qué versión corre en cada etapa lo dice el fichero de la aplicación en refresquito-services
 (`bootstrap/app-of-apps/apps/<nombre>.yaml`):
