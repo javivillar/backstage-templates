@@ -2464,6 +2464,15 @@ spec:
           description: User or organization that will own the repository <owner>/<name>. It is created private.
           type: string
           default: javivillar
+        dataStewards:
+          title: Data stewards
+          description: >-
+            GitHub users (@user, separated by spaces) who approve the exceptions to the classification of its data:
+            the CODEOWNERS of platform/datahub-exceptions.yaml. The data stewards of the program, not the team of the
+            application.
+          type: string
+          pattern: '^@[A-Za-z0-9-]+( @[A-Za-z0-9-]+)*$'
+          default: "@javivillar"
   steps:
     - id: fetch
       name: Generate the application from the skeleton
@@ -2496,6 +2505,8 @@ spec:
           sites: ${{ parameters.dmsSites }}
           # 3.1: its dashboard embedded (page Dashboard, dashboards.py)
           dashboards: ${{ parameters.dashboards }}
+          # 3.1: who approves the exceptions to the classification of its data (.github/CODEOWNERS)
+          dataStewards: ${{ parameters.dataStewards }}
     - id: publish
       name: Create the repository
       action: publish:github

@@ -10,6 +10,8 @@ runs in the platform is always the version of the application that runs.
 | `dashboards/` | Dashboards for Superset: a dashboard exported from Superset (Dashboards, ⋮, Export), unzipped here as it comes | the block `dashboards` of the application is on |
 | `flows/` | Flows for Activepieces: each one a flow exported from Activepieces (the flow's menu, Export), saved as `<flow>.json` | the block `flows` of the application is on |
 | `monitoring/` | Grafana dashboards of its own (optional), one JSON per file, besides the standard Logs and Performance | the block `monitoring` of the application is on |
+| `datahub.yaml` | What it declares for DataHub: glossary terms and classification of tables and columns, folders of its buckets and sites, lineage of its processes and flows | the block `datahub` of the application is on |
+| `datahub-exceptions.yaml` | Approved exceptions to the classification rule; only the data stewards approve them (CODEOWNERS) | the block `datahub` of the application is on |
 
 **Naming rule:** the `id` of every executable process and decision starts with the name of the application followed by
 a dash (`${{ values.name }}-review`). An application never deploys over another one's; a file with another id is refused.
