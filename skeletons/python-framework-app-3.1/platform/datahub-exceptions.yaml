@@ -9,6 +9,6 @@
 #     reads: NATO RESTRICTED                  # what it would inherit
 #     granted: INTERNAL                       # what it is given
 #     reason: "aggregate of at least 10 records per cell, no identifiers"
-#     approvedBy: some-steward                # the CODEOWNER who approved it
+#     approvedBy: some-steward                # a data steward of the program (GitHub user): any other is refused
 #     expires: 2027-06-30
 exceptions: []
