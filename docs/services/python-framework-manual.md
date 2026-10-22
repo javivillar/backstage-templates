@@ -73,7 +73,8 @@ Cada bloque es algo que la aplicación usa de la plataforma. Todos son opcionale
 | **Object storage - buckets** | Una entrada por bucket (`documents`). Cada una se convierte en `<nombre>-documents` en SeaweedFS |
 | **Documents (Alfresco) - sites** | Una entrada por sitio (`records`). Cada una se convierte en el sitio privado `<nombre>-records` |
 | **Documents (Alfresco) - groups** | Grupos de Keycloak cuyos miembros entran en **todos** los sitios de la aplicación |
-| **Data catalog (DataHub) - register its data** | Publica sus tablas como un producto de datos en DataHub |
+| **Data catalog (DataHub) - register its data** | Marcado por defecto. Publica en DataHub, como su producto de datos, sus tablas y sus objetos en los servicios (bucket, API, procesos, flujos, sitios, dashboards). Solo en pro |
+| **Data catalog - classification / releasability** | La clasificación de sus datos (por defecto NATO UNCLASSIFIED, como mucho el techo del clúster) y a quién se pueden ceder (por defecto NATO) |
 | **Data catalog - people / groups who own its data** | Responsables **de negocio** del producto de datos. El técnico es siempre el equipo de la aplicación |
 | **API gateway (Gravitee) - publish its API** | Publica el API en `/gateway/<nombre>/` y en el portal de desarrolladores |
 | **API gateway - team** | Grupo `gravitee-team-<equipo>` cuyos miembros ven el API en Backstage |

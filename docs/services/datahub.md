@@ -7,9 +7,9 @@ vienen**. Desde Backstage no lo sustituyes: **das de alta y consultas** lo que i
 
 - **Página `/datahub`** en Backstage: busca activos, filtra los que tienen huecos de gobierno y ve la **completitud** de cada uno.
 - **Tarjeta y pestaña *Data governance*** en las entidades del catálogo que están enlazadas a un activo de DataHub.
-- **Plantillas y botones** para registrar un producto de datos, añadirle activos, deprecar un activo, ver el impacto de un cambio y
-  pedir vocabulario.
-- **Un enlace directo a DataHub** desde las entidades que genera la plantilla de producto y un acceso rápido en la página de inicio.
+- **Plantillas y botones** para deprecar un activo, ver el impacto de un cambio y pedir vocabulario. El producto de datos de una
+  aplicación lo crea la plataforma (ver abajo).
+- **Un enlace directo a DataHub** desde el recurso `<aplicación>-data-product` del catálogo y un acceso rápido en la página de inicio.
 
 ## Quién puede hacer qué
 
@@ -19,31 +19,27 @@ El acceso lo dan los **grupos de Keycloak** `datahub-admin`, `datahub-editor` y 
 | Quién | Puede |
 |---|---|
 | `datahub-viewer` | Leer: página `/datahub`, tarjetas, impacto de un cambio y solicitud de vocabulario. **No** escribe. |
-| `datahub-editor` | Lo anterior, **más** dar de alta un producto nuevo (te conviertes en su propietario técnico) y editar o deprecar los activos de **los productos de los que eres propietario**, directamente o por un grupo tuyo. |
+| `datahub-editor` | Lo anterior, **más** deprecar los activos de **los productos de los que eres propietario**, directamente o por un grupo tuyo. |
 | Steward (`datahub-admin`) y `backstage-admin` | Todo, incluido corregir clasificaciones de cualquier producto. |
 
 Los botones que **no** puedes usar no se muestran; si no puedes crear, la página lo explica.
 
 ## Cómo se usa
 
-### Dar de alta un producto de datos — **New data product**
+### El producto de datos de una aplicación
 
-Un formulario con el «brief de datos»: nombre y dominio del producto, responsables (negocio, técnico y, si toca, *steward*),
-almacenes (base de datos, topic, prefijo S3 o sitio de Alfresco) con su clasificación y retención, procesos opcionales con lo que
-leen y escriben (esto crea el **linaje previsto**) y enlaces.
+Una aplicación del Python Framework tiene su producto de datos `<programa>-<aplicación>` cuando su despliegue lleva el bloque
+`datahub` y está en pro. La plantilla **New application (Python Framework)** lo marca por defecto y pregunta la **clasificación**
+(escala de la zona, hasta el techo del clúster) y la **releasability**; **Promote** lo añade al llevar a pro una aplicación que no lo
+tenía. Con el bloque, sus tablas, bucket, API, procesos, flujos, sitios y dashboards entran en su producto y heredan su
+clasificación; lo más fino (términos, columnas, carpetas, linaje, contratos) va en `platform/datahub.yaml` de su repositorio. Cómo
+funciona por dentro: `DATA-GOVERNANCE.md` de refresquito-services.
 
-Reglas que verás aplicadas:
+Las antiguas plantillas *New data product* y *Register asset* se retiraron el 22-10-2026: usaban otra escala de clasificación
+(Public, Internal, Confidential, Restricted) y otra propiedad (`refresquito.data_classification`), y ahora el producto lo crea la
+plataforma desde el bloque `datahub`.
 
-- **Nunca se crean dominios, términos ni etiquetas nuevos** desde la plantilla: eliges de listas que vienen de DataHub. Si te falta uno, usa *Request vocabulary*.
-- Si una columna es **dato personal**: la **base legal** RGPD, la retención y una clasificación de al menos *Confidential* pasan a ser obligatorias.
-- Desde *Confidential*, el **steward** es obligatorio.
-- El **propietario técnico** por defecto eres tú.
-
-La plantilla arranca en **«Validate only»**: comprueba el formulario y te enseña el plan **sin escribir nada**. Para crear de verdad,
-desmarca esa opción. Opcionalmente, elige un repositorio (privado) donde publicar el `catalog-info.yaml` del producto: la plantilla lo
-registra en el catálogo con las anotaciones que hacen aparecer la tarjeta y la pestaña de gobierno. Sin repositorio, no se publica nada.
-
-### Añadir activos a un producto, o deprecar uno
+### Deprecar un activo
 
 Solo sobre productos **de los que eres propietario**. Deprecar es un **borrado suave**: el activo deja de aparecer y se puede deshacer.
 
@@ -86,4 +82,4 @@ Si necesitas un dominio, término o etiqueta que no existe, lo pides y **un stew
 | *Forbidden … is not in any DataHub access group* | No estás en `datahub-viewer/editor/admin` | Pide el grupo a un administrador |
 | *Forbidden … is not in a DataHub write group* | Eres *viewer* e intentas crear | Pide `datahub-editor` |
 | *Forbidden … is not an owner of this data product* | El producto es de otro equipo | Pide al propietario que lo haga o que te añada como propietario |
-| No aparece la tarjeta de gobierno en una entidad | La entidad no lleva la anotación `datahub.io/…` | Genérala con la plantilla de producto |
+| No aparece la tarjeta de gobierno en una entidad | La entidad no lleva la anotación `datahub.io/…` | Activa el bloque `datahub` de la aplicación (pro) |
