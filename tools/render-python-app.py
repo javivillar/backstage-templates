@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """render-python-app.py — render the skeleton the way Backstage's fetch:template does, to test it.
 
-    python3 tools/render-python-app.py OUT_DIR [frameworkVersion=3.1 name=orders title=Orders entity=order entities=orders owner=javivillar dataStewards=@javivillar]
+    python3 tools/render-python-app.py OUT_DIR [frameworkVersion=3.1 name=orders title=Orders entity=order entities=orders owner=javivillar dataStewards=@javivillar securityApprovers=@javivillar]
                                               [processes=true flows=true buckets=files sites=documents dashboards=true]   (3.0: the example code of each block; dashboards from 3.1)
     python3 tools/render-python-app.py OUT_DIR --deploy DEPLOY_DIR [... tag=<commit> environments=nato-sirtap admins=javi buckets=documents sites=records siteGroups=finance
                                               datahub=true 'dataClassification=NATO RESTRICTED' dataReleasability=NATO dataOwners=ana dataOwnerGroups=finance
@@ -29,7 +29,7 @@ if "--deploy" in argv:
     del argv[at:at + 2]
 out = pathlib.Path(argv[0]).expanduser().resolve()
 values = {"name": "orders", "title": "Orders", "description": "Orders of the shop", "entity": "order", "entities": "orders",
-          "owner": "javivillar", "dataStewards": "@javivillar"}
+          "owner": "javivillar", "dataStewards": "@javivillar", "securityApprovers": "@javivillar"}
 values.update(dict(a.split("=", 1) for a in argv[1:]))
 # the line of the Python Framework: its own skeleton, as the template's step fetch picks it
 line = values.setdefault("frameworkVersion", "3.1")

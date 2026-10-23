@@ -2056,6 +2056,15 @@ spec:
           type: string
           pattern: '^@[A-Za-z0-9-]+( @[A-Za-z0-9-]+)*$'
           default: "@javivillar"
+        securityApprovers:
+          title: Security approvers
+          description: >-
+            GitHub users (@user, separated by spaces) who approve the exceptions to the checks of Quality & Security
+            (an accepted vulnerability, a public endpoint...): the CODEOWNERS of platform/security-exceptions.yaml.
+            The security of the program, not the team of the application.
+          type: string
+          pattern: '^@[A-Za-z0-9-]+( @[A-Za-z0-9-]+)*$'
+          default: "@javivillar"
   steps:
     - id: fetch
       name: Generate the application from the skeleton
@@ -2091,6 +2100,7 @@ spec:
           dashboards: ${{ parameters.dashboards }}
           # 3.1: who approves the exceptions to the classification of its data (.github/CODEOWNERS)
           dataStewards: ${{ parameters.dataStewards }}
+          securityApprovers: ${{ parameters.securityApprovers }}
     - id: publish
       name: Create the repository
       action: publish:github

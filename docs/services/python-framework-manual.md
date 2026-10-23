@@ -92,6 +92,8 @@ Qué crea exactamente cada uno: sección 5.
 | Campo | Ejemplo | Qué significa |
 |---|---|---|
 | **GitHub owner** | `javivillar` | Usuario u organización dueña del repositorio `<owner>/<nombre>`, que se crea **privado** |
+| **Data stewards** | `@javivillar` | Quien aprueba las excepciones de clasificación de sus datos: los CODEOWNERS de `platform/datahub-exceptions.yaml` |
+| **Security approvers** | `@javivillar` | Quien aprueba las excepciones de seguridad (*Excepciones de seguridad*, abajo): los CODEOWNERS de `platform/security-exceptions.yaml`. La seguridad del programa, no el equipo de la aplicación |
 
 Al final, Backstage muestra un resumen. Revísalo y pulsa **Create**.
 
@@ -278,6 +280,18 @@ Una operación pública a propósito lo declara, con el motivo:
 
 El detalle da la regla, el fichero y la línea, **nunca el secreto** (gitleaks con `--redact`, Trivy lo enmascara). Un
 secreto encontrado en el historial hay que **revocarlo** donde se emitió: reescribir el historial no lo vuelve secreto.
+
+### Excepciones de seguridad
+
+Un hallazgo que se acepta va en `platform/security-exceptions.yaml`: el check (`vulnerability`, `endpoint`, `sast`,
+`secret`, `license`, `os-eol`), su id (`CVE-…`, `GET /api/info`, la regla, el paquete, la imagen), el motivo, quién lo
+aprueba y hasta cuándo (**12 meses como máximo**). Solo lo aprueban los **Security approvers** del formulario
+(página 5 · Repository): son los CODEOWNERS de ese fichero, así que el equipo de la aplicación no puede aprobarse sus excepciones.
+El CI lo valida (paso *Security exceptions* del job `backend`: una inválida sale como error en el resumen) y lo mete en
+el informe de calidad de cada imagen; Backstage saca de sus checks los hallazgos de las excepciones **activas hoy**
+(una caducada después de construir la imagen deja de aplicar), las enseña en la pestaña **Exceptions** de la tarjeta
+de calidad y comprueba que ninguna es inválida ni está a punto de caducar (30 días). El formato está en los
+comentarios del propio fichero.
 
 ## 6. Comprobar que todo ha ido bien
 

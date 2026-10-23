@@ -82,6 +82,11 @@ An operation that is public on purpose says so, with the reason:
 @router.get("/api/info", openapi_extra={"x-refresquito-public": "version shown on the sign-in page"})
 ```
 
+A finding that is accepted goes in `platform/security-exceptions.yaml` (the format is in its comments): check, id,
+why, who approved it and until when, at most 12 months. Only the security approvers can approve it: they are its
+CODEOWNERS (`.github/CODEOWNERS`). Backstage takes the findings of the active ones out of their checks and shows them
+in the tab *Exceptions* of the quality card.
+
 The detail gives the rule, the file and the line, never the secret. A secret found in the history has to be revoked
 where it was issued: rewriting the history does not make it secret again. Locally:
 
