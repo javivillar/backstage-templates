@@ -15,6 +15,8 @@ Created from the Backstage template "New application (Python Framework)": the ${
 - Built with refresquito-fastapi 3.1.2 and refresquito-angular 3.1.1.
 - License: proprietary (`LicenseRef-Refresquito-Proprietary`, `backend/LICENSE` and `frontend/package.json`), like the
   frameworks: the license policy of Backstage checks that every dependency of its images says its license.
+- Security exceptions: `platform/security-exceptions.yaml` (empty), approved by the security approvers
+  (`.github/CODEOWNERS`), validated by the CI into the quality report; Backstage applies the active ones to its checks.
 - CI: the quality report `quality.json` with its code findings (README, *Code findings*): who can call each endpoint,
   Bandit, the eslint rules of security, secrets in the git history and in the images.
 {%- if values.processes %}

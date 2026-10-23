@@ -8,7 +8,8 @@ application/vnd.refresquito.quality.v1+json); Backstage reads it for the scoreca
     quality.py frontend OUT --karma karma.log --coverage coverage-summary.json --eslint eslint.json \
                             [--specs specs.json] [--coverage-final coverage-final.json]
     quality.py secrets  OUT --gitleaks gitleaks.json [--trivy api=trivy-api.json --trivy web=trivy-web.json]
-    quality.py merge    OUT backend.json frontend.json secrets.json --revision <sha>
+    quality.py exceptions OUT --file platform/security-exceptions.yaml
+    quality.py merge    OUT backend.json frontend.json secrets.json exceptions.json --revision <sha>
 
 Code findings (the backend also takes --endpoints endpoints.json --bandit bandit.json; the frontend's come from its
 eslint report): who can call each endpoint (.github/endpoints.py: "unauthenticated" counts the operations of the
@@ -179,6 +180,65 @@ def secrets(gitleaks_path, trivy):
     return part or None, findings[:MAX_FINDINGS]
 
 
+# The approved exceptions to the checks of Quality & Security (platform/security-exceptions.yaml, approved by the
+# CODEOWNERS of that file). Validated here, applied by Backstage: an exception takes its finding out of its check.
+EXCEPTION_CHECKS = {
+    "vulnerability": "a CVE / GHSA id of the image scan; `image:` (repository) to limit it to one image",
+    "endpoint": "an operation without authentication: \"METHOD /path\" as the quality report lists it",
+    "sast": "a rule of Bandit (B608) or eslint (no-eval) with the `file:` it is in",
+    "secret": "a rule of gitleaks / Trivy (generic-api-key) with the `file:` it is in",
+    "license": "a dependency of the application (its name) whose license is denied or unknown",
+    "os-eol": "an image (repository) whose OS is out of support",
+}
+MAX_EXCEPTION_DAYS = 365
+
+
+def exceptions(path, today=None):
+    """The exceptions file, sorted into active, expired and invalid (with why). Missing file: no exceptions."""
+    from datetime import date
+    text = read(path)
+    if text is None:
+        return {"active": [], "expired": [], "invalid": [], "file": False}
+    import yaml
+    try:
+        doc = yaml.safe_load(text) or {}
+    except yaml.YAMLError as e:
+        return {"active": [], "expired": [], "invalid": [{"why": f"not valid YAML: {first_lines(str(e))}"}], "file": True}
+    today = today or datetime.now(timezone.utc).date()
+    out = {"active": [], "expired": [], "invalid": [], "file": True}
+    for i, e in enumerate(doc.get("exceptions") or []):
+        if not isinstance(e, dict):
+            out["invalid"].append({"entry": i + 1, "why": "an exception is a mapping (check, id, reason, approvedBy, expires)"})
+            continue
+        entry = {k: (str(v) if k == "expires" else v) for k, v in e.items()
+                 if k in ("check", "id", "file", "image", "reason", "approvedBy", "expires")}
+        why = []
+        if e.get("check") not in EXCEPTION_CHECKS:
+            why.append(f"check is one of {', '.join(EXCEPTION_CHECKS)}")
+        if not str(e.get("id") or "").strip():
+            why.append("id is required")
+        if e.get("check") in ("sast", "secret") and not str(e.get("file") or "").strip():
+            why.append("file is required for a sast / secret exception")
+        if len(str(e.get("reason") or "").strip()) < 10:
+            why.append("reason is required (why it is accepted, at least a sentence)")
+        if not str(e.get("approvedBy") or "").strip():
+            why.append("approvedBy is required (the approver, a CODEOWNER of the file)")
+        try:
+            expires = e["expires"] if isinstance(e.get("expires"), date) else date.fromisoformat(str(e.get("expires")))
+        except (TypeError, ValueError):
+            expires = None
+            why.append("expires is a date (YYYY-MM-DD)")
+        if expires and (expires - today).days > MAX_EXCEPTION_DAYS:
+            why.append(f"expires at most {MAX_EXCEPTION_DAYS} days ahead")
+        if why:
+            out["invalid"].append({**entry, "entry": i + 1, "why": "; ".join(why)})
+        elif expires < today:
+            out["expired"].append(entry)
+        else:
+            out["active"].append({**entry, "days_left": (expires - today).days})
+    return out
+
+
 MAX_TESTS = 3000  # the report stays small (Backstage reads at most 1 MB)
 MAX_MESSAGE = 500
 
@@ -291,7 +351,10 @@ def summary(title, part):
     for key, value in part.items():
         if key == "detail":
             continue
-        shown = ", ".join(f"{k}: {v}" for k, v in value.items()) if isinstance(value, dict) else value
+        if isinstance(value, list):
+            shown = f"{len(value)}" + (": " + "; ".join(str(x.get("id", x.get("why", ""))) for x in value[:10]) if value else "")
+        else:
+            shown = ", ".join(f"{k}: {v}" for k, v in value.items()) if isinstance(value, dict) else value
         rows.append(f"| {key} | {shown} |")
     text = f"### Quality report: {title}\n\n| | |\n|---|---|\n" + "\n".join(rows) + "\n"
     if os.environ.get("GITHUB_STEP_SUMMARY"):
@@ -302,11 +365,11 @@ def summary(title, part):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("part", choices=["backend", "frontend", "secrets", "merge"])
+    p.add_argument("part", choices=["backend", "frontend", "secrets", "exceptions", "merge"])
     p.add_argument("out")
     p.add_argument("inputs", nargs="*")
     for opt in ("junit", "coverage", "ruff", "mypy", "karma", "eslint", "revision", "specs", "coverage-final",
-                "endpoints", "bandit", "gitleaks"):
+                "endpoints", "bandit", "gitleaks", "file"):
         p.add_argument(f"--{opt}")
     p.add_argument("--trivy", action="append", help="<image>=<Trivy JSON report>, once per image")
     a = p.parse_args()
@@ -322,6 +385,10 @@ def main():
         part = drop_none({"tests": karma(a.karma), "coverage": istanbul(a.coverage), "eslint": eslint(a.eslint),
                           "security": sec,
                           "detail": detail(karma_specs(a.specs), istanbul_files(a.coverage, a.coverage_final), None, sec_findings)})
+    elif a.part == "exceptions":
+        part = exceptions(a.file)
+        for e in part["invalid"]:
+            print(f"::error::{a.file}: exception {e.get('entry', '?')}: {e['why']}")
     elif a.part == "secrets":
         found, found_list = secrets(a.gitleaks, a.trivy)
         part = drop_none({**(found or {}), "detail": detail(None, None, None, found_list)})

@@ -1,3 +1,6 @@
 # The data stewards of the program approve the exceptions to the classification of its data (branch protection of
 # main: "Require review from Code Owners"). Everything else: the team of the application.
 /platform/datahub-exceptions.yaml ${{ values.dataStewards }}
+# The security approvers accept the exceptions to the checks of Quality & Security (same branch protection): the team
+# of the application cannot approve its own.
+/platform/security-exceptions.yaml ${{ values.securityApprovers }}

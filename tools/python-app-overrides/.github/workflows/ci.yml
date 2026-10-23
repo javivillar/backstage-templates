@@ -50,10 +50,16 @@ jobs:
           python3 ../.github/quality.py backend ../quality/quality-backend.json \
             --junit ../quality/junit.xml --coverage ../quality/coverage.json --ruff ../quality/ruff.json --mypy ../quality/mypy.txt \
             --endpoints ../quality/endpoints.json --bandit ../quality/bandit.json
+      # The approved exceptions to the checks (platform/security-exceptions.yaml): validated here (an invalid one is an
+      # error in the summary, it does not fail the job), applied by Backstage.
+      - name: Security exceptions
+        run: python3 ../.github/quality.py exceptions ../quality/quality-exceptions.json --file ../platform/security-exceptions.yaml
       - uses: actions/upload-artifact@v4
         with:
           name: quality-backend
-          path: quality/quality-backend.json
+          path: |
+            quality/quality-backend.json
+            quality/quality-exceptions.json
       - name: openapi.json is what the API publishes
         run: |
           module=$(basename "$(dirname src/*/openapi.py)")
@@ -212,7 +218,7 @@ jobs:
           python3 .github/quality.py secrets quality/quality-secrets.json --gitleaks quality/gitleaks.json \
             --trivy api=quality/trivy-api.json --trivy web=quality/trivy-web.json
       - name: The quality report
-        run: python3 .github/quality.py merge quality.json quality/quality-backend.json quality/quality-frontend.json quality/quality-secrets.json --revision "${{ github.sha }}"
+        run: python3 .github/quality.py merge quality.json quality/quality-backend.json quality/quality-frontend.json quality/quality-secrets.json quality/quality-exceptions.json --revision "${{ github.sha }}"
       - uses: actions/upload-artifact@v4
         with:
           name: quality.json
