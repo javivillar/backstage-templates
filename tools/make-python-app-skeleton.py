@@ -291,7 +291,13 @@ for rel, old_re, new in (("backend/pyproject.toml", r'(?m)^version = "[^"]+"', '
     path.write_text(text)
 # ... and so does its OpenAPI document (its CI checks it matches the code, as JSON): composed by blocks
 api_path = OUT / "backend/openapi.json"
-api_path.write_text(convert(openapi_by_blocks()))
+api_text = convert(openapi_by_blocks())
+# the lineage of the blocks s3 and dms names the bucket and the site the application was given (files.py and
+# documents.py use the first one), not the petstore's: its CI compares this file with what the code publishes
+for old, new in (('"bucket:files"', '"bucket:${{ values.buckets[0] }}"'), ('"site:documents"', '"site:${{ values.sites[0] }}"')):
+    assert old in api_text, old
+    api_text = api_text.replace(old, new)
+api_path.write_text(api_text)
 # the API types of the web are generated from backend/openapi.json when it is built, tested or
 # served (not committed): a new application starts with whatever entity name it was given
 pkg_path = OUT / "frontend/package.json"
