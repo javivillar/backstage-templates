@@ -1,4 +1,4 @@
-# Backend tests against a real PostgreSQL, frontend tests, the contract between the two
+# Backend tests against a real PostgreSQL (the one of the framework, built from vendor/), frontend tests, the contract between the two
 # (backend/openapi.json must be what the API publishes; the web generates its types from it),
 # and the two images pushed to ghcr.io with the commit as tag once the tests of main pass.
 # Nothing here names the application: the same file serves every application of the framework.
@@ -10,16 +10,6 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: app
-          POSTGRES_PASSWORD: app
-          POSTGRES_DB: app_test
-        ports: ["55432:5432"]
-        options: >-
-          --health-cmd "pg_isready -U app" --health-interval 3s --health-retries 20
     env:
       RQ_TEST_DATABASE_URL: postgresql+asyncpg://app:app@localhost:55432/app_test
     defaults:
@@ -27,6 +17,18 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v4
+      # the database of the framework (refresquito-postgres, PostgreSQL 18): built from the Dockerfile of its release in
+      # vendor/ (the image is private), as compose.yaml does; not a service container, which can only pull an image
+      - name: The database of the framework
+        run: |
+          docker build -q -t refresquito-postgres:ci ../vendor/refresquito-postgres-*/
+          docker run -d --name db -p 55432:5432 -e POSTGRES_USER=app -e POSTGRES_PASSWORD=app -e POSTGRES_DB=app_test \
+            refresquito-postgres:ci
+          for _ in $(seq 1 60); do
+            docker logs db 2>&1 | grep -q "PostgreSQL init process complete" && docker exec db pg_isready -U app -q && exit 0
+            sleep 2
+          done
+          docker logs db; exit 1
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"

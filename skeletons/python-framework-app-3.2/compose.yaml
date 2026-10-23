@@ -1,0 +1,24 @@
+# Local development: the database, and the test database next to it.
+#   podman compose up -d db      (or docker compose)
+# The database of the framework (refresquito-postgres, PostgreSQL 18), built from the Dockerfile of its release in
+# vendor/: the image is private, the same one the platform runs. It runs as postgres (uid 70), never as root.
+services:
+  db:
+    build: ./vendor/refresquito-postgres-3.2.0
+    image: localhost/refresquito-postgres:3.2.0
+    environment:
+      POSTGRES_USER: ${{ values.name }}
+      POSTGRES_PASSWORD: ${{ values.name }}
+      POSTGRES_DB: ${{ values.name }}
+    ports:
+      - "55432:5432"
+    volumes:
+      - ./dev/initdb:/docker-entrypoint-initdb.d:ro,Z
+      # PostgreSQL 18 keeps its data under /var/lib/postgresql; a volume of its own (the one of 16 had another layout)
+      - ${{ values.name }}-db-18:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${{ values.name }}"]
+      interval: 3s
+      retries: 20
+volumes:
+  ${{ values.name }}-db-18:

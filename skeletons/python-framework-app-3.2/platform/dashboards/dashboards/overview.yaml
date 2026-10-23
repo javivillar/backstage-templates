@@ -1,0 +1,101 @@
+dashboard_title: ${{ values.title }}
+description: null
+css: null
+slug: ${{ values.name }}
+certified_by: null
+certification_details: null
+published: true
+uuid: f1ef9db4-1d62-46b9-b0c5-7840b904abd8
+position:
+  DASHBOARD_VERSION_KEY: v2
+  ROOT_ID:
+    type: ROOT
+    id: ROOT_ID
+    children:
+    - GRID_ID
+  GRID_ID:
+    type: GRID
+    id: GRID_ID
+    children:
+    - ROW-1
+    - ROW-N-1FK01BWL
+    parents:
+    - ROOT_ID
+  ROW-1:
+    type: ROW
+    id: ROW-1
+    children:
+    - CHART-1
+    - CHART-2
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  CHART-1:
+    type: CHART
+    id: CHART-1
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-1
+    meta:
+      chartId: 2
+      width: 4
+      height: 50
+      sliceName: ${{ values.entitiesTitle }}
+  CHART-2:
+    type: CHART
+    id: CHART-2
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-1
+    meta:
+      chartId: 1
+      width: 8
+      height: 50
+      sliceName: ${{ values.entitiesTitle }} by status
+  ROW-N-1FK01BWL:
+    children:
+    - CHART-5OCZZ53M
+    - CHART-K03Y6OBY
+    id: ROW-N-1FK01BWL
+    meta:
+      '0': ROOT_ID
+      background: BACKGROUND_TRANSPARENT
+    type: ROW
+    parents:
+    - ROOT_ID
+    - GRID_ID
+  CHART-5OCZZ53M:
+    children: []
+    id: CHART-5OCZZ53M
+    meta:
+      chartId: 2
+      height: 50
+      sliceName: ${{ values.entitiesTitle }}
+      uuid: ba819011-f2e9-42ac-a8e0-82394bc77b34
+      width: 4
+    type: CHART
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-N-1FK01BWL
+  CHART-K03Y6OBY:
+    children: []
+    id: CHART-K03Y6OBY
+    meta:
+      chartId: 1
+      height: 50
+      sliceName: ${{ values.entitiesTitle }} by status
+      uuid: 195fcddc-51ad-4de8-a32d-f5fb10a389f0
+      width: 4
+    type: CHART
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-N-1FK01BWL
+version: 1.0.0

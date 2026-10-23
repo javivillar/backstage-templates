@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """render-python-app.py — render the skeleton the way Backstage's fetch:template does, to test it.
 
-    python3 tools/render-python-app.py OUT_DIR [frameworkVersion=3.1 name=orders title=Orders entity=order entities=orders owner=javivillar dataStewards=@javivillar securityApprovers=@javivillar]
+    python3 tools/render-python-app.py OUT_DIR [frameworkVersion=3.2 name=orders title=Orders entity=order entities=orders owner=javivillar dataStewards=@javivillar securityApprovers=@javivillar]
                                               [processes=true flows=true buckets=files sites=documents dashboards=true]   (3.0: the example code of each block; dashboards from 3.1)
     python3 tools/render-python-app.py OUT_DIR --deploy DEPLOY_DIR [... tag=<commit> environments=nato-sirtap admins=javi buckets=documents sites=records siteGroups=finance
                                               datahub=true 'dataClassification=NATO RESTRICTED' dataReleasability=NATO dataOwners=ana dataOwnerGroups=finance
@@ -32,7 +32,7 @@ values = {"name": "orders", "title": "Orders", "description": "Orders of the sho
           "owner": "javivillar", "dataStewards": "@javivillar", "securityApprovers": "@javivillar"}
 values.update(dict(a.split("=", 1) for a in argv[1:]))
 # the line of the Python Framework: its own skeleton, as the template's step fetch picks it
-line = values.setdefault("frameworkVersion", "3.1")
+line = values.setdefault("frameworkVersion", "3.2")
 SKELETON = SKELETONS / f"python-framework-app-{line}"
 if not SKELETON.is_dir():
     sys.exit(f"no skeleton for the line {line} of the Python Framework: {', '.join(sorted(p.name for p in SKELETONS.glob('python-framework-app-*')))}")
@@ -70,7 +70,7 @@ render(SKELETON, out, VERBATIM)
 print(f"rendered {values['name']} ({values['entityTitle']}/{values['entities']}) in {out}")
 if deploy:
     # what the template adds for the deployment pull request (its step "deploy")
-    values.update(tag=values.get("tag", "0000000"), stage=values.get("stage", "dev"), fastapi=values.get("fastapi", f"{line}.0"), angular=values.get("angular", f"{line}.0"),
+    values.update(tag=values.get("tag", "0000000"), stage=values.get("stage", "dev"), fastapi=values.get("fastapi", f"{line}.0"), angular=values.get("angular", f"{line}.0"), postgres=values.get("postgres", "3.2.0" if line == "3.2" else ""),
                   environments=values.get("environments", "nato-sirtap").split(","),
                   admins=[a for a in values.get("admins", "").split(",") if a],
 
