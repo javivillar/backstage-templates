@@ -1,0 +1,130 @@
+{
+  "platform": {
+    "events": [
+      "${{ values.entity }}.created"
+    ]
+  },
+  "name": "New ${{ values.entity }}",
+  "type": "SHARED",
+  "summary": "",
+  "description": "Welcomes a ${{ values.entity }}: started by the API (POST /api/${{ values.entities }}/{id}/welcome, waiting for the answer) and by the event ${{ values.entity }}.created; tells the API how it ended (POST /api/flow-runs/{run}) with the key of the application.",
+  "tags": [],
+  "blogUrl": "",
+  "metadata": {},
+  "author": "",
+  "categories": [],
+  "pieces": [
+    "@activepieces/piece-webhook",
+    "@activepieces/piece-http"
+  ],
+  "flows": [
+    {
+      "displayName": "New ${{ values.entity }}",
+      "trigger": {
+        "name": "trigger",
+        "valid": true,
+        "displayName": "Catch Webhook",
+        "nextAction": {
+          "name": "api_key",
+          "type": "CODE",
+          "valid": true,
+          "displayName": "The key of the API",
+          "settings": {
+            "input": {
+              "connection": "{{connections['app-api-key']}}"
+            },
+            "sourceCode": {
+              "code": "export const code = async (inputs) => inputs.connection.secret_text;",
+              "packageJson": "{}"
+            },
+            "sampleData": {}
+          },
+          "nextAction": {
+            "name": "report",
+            "type": "PIECE",
+            "valid": true,
+            "displayName": "Tell the API how it ended",
+            "settings": {
+              "pieceName": "@activepieces/piece-http",
+              "pieceVersion": "~0.11.19",
+              "actionName": "send_request",
+              "propertySettings": {},
+              "sampleData": {},
+              "input": {
+                "method": "POST",
+                "url": "{{trigger['output']['headers']['x-platform-api']}}/flow-runs/{{trigger['output']['headers']['x-flow-run']}}",
+                "headers": {
+                  "X-Flow-Key": "{{api_key['output']}}"
+                },
+                "queryParams": {},
+                "authType": "NONE",
+                "authFields": {},
+                "body_type": "json",
+                "body": {
+                  "data": {
+                    "status": "succeeded",
+                    "detail": "Welcome, {{trigger['output']['body']['name']}} the {{trigger['output']['body']['category']}}!"
+                  }
+                },
+                "failureMode": "continue_none"
+              }
+            },
+            "nextAction": {
+              "name": "step_1",
+              "type": "PIECE",
+              "valid": true,
+              "settings": {
+                "input": {
+                  "fields": {
+                    "body": {
+                      "message": "Welcome, {{trigger['output']['body']['name']}} the {{trigger['output']['body']['category']}}!"
+                    },
+                    "status": 200
+                  },
+                  "respond": "stop",
+                  "responseType": "json"
+                },
+                "pieceName": "@activepieces/piece-webhook",
+                "actionName": "return_response",
+                "sampleData": {},
+                "pieceVersion": "0.1.42",
+                "propertySettings": {
+                  "fields": {
+                    "type": "MANUAL"
+                  },
+                  "respond": {
+                    "type": "MANUAL"
+                  },
+                  "responseType": {
+                    "type": "MANUAL"
+                  }
+                }
+              },
+              "displayName": "Return Response",
+              "lastUpdatedDate": "2026-10-15T04:04:08.409Z"
+            }
+          }
+        },
+        "lastUpdatedDate": "2026-10-15T04:04:08.409Z",
+        "type": "PIECE_TRIGGER",
+        "settings": {
+          "propertySettings": {
+            "authType": {
+              "type": "MANUAL"
+            }
+          },
+          "pieceName": "@activepieces/piece-webhook",
+          "pieceVersion": "0.1.42",
+          "triggerName": "catch_webhook",
+          "input": {
+            "authType": "none"
+          }
+        }
+      },
+      "valid": true,
+      "schemaVersion": "22",
+      "notes": []
+    }
+  ],
+  "status": "PUBLISHED"
+}

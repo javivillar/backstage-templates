@@ -1,0 +1,22 @@
+import { HttpClient } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
+import { ConfigService, NotificationService } from 'refresquito-angular';
+
+/** Block flows: what the flow new-${{ values.entity }} answers for a ${{ values.entity }} (Activepieces). */
+@Component({
+  selector: 'app-${{ values.entity }}-welcome',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `<button type="button" (click)="welcome()">Welcome</button>`,
+})
+export class ${{ values.entityTitle }}Welcome {
+  readonly id = input.required<number>();
+  private readonly http = inject(HttpClient);
+  private readonly config = inject(ConfigService);
+  private readonly notifications = inject(NotificationService);
+
+  protected welcome(): void {
+    this.http
+      .post<{ message?: string }>(`${this.config.apiUrl}/api/${{ values.entities }}/${this.id()}/welcome`, {})
+      .subscribe((answer) => this.notifications.success(answer.message ?? 'Welcomed'));
+  }
+}

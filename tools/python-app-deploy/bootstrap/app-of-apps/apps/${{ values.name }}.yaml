@@ -16,7 +16,7 @@ stages:
   ${{ values.stage }}: { tag: "${{ values.tag }}" }
 {%- endif %}
 # versions of the framework it is built with (shown in the catalog)
-framework: { fastapi: ${{ values.fastapi }}, angular: ${{ values.angular }} }
+framework: { fastapi: ${{ values.fastapi }}, angular: ${{ values.angular }}{% if values.postgres %}, postgres: ${{ values.postgres }}{% endif %} }
 tier: bronze
 # its API in the catalog: catalog/apis/${{ values.name }}.json
 api:

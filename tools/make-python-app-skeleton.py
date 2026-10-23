@@ -35,7 +35,11 @@ HERE = pathlib.Path(__file__).resolve().parent
 SKELETONS = HERE.parent / "skeletons"
 OUT = SKELETONS / "python-framework-app"          # built here first, then one copy per line
 # the maintained lines of the Python Framework (its SUPPORT.md): line -> (refresquito-fastapi, refresquito-angular)
-LINES = {"0.1": ("0.1.0", "0.1.0"), "2.0": ("2.0.0", "2.0.0"), "3.0": ("3.0.1", "3.0.0"), "3.1": ("3.1.2", "3.1.1")}
+LINES = {"0.1": ("0.1.0", "0.1.0"), "2.0": ("2.0.0", "2.0.0"), "3.0": ("3.0.1", "3.0.0"), "3.1": ("3.1.2", "3.1.1"),
+         "3.2": ("3.2.0", "3.2.0")}
+# from 3.2 the framework has its database, refresquito-postgres: the Dockerfile of its release goes to
+# vendor/refresquito-postgres-<version>/ (the image is private: compose.yaml and the CI build it from there)
+POSTGRES = {"3.2": "3.2.0"}
 NEWEST = max(LINES, key=lambda line: tuple(int(n) for n in line.split(".")))
 OVERRIDES = HERE / "python-app-overrides"
 src = pathlib.Path(sys.argv[1]).expanduser().resolve() if len(sys.argv) > 1 else sys.exit(__doc__)
@@ -390,7 +394,13 @@ for line, (fastapi, angular) in LINES.items():
         shutil.rmtree(dest)
     shutil.copytree(OUT, dest)
     for old in (dest / "vendor").iterdir():
-        old.unlink()
+        shutil.rmtree(old) if old.is_dir() else old.unlink()
+    if line in POSTGRES:
+        pg = POSTGRES[line]
+        local = src / "vendor" / f"refresquito-postgres-{pg}" / "Dockerfile"
+        (dest / "vendor" / f"refresquito-postgres-{pg}").mkdir()
+        (dest / "vendor" / f"refresquito-postgres-{pg}" / "Dockerfile").write_bytes(
+            local.read_bytes() if local.exists() else package("refresquito-postgres", f"refresquito-postgres-v{pg}.Dockerfile"))
     wheel, tgz = f"refresquito_fastapi-{fastapi}-py3-none-any.whl", f"refresquito-angular-{angular}.tgz"
     (dest / "vendor" / wheel).write_bytes(package("refresquito-fastapi", wheel))
     tgz_bytes = package("refresquito-angular", tgz)

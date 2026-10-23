@@ -1,0 +1,38 @@
+<section>
+  <h1>{{ id() ? 'Edit ${{ values.entity }}' : 'New ${{ values.entity }}' }}</h1>
+  <form class="card" [formGroup]="form" (ngSubmit)="save()">
+    <label>
+      Name
+      <input formControlName="name" autocomplete="off" />
+      @if (problem('name'); as message) {
+        <small class="field-error">{{ message }}</small>
+      }
+    </label>
+    <label>
+      Category
+      <input formControlName="category" autocomplete="off" />
+      @if (problem('category'); as message) {
+        <small class="field-error">{{ message }}</small>
+      }
+    </label>
+    <label>
+      Status
+      <select formControlName="status">
+        @for (s of statuses; track s) {
+          <option [value]="s">{{ s }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Start date
+      <input type="date" formControlName="start_date" />
+      @if (problem('start_date'); as message) {
+        <small class="field-error">{{ message }}</small>
+      }
+    </label>
+    <div class="form-actions">
+      <a class="button" routerLink="/${{ values.entities }}">Cancel</a>
+      <button type="submit" class="primary" [disabled]="saving()">Save</button>
+    </div>
+  </form>
+</section>

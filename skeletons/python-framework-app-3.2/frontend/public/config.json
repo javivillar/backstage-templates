@@ -1,0 +1,8 @@
+{
+  "apiUrl": "",
+  "keycloak": {
+    "url": "https://iam.platform.nato.sirtap.iaas.refresquito.io",
+    "realm": "RefresquitoTime",
+    "clientId": "${{ values.name }}"
+  }
+}

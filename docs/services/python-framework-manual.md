@@ -57,7 +57,7 @@ La entidad nace con nombre, categoría, estado y fecha de inicio: cámbiala por 
 | Campo | Ejemplo | Qué significa |
 |---|---|---|
 | **Environments** | `nato-sirtap` | Los clusters donde se despliega, como `<zona>-<programa>`. Se pueden añadir más después en el fichero de la aplicación |
-| **Version of the Python Framework** | `3.1` | La línea del framework con la que nace. Solo se ofrecen las **mantenidas**: **3.1** (la actual: dashboards de Superset embebidos y ejecuciones de flujos), **3.0** (bloques de la plataforma en el código), **2.0** (traza de auditoría) y **0.1** (en retirada, mantenida hasta el 15-04-2027). En el catálogo la aplicación dependerá de esa línea (`python-framework-3-1`, `python-framework-3-0`...). Todas traen el SBOM de sus imágenes en el CI |
+| **Version of the Python Framework** | `3.2` | La línea del framework con la que nace. Solo se ofrecen las **mantenidas**: **3.2** (la actual: trae su base de datos, refresquito-postgres, PostgreSQL 18 sin root; el CI y `compose.yaml` la construyen desde `vendor/`), **3.1** (hasta el 23-04-2027: dashboards de Superset embebidos y ejecuciones de flujos), **3.0** (bloques de la plataforma en el código), **2.0** (traza de auditoría) y **0.1** (en retirada, mantenida hasta el 15-04-2027). En el catálogo la aplicación dependerá de esa línea (`python-framework-3-2`, `python-framework-3-1`...). Todas traen el SBOM de sus imágenes en el CI |
 
 | **Initial stage** | `dev` | La etapa en la que nace: **dev** por defecto (`<nombre>-dev`, su propio cliente de Keycloak y sus usuarios de prueba). Después pasa a pre y a pro con la plantilla **Promote an application**. Elige `pro` solo si debe nacer ya en producción. DataHub solo existe en pro |
 

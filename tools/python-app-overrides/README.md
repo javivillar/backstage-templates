@@ -9,7 +9,7 @@ An application of the Refresquito platform in three layers, created from the Bac
 |---|---|---|
 | Web | `frontend/`: Angular 20. The list of ${{ values.entities }}, the form, sign in and out | [`refresquito-angular`](https://github.com/javivillar/refresquito-angular) |
 | API | `backend/`: FastAPI. `/api/${{ values.entities }}`, documented on `/api/docs` | [`refresquito-fastapi`](https://github.com/javivillar/refresquito-fastapi) |
-| Data | PostgreSQL 16, schema kept by Alembic migrations (`backend/migrations/`) | |
+| Data | PostgreSQL 18 (refresquito-postgres, the database of the framework: `vendor/`), schema kept by Alembic migrations (`backend/migrations/`) | |
 
 Users come from Keycloak. Two realm roles: `${{ values.name }}-viewer` reads, `${{ values.name }}-admin` also
 creates, edits and deletes. The web only hides what a role cannot do; the API is what refuses it.
@@ -153,6 +153,9 @@ Locally no block is declared: those endpoints answer 500 `platform_block_not_dec
 
 ## `vendor/`
 
-The two parts of the framework, as the packages of their releases (the versions `backend/pyproject.toml` and `frontend/package.json` name): neither can be
-installed from a build without a token yet. Once they can, replace `--find-links ../vendor` and
-the `file:` dependency of `frontend/package.json` with the published packages, and delete it.
+The framework, as the files of its releases: the packages of refresquito-fastapi and refresquito-angular (the versions
+`backend/pyproject.toml` and `frontend/package.json` name), and the Dockerfile of its database, refresquito-postgres
+(`refresquito-postgres-<version>/`), which `compose.yaml` and the CI build: PostgreSQL 18 without root, the image the
+platform runs. None can be installed or pulled from a build without a token yet. Once they can, replace
+`--find-links ../vendor`, the `file:` dependency of `frontend/package.json` and the `build:` of `compose.yaml` with the
+published packages and image, and delete it.

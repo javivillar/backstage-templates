@@ -1,0 +1,32 @@
+import { HttpClient } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ConfigService, RqDashboard } from 'refresquito-angular';
+
+/** Block dashboards: the Superset dashboard of the ${{ values.name }}, embedded, and the ${{ values.entities }} by status as Superset counts them. */
+@Component({
+  selector: 'app-dashboard',
+  imports: [RqDashboard],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <section>
+      <h1>Dashboard</h1>
+      <ul class="stats">
+        @for (row of byStatus(); track row.status) {
+          <li><span class="status status-{{ row.status }}">{{ row.status }}</span> {{ row.count }}</li>
+        }
+      </ul>
+      <rq-dashboard name="main" />
+    </section>
+  `,
+})
+export class Dashboard {
+  private readonly http = inject(HttpClient);
+  private readonly config = inject(ConfigService);
+  protected readonly byStatus = signal<{ status: string; count: number }[]>([]);
+
+  constructor() {
+    this.http
+      .get<{ status: string; count: number }[]>(`${this.config.apiUrl}/api/stats/${{ values.entities }}-by-status`)
+      .subscribe((rows) => this.byStatus.set(rows));
+  }
+}

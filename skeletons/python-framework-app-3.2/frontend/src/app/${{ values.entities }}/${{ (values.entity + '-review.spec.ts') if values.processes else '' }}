@@ -1,0 +1,23 @@
+import { HttpTestingController } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { NotificationService } from 'refresquito-angular';
+import { provideRefresquitoTesting } from 'refresquito-angular/testing';
+import { ADMIN } from '../roles';
+import { API, request } from '../testing';
+import { ${{ values.entityTitle }}Review } from './${{ values.entity }}-review';
+
+describe('${{ values.entityTitle }}Review', () => {
+  it('calls the API and tells the user what it answered', async () => {
+    TestBed.configureTestingModule({ providers: [provideRefresquitoTesting({ user: { roles: [ADMIN] } })] });
+    const success = spyOn(TestBed.inject(NotificationService), 'success');
+    const fixture = TestBed.createComponent(${{ values.entityTitle }}Review);
+    fixture.componentRef.setInput('id', 7);
+    fixture.detectChanges();
+    const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+    expect(button.textContent).toBe('Ask for a review');
+    button.click();
+    (await request('POST', `${API}/7/review`)).flush({ process: 'i1', business_key: '${{ values.entity }}-7' });
+    expect(success).toHaveBeenCalledWith('Review requested: it is in your tasks');
+    TestBed.inject(HttpTestingController).verify();
+  });
+});

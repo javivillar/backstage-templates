@@ -13,6 +13,7 @@ Created from the Backstage template "New application (Python Framework)": the ${
 - Data catalog: `platform/datahub.yaml` (what it declares for DataHub) and `platform/datahub-exceptions.yaml`
   (classification exceptions, approved by the data stewards: `.github/CODEOWNERS`).
 - Built with refresquito-fastapi 3.1.1 and refresquito-angular 3.1.1.
+- Its database: refresquito-postgres (PostgreSQL 18, no root), built from `vendor/` by `compose.yaml` and the CI.
 - License: proprietary (`LicenseRef-Refresquito-Proprietary`, `backend/LICENSE` and `frontend/package.json`), like the
   frameworks: the license policy of Backstage checks that every dependency of its images says its license.
 - Security exceptions: `platform/security-exceptions.yaml` (empty), approved by the security approvers

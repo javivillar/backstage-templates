@@ -1,0 +1,18 @@
+Refresquito Proprietary License
+
+Copyright (c) 2026 Refresquito. All rights reserved.
+
+This software and its documentation (the "Software") are the property of Refresquito and are confidential.
+They are provided only to build and run applications on the Refresquito platform, under the agreement
+with Refresquito that grants that use.
+
+Without the prior written permission of Refresquito, no one may copy, modify, merge, publish, distribute,
+sublicense or sell the Software or any part of it, nor use it for any other purpose. An application built
+with the Software may include it, unmodified, only to run on the Refresquito platform.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+REFRESQUITO BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR ITS USE.
+
+SPDX-License-Identifier: LicenseRef-Refresquito-Proprietary

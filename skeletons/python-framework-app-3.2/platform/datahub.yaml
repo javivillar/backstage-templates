@@ -1,0 +1,28 @@
+# What this application declares for DataHub, finer than the block `datahub` of its deployment (classification of the
+# whole application). The platform applies it within the hour; errors are said in the log of the ingestion of DataHub.
+# Format: refresquito-services, charts/python-app-oneke/INSTALL.md, "Block datahub". Uncomment what applies.
+#
+# tables:
+#   ${{ values.entity }}:
+#     terms: [Business.Order]                 # glossary terms: the base glossary (PersonalData.*, Security.*,
+#                                             # Business.*, Program.*) or the ones the stewards add
+#     columns:
+#       name: { terms: [PersonalData.Name] }  # a term of personal data marks the column as personal data
+#       notes: { classification: NATO SECRET }   # never below the application's; the table goes up with it
+# buckets:
+#   documents:                                # the bucket ${{ values.name }}-documents (block s3)
+#     folders: { "exports/": { classification: NATO RESTRICTED, releasability: NATO } }
+# sites:
+#   files:                                    # the site ${{ values.name }}-files (block dms)
+#     folders: { "contracts/": { classification: CONFIDENTIAL } }
+# processes:
+#   review: { reads: [table:${{ values.entity }}] }        # the process ${{ values.name }}-review (block processes)
+# flows:
+#   new-${{ values.entity }}: { reads: [table:${{ values.entity }}] }   # platform/flows/new-${{ values.entity }}.json
+# contracts:
+#   ${{ values.entity }}:                         # the data contract of a table, checked once an hour
+#     freshness: { column: created_at, within: 7d }   # its newest row is at most this old (m, h, d)
+#     rows: { min: 1 }
+#     notNull: [name]
+#     unique: [id]
+tables: {}
