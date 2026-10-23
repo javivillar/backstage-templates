@@ -7,7 +7,14 @@ application/vnd.refresquito.quality.v1+json); Backstage reads it for the scoreca
     quality.py backend  OUT --junit junit.xml --coverage coverage.json --ruff ruff.json --mypy mypy.txt
     quality.py frontend OUT --karma karma.log --coverage coverage-summary.json --eslint eslint.json \
                             [--specs specs.json] [--coverage-final coverage-final.json]
-    quality.py merge    OUT backend.json frontend.json --revision <sha>
+    quality.py secrets  OUT --gitleaks gitleaks.json [--trivy api=trivy-api.json --trivy web=trivy-web.json]
+    quality.py merge    OUT backend.json frontend.json secrets.json --revision <sha>
+
+Code findings (the backend also takes --endpoints endpoints.json --bandit bandit.json; the frontend's come from its
+eslint report): who can call each endpoint (.github/endpoints.py: "unauthenticated" counts the operations of the
+application with no authentication that are not declared public), the static analysis of the code (Bandit; the
+rules of eslint.config.js marked security) and the secrets found in the history of the repository (gitleaks) and in
+the images (Trivy). Their detail is "detail.endpoints" and "detail.findings": rule, file, line, never the secret.
 
 Besides the numbers, each part has a detail (Backstage shows it in the tab Quality & Security): every test with its
 result and time ("detail.tests"; the frontend's from the reporter "specs" of karma.conf.js), and every file with its
@@ -28,6 +35,8 @@ SCHEMA = "refresquito.quality/v1"
 
 
 def read(path):
+    if not path:
+        return None
     try:
         with open(path, encoding="utf-8") as f:
             return f.read()
@@ -95,6 +104,79 @@ def eslint(path):
         return None
     files = json.loads(text or "[]")
     return {"errors": sum(f["errorCount"] for f in files), "warnings": sum(f["warningCount"] for f in files)}
+
+
+# the eslint rules of the part security (eslint.config.js: the block "Security", messages prefixed [security])
+SECURITY_RULES = {"no-eval", "no-implied-eval", "no-new-func", "no-script-url"}
+MAX_FINDINGS = 500
+
+
+def is_security(message):
+    return message.get("ruleId") in SECURITY_RULES or str(message.get("message", "")).startswith("[security]")
+
+
+def eslint_security(path):
+    text = read(path)
+    if text is None:
+        return None, None
+    findings = []
+    for f in json.loads(text or "[]"):
+        name = f["filePath"]
+        name = name[name.index("/src/") + 1:] if "/src/" in name else name
+        for m in f.get("messages", []):
+            if is_security(m):
+                findings.append({"tool": "eslint", "rule": m.get("ruleId"), "severity": "MEDIUM", "file": name,
+                                 "line": m.get("line"), "message": first_lines(m.get("message"))})
+    return {"errors": len(findings)}, findings[:MAX_FINDINGS]
+
+
+def bandit(path):
+    """Bandit's JSON report: counts by severity, and every finding (rule, severity, confidence, file, line)."""
+    text = read(path)
+    if text is None:
+        return None, None
+    results = json.loads(text or "{}").get("results", [])
+    count = lambda sev: sum(r.get("issue_severity") == sev for r in results)
+    findings = [{"tool": "bandit", "rule": f"{r.get('test_id')} {r.get('test_name', '')}".strip(),
+                 "severity": r.get("issue_severity"), "confidence": r.get("issue_confidence"),
+                 "file": r.get("filename"), "line": r.get("line_number"), "message": first_lines(r.get("issue_text"))}
+                for r in results]
+    findings.sort(key=lambda f: ({"HIGH": 0, "MEDIUM": 1}.get(f["severity"], 2), f["file"], f["line"] or 0))
+    return {"high": count("HIGH"), "medium": count("MEDIUM"), "low": count("LOW")}, findings[:MAX_FINDINGS]
+
+
+def endpoints(path):
+    """The report of .github/endpoints.py: its counts, and the list of operations as detail."""
+    text = read(path)
+    if text is None:
+        return None, None
+    report = json.loads(text)
+    return {k: v for k, v in report.items() if k != "endpoints"}, report.get("endpoints", [])
+
+
+def secrets(gitleaks_path, trivy):
+    """gitleaks (the whole git history, run with --redact) and Trivy (--scanners secret) on each image: where, never what."""
+    findings, repo, images = [], None, None
+    text = read(gitleaks_path) if gitleaks_path else None
+    if text is not None:
+        leaks = json.loads(text or "[]") or []
+        repo = len(leaks)
+        findings += [{"tool": "gitleaks", "where": "repository", "rule": f.get("RuleID"), "severity": "HIGH",
+                      "file": f.get("File"), "line": f.get("StartLine"), "commit": (f.get("Commit") or "")[:12]}
+                     for f in leaks]
+    for item in trivy or []:
+        name, _, path = item.partition("=")
+        text = read(path)
+        if text is None:
+            continue
+        images = images or 0
+        for result in json.loads(text).get("Results", []) or []:
+            for f in result.get("Secrets", []) or []:
+                images += 1
+                findings.append({"tool": "trivy", "where": f"image {name}", "rule": f.get("RuleID"),
+                                 "severity": f.get("Severity"), "file": result.get("Target"), "line": f.get("StartLine")})
+    part = drop_none({"repo": repo, "images": images})
+    return part or None, findings[:MAX_FINDINGS]
 
 
 MAX_TESTS = 3000  # the report stays small (Backstage reads at most 1 MB)
@@ -195,8 +277,8 @@ def istanbul_files(summary_path, final_path):
     return sorted(files, key=lambda f: (f["lines"], f.get("branches", 100), f["file"]))
 
 
-def detail(tests, files):
-    d = drop_none({"tests": tests, "coverage": files})
+def detail(tests, files, endpoint_list=None, findings=None):
+    d = drop_none({"tests": tests, "coverage": files, "endpoints": endpoint_list, "findings": findings or None})
     return d or None
 
 
@@ -209,7 +291,8 @@ def summary(title, part):
     for key, value in part.items():
         if key == "detail":
             continue
-        rows.append(f"| {key} | {', '.join(f'{k}: {v}' for k, v in value.items())} |")
+        shown = ", ".join(f"{k}: {v}" for k, v in value.items()) if isinstance(value, dict) else value
+        rows.append(f"| {key} | {shown} |")
     text = f"### Quality report: {title}\n\n| | |\n|---|---|\n" + "\n".join(rows) + "\n"
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
@@ -219,19 +302,29 @@ def summary(title, part):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("part", choices=["backend", "frontend", "merge"])
+    p.add_argument("part", choices=["backend", "frontend", "secrets", "merge"])
     p.add_argument("out")
     p.add_argument("inputs", nargs="*")
-    for opt in ("junit", "coverage", "ruff", "mypy", "karma", "eslint", "revision", "specs", "coverage-final"):
+    for opt in ("junit", "coverage", "ruff", "mypy", "karma", "eslint", "revision", "specs", "coverage-final",
+                "endpoints", "bandit", "gitleaks"):
         p.add_argument(f"--{opt}")
+    p.add_argument("--trivy", action="append", help="<image>=<Trivy JSON report>, once per image")
     a = p.parse_args()
 
     if a.part == "backend":
+        ep, ep_list = endpoints(a.endpoints)
+        sast, sast_findings = bandit(a.bandit)
         part = drop_none({"tests": junit(a.junit), "coverage": pytest_coverage(a.coverage), "ruff": ruff(a.ruff), "mypy": mypy(a.mypy),
-                          "detail": detail(junit_tests(a.junit), pytest_files(a.coverage))})
+                          "endpoints": ep, "bandit": sast,
+                          "detail": detail(junit_tests(a.junit), pytest_files(a.coverage), ep_list, sast_findings)})
     elif a.part == "frontend":
+        sec, sec_findings = eslint_security(a.eslint)
         part = drop_none({"tests": karma(a.karma), "coverage": istanbul(a.coverage), "eslint": eslint(a.eslint),
-                          "detail": detail(karma_specs(a.specs), istanbul_files(a.coverage, a.coverage_final))})
+                          "security": sec,
+                          "detail": detail(karma_specs(a.specs), istanbul_files(a.coverage, a.coverage_final), None, sec_findings)})
+    elif a.part == "secrets":
+        found, found_list = secrets(a.gitleaks, a.trivy)
+        part = drop_none({**(found or {}), "detail": detail(None, None, None, found_list)})
     else:
         part = {"schema": SCHEMA, "revision": a.revision or "", "generated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
         for path in a.inputs:

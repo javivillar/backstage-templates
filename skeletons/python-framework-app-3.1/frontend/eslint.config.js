@@ -34,6 +34,37 @@ module.exports = tseslint.config(
       ],
     },
   },
+  // Security (part `security` of the quality report: .github/quality.py counts these rules apart). Code that turns
+  // off what protects the web: evaluating text as code, HTML written by hand, Angular's sanitizer bypassed.
+  {
+    files: ["**/*.ts"],
+    ignores: ["**/*.spec.ts"],
+    rules: {
+      "no-eval": "error",
+      "no-implied-eval": "error",
+      "no-new-func": "error",
+      "no-script-url": "error",
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "CallExpression[callee.property.name=/^bypassSecurityTrust/]",
+          message: "[security] DomSanitizer.bypassSecurityTrust* turns off Angular's sanitization of that value",
+        },
+        {
+          selector: "AssignmentExpression > MemberExpression.left[property.name=/^(innerHTML|outerHTML)$/]",
+          message: "[security] HTML written by hand is not sanitized: bind it in the template instead",
+        },
+        {
+          selector: "CallExpression[callee.property.name=/^(insertAdjacentHTML|write|writeln)$/]",
+          message: "[security] HTML written by hand (insertAdjacentHTML / document.write) is not sanitized",
+        },
+        {
+          selector: "CallExpression[callee.object.name=/^(localStorage|sessionStorage)$/][callee.property.name='setItem'][arguments.0.value=/token/i]",
+          message: "[security] a token in web storage can be read by any script of the page: keep it in memory (refresquito-angular does)",
+        },
+      ],
+    },
+  },
   {
     files: ["**/*.html"],
     extends: [

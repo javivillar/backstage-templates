@@ -13,6 +13,8 @@ Created from the Backstage template "New application (Python Framework)": the ${
 - Data catalog: `platform/datahub.yaml` (what it declares for DataHub) and `platform/datahub-exceptions.yaml`
   (classification exceptions, approved by the data stewards: `.github/CODEOWNERS`).
 - Built with refresquito-fastapi 3.1.1 and refresquito-angular 3.1.1.
+- CI: the quality report `quality.json` with its code findings (README, *Code findings*): who can call each endpoint,
+  Bandit, the eslint rules of security, secrets in the git history and in the images.
 {%- if values.processes %}
 - Block `processes`: `POST /api/${{ values.entities }}/{id}/review` starts its process `review`; *My tasks* (`/api/tasks`).
 {%- endif %}

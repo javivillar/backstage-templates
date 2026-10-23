@@ -62,7 +62,33 @@ ruff and mypy of the backend, eslint of the frontend. Its tables are in the summ
 image deployed. Coverage below its threshold and ruff fail the CI; mypy and eslint only report for now.
 Besides the numbers it has the detail of each part: every test with its result and time, and every file with its
 coverage and the lines no test runs (the frontend's tests come from the reporter `specs` of `karma.conf.js`). The
-card *Tests & coverage* of that tab shows it.
+card *Tests, coverage & code findings* of that tab shows it (its tab *Code findings*, the code findings below).
+
+### Code findings
+
+The quality report also says what is wrong in the code itself. Nothing here fails the CI: the scorecard shows it and
+its checks decide.
+
+| Part | Tool | What |
+|---|---|---|
+| `backend.endpoints` | `.github/endpoints.py` | who can call each operation: `roles` (`require_roles`), `user` (`CurrentUser`), `flow` (`FlowCaller`), `custom` (a security scheme of its own), `public` (declared) or `none`. `unauthenticated` counts the operations with **no authentication that are not declared public** |
+| `backend.bandit` | Bandit on `backend/src` | static analysis of the Python code, by severity |
+| `frontend.security` | the block *Security* of `eslint.config.js` | `eval`, HTML written by hand, `bypassSecurityTrust*`, a token in `localStorage` |
+| `secrets` | gitleaks on the whole git history (job `secrets`), Trivy on each image | keys, tokens or passwords committed or copied into an image |
+
+An operation that is public on purpose says so, with the reason:
+
+```python
+@router.get("/api/info", openapi_extra={"x-refresquito-public": "version shown on the sign-in page"})
+```
+
+The detail gives the rule, the file and the line, never the secret. A secret found in the history has to be revoked
+where it was issued: rewriting the history does not make it secret again. Locally:
+
+```bash
+cd backend && .venv/bin/python ../.github/endpoints.py ${{ values.name }}.main:build /tmp/endpoints.json && .venv/bin/bandit -r src
+cd ../frontend && npx eslint src
+```
 
 ## The contract between web and API
 

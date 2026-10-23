@@ -253,9 +253,31 @@ el resumen de los jobs `backend` y `frontend`; en `main` se adjunta a las dos im
 artefacto `application/vnd.refresquito.quality.v1+json`). La cobertura bajo su umbral y ruff hacen fallar el CI; mypy
 y eslint de momento solo informan. En Backstage, la pestaña **Quality & Security** del componente `<nombre>-oneke`
 muestra el scorecard de la aplicación (catálogo, SBOM, vulnerabilidades, línea del framework e informe de calidad),
-y *Tools → Quality & Security* el de todas. Debajo del scorecard, la tarjeta **Tests & coverage** enseña el detalle
+y *Tools → Quality & Security* el de todas. Debajo del scorecard, la tarjeta **Tests, coverage & code findings** enseña el detalle
 del último run: cada test con su resultado y su tiempo (los fallidos primero, con el motivo) y la cobertura de cada
 fichero con las líneas que ningún test ejecuta.
+
+### Hallazgos de código
+
+El informe de calidad dice también qué falla en el **código propio** de la aplicación, no solo en sus dependencias.
+Nada de esto hace fallar el CI: lo muestran el scorecard (checks *No operation without authentication*, *No static
+analysis finding*, *No secret in the history or the images*) y la pestaña **Code findings** de la tarjeta de calidad.
+
+| Parte | Herramienta | Qué mira |
+|---|---|---|
+| `backend.endpoints` | `.github/endpoints.py` | quién puede llamar a cada operación: `roles` (`require_roles`), `user` (`CurrentUser`), `flow` (`FlowCaller`, la clave de la aplicación), `custom` (un esquema propio), `public` (declarada) o `none`. Cuenta como hallazgo cada operación **sin autenticación que no se ha declarado pública**. Las del framework (`/health`, `/metrics`, la OpenAPI) van aparte |
+| `backend.bandit` | Bandit sobre `backend/src` | análisis estático del Python: comandos de shell, hashes débiles, SQL montado con cadenas, contraseñas en el código… por severidad |
+| `frontend.security` | el bloque *Security* de `eslint.config.js` | `eval` / `new Function`, HTML escrito a mano (`innerHTML`, `document.write`), el sanitizador de Angular desactivado (`bypassSecurityTrust*`), un token en `localStorage` |
+| `secrets` | gitleaks sobre **todo el historial** de git (job `secrets`) y Trivy sobre cada imagen | claves, tokens o contraseñas en cualquier commit (aunque luego se borraran) o copiados en una imagen |
+
+Una operación pública a propósito lo declara, con el motivo:
+
+```python
+@router.get("/api/info", openapi_extra={"x-refresquito-public": "versión que se enseña en el login"})
+```
+
+El detalle da la regla, el fichero y la línea, **nunca el secreto** (gitleaks con `--redact`, Trivy lo enmascara). Un
+secreto encontrado en el historial hay que **revocarlo** donde se emitió: reescribir el historial no lo vuelve secreto.
 
 ## 6. Comprobar que todo ha ido bien
 

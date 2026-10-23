@@ -20,7 +20,7 @@ HERE = pathlib.Path(__file__).resolve().parent
 SKELETONS = HERE.parent / "skeletons"
 # the files the template lists in copyWithoutTemplating
 VERBATIM = ("vendor/", "frontend/package-lock.json", "frontend/public/favicon.ico", ".github/workflows/",
-            "backend/migrations/script.py.mako")
+            ".github/quality.py", ".github/endpoints.py", "backend/migrations/script.py.mako")
 argv = sys.argv[1:]
 deploy = None
 if "--deploy" in argv:
