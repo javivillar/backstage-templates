@@ -1070,7 +1070,7 @@
           "files"
         ],
         "x-refresquito-source": [
-          "bucket:files"
+          "bucket:${{ values.buckets[0] }}"
         ]
       },
       "post": {
@@ -1128,7 +1128,7 @@
           "files"
         ],
         "x-refresquito-target": [
-          "bucket:files"
+          "bucket:${{ values.buckets[0] }}"
         ]
       }
     },
@@ -1182,7 +1182,7 @@
           "files"
         ],
         "x-refresquito-target": [
-          "bucket:files"
+          "bucket:${{ values.buckets[0] }}"
         ]
       },
       "get": {
@@ -1239,7 +1239,7 @@
           "files"
         ],
         "x-refresquito-source": [
-          "bucket:files"
+          "bucket:${{ values.buckets[0] }}"
         ]
       }
     },
@@ -1295,7 +1295,7 @@
           "documents"
         ],
         "x-refresquito-source": [
-          "site:documents"
+          "site:${{ values.sites[0] }}"
         ]
       },
       "post": {
@@ -1353,7 +1353,7 @@
           "documents"
         ],
         "x-refresquito-target": [
-          "site:documents"
+          "site:${{ values.sites[0] }}"
         ]
       }
     },
@@ -1407,7 +1407,7 @@
           "documents"
         ],
         "x-refresquito-target": [
-          "site:documents"
+          "site:${{ values.sites[0] }}"
         ]
       },
       "get": {
@@ -1462,7 +1462,7 @@
           "documents"
         ],
         "x-refresquito-source": [
-          "site:documents"
+          "site:${{ values.sites[0] }}"
         ]
       }
     },
