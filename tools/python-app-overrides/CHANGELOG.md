@@ -13,6 +13,8 @@ Created from the Backstage template "New application (Python Framework)": the ${
 - Data catalog: `platform/datahub.yaml` (what it declares for DataHub) and `platform/datahub-exceptions.yaml`
   (classification exceptions, approved by the data stewards: `.github/CODEOWNERS`).
 - Built with refresquito-fastapi 3.1.1 and refresquito-angular 3.1.1.
+- License: proprietary (`LicenseRef-Refresquito-Proprietary`, `backend/LICENSE` and `frontend/package.json`), like the
+  frameworks: the license policy of Backstage checks that every dependency of its images says its license.
 - CI: the quality report `quality.json` with its code findings (README, *Code findings*): who can call each endpoint,
   Bandit, the eslint rules of security, secrets in the git history and in the images.
 {%- if values.processes %}

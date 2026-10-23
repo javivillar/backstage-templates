@@ -1,11 +1,15 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [project]
 name = "${{ values.name }}"
 version = "0.1.0"
 description = "${{ values.title }} API: the example service of the Refresquito frameworks"
+# proprietary, like the frameworks it is built on: the license policy of Backstage (SBOM tab) wants every dependency
+# of an image to say its license, the application's own package included
+license = "LicenseRef-Refresquito-Proprietary"
+license-files = ["LICENSE"]
 requires-python = ">=3.12"
 dependencies = [
     # installed from ../vendor (pip --find-links) while its repository is private: see the README
