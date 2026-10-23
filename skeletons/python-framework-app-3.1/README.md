@@ -62,7 +62,7 @@ ruff and mypy of the backend, eslint of the frontend. Its tables are in the summ
 image deployed. Coverage below its threshold and ruff fail the CI; mypy and eslint only report for now.
 Besides the numbers it has the detail of each part: every test with its result and time, and every file with its
 coverage and the lines no test runs (the frontend's tests come from the reporter `specs` of `karma.conf.js`). The
-card *Tests & coverage* of that tab shows it.
+card *Tests, coverage & code findings* of that tab shows it (its tab *Code findings*, the code findings below).
 
 ### Code findings
 
