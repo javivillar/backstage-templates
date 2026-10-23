@@ -2071,6 +2071,7 @@ spec:
           - frontend/public/favicon.ico
           - .github/workflows/**
           - .github/quality.py
+          - .github/endpoints.py
           - backend/migrations/script.py.mako
         values:
           name: ${{ parameters.name }}

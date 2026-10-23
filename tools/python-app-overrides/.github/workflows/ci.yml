@@ -37,13 +37,19 @@ jobs:
       - run: pytest --junitxml=../quality/junit.xml --cov-report=json:../quality/coverage.json
       # The quality report (.github/quality.py): tests, coverage, ruff and mypy. mypy only reports for now: its errors
       # are in the report and the scorecard of Backstage, they do not fail the job.
+      # Code findings, they only report too: who can call each endpoint (.github/endpoints.py: an operation without
+      # authentication must be declared public, openapi_extra={"x-refresquito-public": "<why>"}) and Bandit.
       - name: Quality report of the backend
         run: |
           ruff check . --output-format json > ../quality/ruff.json || true
           mypy src > ../quality/mypy.txt || true
           cat ../quality/mypy.txt
+          module=$(basename "$(dirname src/*/main.py)")
+          python3 ../.github/endpoints.py "$module.main:build" ../quality/endpoints.json || true
+          bandit -r src -f json -o ../quality/bandit.json -q || true
           python3 ../.github/quality.py backend ../quality/quality-backend.json \
-            --junit ../quality/junit.xml --coverage ../quality/coverage.json --ruff ../quality/ruff.json --mypy ../quality/mypy.txt
+            --junit ../quality/junit.xml --coverage ../quality/coverage.json --ruff ../quality/ruff.json --mypy ../quality/mypy.txt \
+            --endpoints ../quality/endpoints.json --bandit ../quality/bandit.json
       - uses: actions/upload-artifact@v4
         with:
           name: quality-backend
@@ -76,6 +82,7 @@ jobs:
           mkdir -p ../quality
           KARMA_SPECS=../quality/specs.json npm test 2>&1 | tee ../quality/karma.log
       # The quality report (.github/quality.py): tests, coverage and eslint. eslint only reports for now.
+      # Its rules of the block "Security" of eslint.config.js are counted apart (part security).
       - name: Quality report of the frontend
         run: |
           npx eslint src -f json -o ../quality/eslint.json || true
@@ -88,9 +95,32 @@ jobs:
           name: quality-frontend
           path: quality/quality-frontend.json
       - run: npm run build
+  # Secrets committed in any commit of the history (a secret removed later is still in it): gitleaks, with --redact so
+  # that the report says where, never what. It only reports; the images job adds what Trivy finds in the images.
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks on the whole history
+        env:
+          GITLEAKS_VERSION: "8.30.1"
+        run: |
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          curl -sSfL -o "gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" "$base/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfL "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt" | grep " gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz$" | sha256sum -c -
+          tar -xzf "gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" gitleaks && rm -f "gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          mkdir -p quality
+          ./gitleaks git . --redact --no-banner --report-format json --report-path quality/gitleaks.json --exit-code 0
+          python3 .github/quality.py secrets quality/secrets-repo.json --gitleaks quality/gitleaks.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: quality-gitleaks
+          path: quality/gitleaks.json
   images:
     if: github.event_name == 'push'
-    needs: [backend, frontend]
+    needs: [backend, frontend, secrets]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -165,8 +195,24 @@ jobs:
           pattern: quality-*
           path: quality
           merge-multiple: true
+      # Secrets inside the images (a key or a .env copied into a layer): Trivy, the same version as the image scan of
+      # Wazuh; its report masks what it matches. With the gitleaks report of the history: the part secrets.
+      - name: Secrets in the images
+        env:
+          OWNER: ${{ github.repository_owner }}
+          NAME: ${{ github.event.repository.name }}
+          TOKEN: ${{ github.token }}
+        run: |
+          for image in api web; do
+            digest=$([ $image = api ] && echo "${{ steps.api.outputs.digest }}" || echo "${{ steps.web.outputs.digest }}")
+            docker run --rm -e TRIVY_USERNAME="${{ github.actor }}" -e TRIVY_PASSWORD="$TOKEN" -v "$PWD/quality:/out" \
+              docker.io/aquasec/trivy:0.74.0 image --quiet --scanners secret --format json --output "/out/trivy-$image.json" \
+              "ghcr.io/${OWNER}/${NAME}-${image}@${digest}" || echo "::warning::Trivy could not scan ${NAME}-$image"
+          done
+          python3 .github/quality.py secrets quality/quality-secrets.json --gitleaks quality/gitleaks.json \
+            --trivy api=quality/trivy-api.json --trivy web=quality/trivy-web.json
       - name: The quality report
-        run: python3 .github/quality.py merge quality.json quality/quality-backend.json quality/quality-frontend.json --revision "${{ github.sha }}"
+        run: python3 .github/quality.py merge quality.json quality/quality-backend.json quality/quality-frontend.json quality/quality-secrets.json --revision "${{ github.sha }}"
       - uses: actions/upload-artifact@v4
         with:
           name: quality.json
