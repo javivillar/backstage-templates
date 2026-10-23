@@ -2,7 +2,7 @@
 FROM docker.io/library/python:3.12-slim AS build
 WORKDIR /src
 COPY vendor ./vendor
-COPY backend/pyproject.toml ./backend/
+COPY backend/pyproject.toml backend/LICENSE ./backend/
 COPY backend/src ./backend/src
 RUN pip install --no-cache-dir --find-links vendor --prefix=/install ./backend
 
