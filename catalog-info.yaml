@@ -2403,3 +2403,85 @@ spec:
       - title: ${{ 'Next - review and merge the pull request' if steps['promote'].output.remoteUrl else 'Nothing was promoted' }}
         content: |
           ${{ ('Merging the pull request deploys the version in **' + parameters.target + '**; Argo CD does it within a few minutes, with no pass of the bootstrap. The tags of the other stages do not change.') if steps['promote'].output.remoteUrl else ('**' + parameters.name + '** has no version in **' + parameters.source + '**: no pull request was opened. Put a commit there first (From: a commit of its repository).') }}
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: developer-assistant-implement
+  title: Implement a change (Developer Assistant)
+  description: >-
+    The developer assistant implements a change of an approved specification in the application its approved
+    architecture instantiated: plan proposes the tasks of the change; implement builds the tasks not done, with tests
+    from its scenarios. It runs as the workflow develop of refresquito-specs (Claude Code on the operator's
+    subscription) and leaves DRAFT pull requests — the code in the application, the tasks done in refresquito-specs —
+    for a person to review and merge. Only the operator may run it for now.
+  tags:
+    - developer-assistant
+    - python-framework
+    - openspec
+spec:
+  owner: group:default/backstage-admin
+  type: service
+  parameters:
+    - title: What to implement
+      required:
+        - system
+        - change
+        - mode
+      properties:
+        system:
+          title: System
+          description: The system of refresquito-specs; its specification and its architecture must be approved (merged), and its application instantiated (section 5.6 of its Architecture Design).
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              kind: System
+        change:
+          title: Change
+          description: The change of its specification, as its folder docs/openspec/changes/<change> (e.g. new-orders).
+          type: string
+          pattern: ^[a-z0-9][a-z0-9-]{1,60}$
+        mode:
+          title: Mode
+          type: string
+          enum: [implement, plan]
+          enumNames: ["implement: build the tasks not done", "plan: propose tasks.md"]
+          default: implement
+        group:
+          title: Group of tasks
+          description: Only this group of tasks.md (its number), one pull request to review; empty = every task not done.
+          type: string
+          pattern: ^[0-9]*$
+          default: ""
+        model:
+          title: Model
+          type: string
+          enum: [claude-opus-5-5, claude-sonnet-5-5]
+          default: claude-opus-5-5
+  steps:
+    - id: dispatch
+      name: Start the developer assistant (workflow develop of refresquito-specs)
+      action: github:actions:dispatch
+      input:
+        repoUrl: github.com?repo=refresquito-specs&owner=javivillar
+        workflowId: develop.yml
+        branchOrTagName: main
+        workflowInputs:
+          system: ${{ parameters.system | parseEntityRef | pick('name') }}
+          change: ${{ parameters.change }}
+          mode: ${{ parameters.mode }}
+          group: ${{ parameters.group }}
+          model: ${{ parameters.model }}
+  output:
+    links:
+      - title: The runs of the developer assistant
+        url: https://github.com/javivillar/refresquito-specs/actions/workflows/develop.yml
+      - title: The change
+        url: https://github.com/javivillar/refresquito-specs/tree/main/systems/${{ parameters.system | parseEntityRef | pick('name') }}/docs/openspec/changes/${{ parameters.change }}
+    text:
+      - title: Next - follow the run, then review the pull requests
+        content: |
+          The assistant runs on GitHub Actions (minutes to an hour or more). When it ends, its **draft** pull requests are
+          in the repository of the application (the code) and in refresquito-specs (the tasks done); their description
+          says what it did, the tests and any question. Review them like any pull request: **merging is approving**.

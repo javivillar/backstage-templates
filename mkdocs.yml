@@ -15,5 +15,6 @@ nav:
       - Aplicación nueva (Python Framework): services/python-framework.md
       - El Python Framework en el catálogo: services/python-framework-catalog.md
       - Promocionar una aplicación (dev, pre, pro): services/python-framework-promote.md
+      - Implementar un cambio (Developer Assistant): services/developer-assistant.md
 plugins:
   - techdocs-core
