@@ -2411,7 +2411,8 @@ metadata:
   title: Implement a change (Developer Assistant)
   description: >-
     The developer assistant implements a change of an approved specification in the application its approved
-    architecture instantiated: plan proposes the tasks of the change; implement builds the tasks not done, with tests
+    architecture instantiated: plan breaks the specification down into the tasks of the OpenSpec change, each one
+    marked pure development, a Refresquito service, or a person; implement builds the tasks not done, with tests
     from its scenarios. It runs as the workflow develop of refresquito-specs (Claude Code on the operator's
     subscription) and leaves DRAFT pull requests — the code in the application, the tasks done in refresquito-specs —
     for a person to review and merge. Only the operator may run it for now.
@@ -2446,7 +2447,7 @@ spec:
           title: Mode
           type: string
           enum: [implement, plan]
-          enumNames: ["implement: build the tasks not done", "plan: propose tasks.md"]
+          enumNames: ["implement: build the tasks not done", "plan: break the specification down into tasks.md (OpenSpec), each task dev, service or person"]
           default: implement
         group:
           title: Group of tasks
@@ -2454,6 +2455,18 @@ spec:
           type: string
           pattern: ^[0-9]*$
           default: ""
+        instructions:
+          title: Instructions (optional)
+          description: >-
+            What you ask the assistant for this run, besides its fixed instructions (e.g. "break it down by role",
+            "the API first, the web in the last groups", "smaller tasks"). It is added at the end of its instructions and
+            never lifts one of their rules.
+          type: string
+          maxLength: 4000
+          default: ""
+          ui:widget: textarea
+          ui:options:
+            rows: 5
         model:
           title: Model
           type: string
@@ -2472,6 +2485,7 @@ spec:
           change: ${{ parameters.change }}
           mode: ${{ parameters.mode }}
           group: ${{ parameters.group }}
+          instructions: ${{ parameters.instructions }}
           model: ${{ parameters.model }}
   output:
     links:
