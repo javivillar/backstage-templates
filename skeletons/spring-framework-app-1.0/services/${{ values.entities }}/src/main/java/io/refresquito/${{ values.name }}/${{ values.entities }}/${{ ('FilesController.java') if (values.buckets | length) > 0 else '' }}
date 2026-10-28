@@ -1,0 +1,93 @@
+package io.refresquito.${{ values.name }}.${{ values.entities }};
+
+import java.io.IOException;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+
+import io.refresquito.spring.error.RefresquitoException;
+import io.refresquito.spring.openapi.Lineage;
+import io.refresquito.spring.s3.Storage;
+import jakarta.annotation.security.RolesAllowed;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import static io.refresquito.${{ values.name }}.${{ values.entities }}.${{ values.entitiesTitle }}Application.ADMIN;
+import static io.refresquito.${{ values.name }}.${{ values.entities }}.${{ values.entitiesTitle }}Application.VIEWER;
+import org.jspecify.annotations.Nullable;
+
+/** Block s3: the files of a ${{ values.entity }} (photos...), in the bucket `files`, under ${{ values.entity }}/<id>/; downloaded with a presigned URL. */
+@RestController
+@RequestMapping("/api/${{ values.entities }}/{id}/files")
+public class FilesController {
+
+    static final String BUCKET = "${{ values.buckets[0] }}";
+
+    public record FileOut(String id, String name, @Nullable Long size, @Nullable String contentType) {}
+
+    private final ${{ values.entitiesTitle }}Controller ${{ values.entities }};
+    private final ObjectProvider<Storage> storage;
+
+    FilesController(${{ values.entitiesTitle }}Controller ${{ values.entities }}, ObjectProvider<Storage> storage) {
+        this.${{ values.entities }} = ${{ values.entities }};
+        this.storage = storage;
+    }
+
+    private Storage.Bucket bucket() {
+        return Blocks.required(storage, "s3").bucket(BUCKET);
+    }
+
+    static String key(long id, String name) {
+        return "${{ values.entity }}/" + id + "/" + name;
+    }
+
+    @GetMapping
+    @RolesAllowed({VIEWER, ADMIN})
+    @Lineage(source = "bucket:${{ values.buckets[0] }}")
+    public List<FileOut> list(@PathVariable long id) {
+        ${{ values.entities }}.find(id);
+        return bucket().list(key(id, "")).stream().map(o -> {
+            String name = o.key().substring(o.key().lastIndexOf('/') + 1);
+            return new FileOut(name, name, o.size(), o.contentType());
+        }).toList();
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    @RolesAllowed(ADMIN)
+    @Lineage(target = "bucket:${{ values.buckets[0] }}")
+    public FileOut add(@PathVariable long id, @RequestParam("file") MultipartFile file) throws IOException {
+        ${{ values.entities }}.find(id);
+        String name = Blocks.basename(file.getOriginalFilename(), "file");
+        var info = bucket().put(key(id, name), file.getBytes(), file.getContentType(), Map.of());
+        return new FileOut(name, name, info.size(), info.contentType());
+    }
+
+    @GetMapping("/{name}")
+    @RolesAllowed({VIEWER, ADMIN})
+    @Lineage(source = "bucket:${{ values.buckets[0] }}")
+    public Map<String, String> download(@PathVariable long id, @PathVariable String name) {
+        Storage.Bucket bucket = bucket();
+        if (!bucket.exists(key(id, name))) {
+            throw new RefresquitoException.NotFound("${{ values.entityTitle }} " + id + " has no file " + name);
+        }
+        return Map.of("url", bucket.downloadUrl(key(id, name), Duration.ofMinutes(5), name).toString());
+    }
+
+    @DeleteMapping("/{name}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @RolesAllowed(ADMIN)
+    @Lineage(target = "bucket:${{ values.buckets[0] }}")
+    public void delete(@PathVariable long id, @PathVariable String name) {
+        bucket().delete(key(id, name));
+    }
+}

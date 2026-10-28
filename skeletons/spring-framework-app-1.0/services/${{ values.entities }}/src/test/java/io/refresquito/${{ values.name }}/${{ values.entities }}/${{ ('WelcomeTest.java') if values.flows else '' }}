@@ -1,0 +1,36 @@
+package io.refresquito.${{ values.name }}.${{ values.entities }};
+
+import java.net.URI;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.Map;
+
+import io.refresquito.spring.flows.FlowAnswer;
+
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+
+/** Block flows: the welcome of a ${{ values.entity }} is a flow of Activepieces, and a flow may change the status of a ${{ values.entity }}. */
+class WelcomeTest extends BlockTest {
+
+    @Test
+    void the_welcome_is_a_flow_and_a_flow_may_change_the_status() throws Exception {
+        when(flows.triggerAndWait(eq("new-${{ values.entity }}"), any())).thenReturn(new FlowAnswer(200, Map.of("message", "Welcome, Rex"), "r1"));
+        HttpResponse<String> welcome = call("POST", "/api/${{ values.entities }}/" + rex + "/welcome", null, "${{ values.name }}-admin");
+        assertThat(welcome.statusCode()).as(welcome.body()).isEqualTo(200);
+        assertThat(welcome.body()).contains("Welcome, Rex");
+
+        // only a flow of the application (X-Flow-Key) changes the status this way, not a user
+        assertThat(call("POST", "/api/${{ values.entities }}/" + rex + "/status", "{\"status\":\"closed\"}", "${{ values.name }}-admin").statusCode()).isEqualTo(403);
+        when(flows.caller("the-key")).thenReturn(true);
+        HttpResponse<String> byFlow = HTTP.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/api/${{ values.entities }}/" + rex + "/status"))
+                .header("X-Flow-Key", "the-key").header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString("{\"status\":\"closed\"}")).build(), HttpResponse.BodyHandlers.ofString());
+        assertThat(byFlow.statusCode()).as(byFlow.body()).isEqualTo(200);
+        assertThat(${{ values.entities }}.findById(rex).orElseThrow().getStatus()).isEqualTo(${{ values.entityTitle }}.Status.closed);
+    }
+}

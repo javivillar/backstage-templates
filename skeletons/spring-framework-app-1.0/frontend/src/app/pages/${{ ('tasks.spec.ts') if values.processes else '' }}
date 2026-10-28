@@ -1,0 +1,19 @@
+import { HttpTestingController } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { provideRefresquitoTesting } from 'refresquito-angular/testing';
+import { VIEWER } from '../roles';
+import { request } from '../testing';
+import { Tasks } from './tasks';
+
+describe('Tasks', () => {
+  it('lists the tasks of the user', async () => {
+    TestBed.configureTestingModule({ providers: [provideRefresquitoTesting({ user: { roles: [VIEWER] } })] });
+    const fixture = TestBed.createComponent(Tasks);
+    fixture.detectChanges();
+    (await request('GET', 'http://api.test/api/tasks')).flush([{ id: 't1', name: 'Review' }]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.rq-task-name')?.textContent).toBe('Review');
+    TestBed.inject(HttpTestingController).verify();
+  });
+});

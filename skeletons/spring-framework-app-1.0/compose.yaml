@@ -1,0 +1,38 @@
+# Local development: what the services need of the platform to run on this machine.
+#   podman compose up -d          (or docker compose)
+# The tests do not need it (Testcontainers starts their own). To run a service against it, with the realm of a
+# development cluster for the tokens:
+#   DB_HOST=localhost DB_PORT=55432 DB_DATABASE=${{ values.entities }} DB_USERNAME=${{ values.entities }} DB_PASSWORD=${{ values.entities }} \
+#   RABBITMQ_HOST=localhost RABBITMQ_PORT=55672 RABBITMQ_USERNAME=${{ values.name }} RABBITMQ_PASSWORD=${{ values.name }} \
+#   RQ_OIDC_ISSUER=https://<keycloak>/realms/<realm> RQ_OIDC_CLIENT_ID=${{ values.name }}-dev \
+#   mvn -pl services/${{ values.entities }} spring-boot:run
+services:
+  # The database of the framework (refresquito-postgres, PostgreSQL 18), built from the Dockerfile of its release in
+  # vendor/: the image is private, the same one the platform runs. One server here; one per service in the cluster.
+  db:
+    build: ./vendor/refresquito-postgres-3.3.0
+    image: localhost/refresquito-postgres:3.3.0
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "55432:5432"
+    volumes:
+      - ./dev/initdb:/docker-entrypoint-initdb.d:ro,Z
+      - ${{ values.name }}-db-18:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+      retries: 20
+  # The block events: RabbitMQ, as the platform runs it per zone (a vhost and a user per application).
+  rabbitmq:
+    image: docker.io/library/rabbitmq:4-management-alpine
+    user: "999:999"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${{ values.name }}
+      RABBITMQ_DEFAULT_PASS: ${{ values.name }}
+    ports:
+      - "55672:5672"
+      - "15672:15672"
+volumes:
+  ${{ values.name }}-db-18:

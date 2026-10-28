@@ -1,0 +1,40 @@
+# Backstage catalog entry of this repository (read by the Refresquito Backstage).
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.name }}
+  title: ${{ values.title }}
+  description: ${{ values.description | dump }}
+  annotations:
+    github.com/project-slug: ${{ values.owner }}/${{ values.name }}
+    backstage.io/source-location: url:https://github.com/${{ values.owner }}/${{ values.name }}/tree/main/
+  tags:
+  - java
+  - spring-boot
+  - angular
+  - postgresql
+  - microservices
+  links:
+  - url: https://github.com/${{ values.owner }}/${{ values.name }}
+    title: Repository
+    icon: github
+  - url: https://github.com/${{ values.owner }}/${{ values.name }}/blob/main/CHANGELOG.md
+    title: Release notes
+    icon: docs
+spec:
+  type: service
+  lifecycle: experimental
+  owner: group:default/development-team
+  system: business-systems
+  # what is deployed from this repository: the service ${{ values.name }}-oneke of the stack, which
+  # carries the APIs of its services, the URL of each cluster and the service level
+  dependencyOf:
+  - component:default/${{ values.name }}-oneke
+  # the framework it is built on, and each of its parts: a change in one of them shows here
+  # which applications it reaches
+  dependsOn:
+  - component:default/spring-framework
+  - component:default/refresquito-spring-boot
+  - component:default/refresquito-angular
+  consumesApis:
+  - api:default/keycloak-oidc

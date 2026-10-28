@@ -1,0 +1,90 @@
+# ${{ values.title }} — https://github.com/${{ values.owner }}/${{ values.name }} (created with the Backstage template
+# "New application (Spring Framework)"). This file is all the stack has of it: see charts/spring-app-oneke/INSTALL.md.
+name: ${{ values.name }}
+title: ${{ values.title | dump }}
+description: ${{ values.description | dump }}
+repository: ${{ values.owner }}/${{ values.name }}
+# the clusters it is deployed in, as <zone>-<program>
+environments: ${{ values.environments | dump }}
+image:
+  registry: ghcr.io/${{ values.owner }}
+{%- if values.stage == "pro" %}
+  tag: "${{ values.tag }}"        # quoted: a commit made only of digits is still a text
+{%- else %}
+# its stages (dev, pre, pro), each a deployment of its own; the template Promote moves a tag on
+stages:
+  ${{ values.stage }}: { tag: "${{ values.tag }}" }
+{%- endif %}
+# versions of the framework it is built with (shown in the catalog); postgres: the image of its databases
+framework: { spring: ${{ values.spring }}, angular: ${{ values.angular }}, postgres: ${{ values.postgres }} }
+tier: bronze
+# its services: an image <name>-<service> each (one tag), a PostgreSQL each with db; the first is the primary one
+services:
+  - name: ${{ values.entities }}
+    paths: [/api/${{ values.entities }}{% if values.processes %}, /api/tasks{% endif %}{% if values.dashboards %}, /api/dashboards, /api/stats{% endif %}{% if values.flows %}, /api/flow-runs{% endif %}]
+    db: true
+    # its API in the catalog: catalog/apis/${{ values.name }}-${{ values.entities }}.json
+    api: { description: ${{ (values.title + ": list, read, create, update and delete its " + values.entities + "; errors as problem+json.") | dump }} }
+  # no API: it handles the events of the application
+  - name: notifier
+    db: true
+primaryService: ${{ values.entities }}
+# what it uses of the platform (charts/python-app-oneke/INSTALL.md, "Platform blocks": the same in both charts)
+platform:
+  sso:
+    enabled: true
+    roles:
+      - { name: viewer, description: "read the ${{ values.entities }}" }
+      - { name: admin, description: "also create, edit and delete ${{ values.entities }}", users: ${{ values.admins | dump }} }
+    testUsers: true
+    extraRedirectUris: ["http://localhost:4200/*"]
+  # the events between its services (RabbitMQ of the cluster, events-oneke): a virtual host of its own
+  events:
+    enabled: true
+{%- if values.buckets | length %}
+  s3:
+    enabled: true
+    buckets: ${{ values.buckets | dump }}
+{%- endif %}
+{%- if values.sites | length %}
+  dms:
+    enabled: true
+    sites:
+{%- for site in values.sites %}
+      - { name: ${{ site }}, groups: ${{ values.siteGroups | dump }} }
+{%- endfor %}
+{%- endif %}
+{%- if values.datahub %}
+  datahub:
+    enabled: true
+    classification: ${{ values.dataClassification | dump }}
+{%- if values.dataReleasability %}
+    releasability: ${{ values.dataReleasability | dump }}
+{%- endif %}
+    owners: { users: ${{ values.dataOwners | dump }}, groups: ${{ values.dataOwnerGroups | dump }} }
+{%- endif %}
+{%- if values.gateway %}
+  gateway:
+    enabled: true
+{%- if values.gatewayTeam %}
+    team: ${{ values.gatewayTeam }}
+{%- endif %}
+{%- endif %}
+{%- if values.processes %}
+  processes:
+    enabled: true
+    groups: ${{ values.processGroups | dump }}
+{%- endif %}
+{%- if values.dashboards %}
+  dashboards:
+    enabled: true
+{%- endif %}
+{%- if values.flows %}
+  flows:
+    enabled: true
+    groups: ${{ values.flowGroups | dump }}
+{%- endif %}
+{%- if values.monitoring %}
+  monitoring:
+    enabled: true
+{%- endif %}

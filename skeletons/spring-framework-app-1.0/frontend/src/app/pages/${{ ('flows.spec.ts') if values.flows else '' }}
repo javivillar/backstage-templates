@@ -1,0 +1,24 @@
+import { HttpTestingController } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { provideRefresquitoTesting } from 'refresquito-angular/testing';
+import { VIEWER } from '../roles';
+import { request } from '../testing';
+import { Flows } from './flows';
+
+describe('Flows', () => {
+  it('shows the runs of the flows and reloads them', async () => {
+    TestBed.configureTestingModule({ providers: [provideRefresquitoTesting({ user: { roles: [VIEWER] } })] });
+    const fixture = TestBed.createComponent(Flows);
+    fixture.detectChanges();
+    const run = { id: 'r1', flow: 'new-${{ values.entity }}', event: '${{ values.entity }}.created', status: 'succeeded', detail: 'Welcome, Kiwi the bird!',
+                  started_by: 'ana', started_at: '2026-10-16T10:00:00Z', finished_at: '2026-10-16T10:00:02Z' };
+    (await request('GET', 'http://api.test/api/flow-runs?page=1&size=20')).flush({ items: [run], total: 1, page: 1, size: 20 });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.rq-flow-run-detail')?.textContent).toContain('Welcome, Kiwi');
+    fixture.nativeElement.querySelector('button').click();
+    fixture.detectChanges();
+    (await request('GET', 'http://api.test/api/flow-runs?page=1&size=20')).flush({ items: [], total: 0, page: 1, size: 20 });
+    TestBed.inject(HttpTestingController).verify();
+  });
+});

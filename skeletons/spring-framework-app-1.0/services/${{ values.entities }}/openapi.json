@@ -1,0 +1,1338 @@
+{
+  "info": {
+    "description": "Errors as RFC 9457 problem details (application/problem+json) with `code` and `request_id`.",
+    "title": "${{ values.name }} API{% if values.name != values.entities %}: ${{ values.entities }}{% endif %}",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "security": [
+    {
+      "bearer": []
+    }
+  ],
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "bearerFormat": "JWT",
+        "description": "A token of the realm, issued for the application",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    },
+    "schemas": {
+{%- if (values.dashboards) %}
+      "Dashboard": {
+        "properties": {
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "uuid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "title",
+          "url",
+          "uuid"
+        ]
+      },
+{%- endif %}
+{%- if ((values.sites | length) > 0) %}
+      "Document": {
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "folder": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "mime_type": {
+            "type": "string"
+          },
+          "modified_at": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "modified_by": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "size": {
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "folder",
+          "id",
+          "mime_type",
+          "name"
+        ]
+      },
+{%- endif %}
+{%- if ((values.buckets | length) > 0) %}
+      "FileOut": {
+        "properties": {
+          "content_type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "size": {
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+{%- endif %}
+{%- if (values.dashboards) %}
+      "GuestToken": {
+        "properties": {
+          "expires_in": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "superset_url": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          },
+          "uuid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "expires_in",
+          "superset_url",
+          "token",
+          "uuid"
+        ]
+      },
+{%- endif %}
+{%- if (values.processes) %}
+      "ReviewIn": {
+        "properties": {
+          "reviewer": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+{%- endif %}
+{%- if (values.processes) %}
+      "ReviewOut": {
+        "properties": {
+          "business_key": {
+            "type": "string"
+          },
+          "process": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "business_key",
+          "process"
+        ]
+      },
+{%- endif %}
+{%- if (values.flows) %}
+      "StatusIn": {
+        "properties": {
+          "status": {
+            "enum": [
+              "active",
+              "pending",
+              "closed"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+{%- endif %}
+{%- if (values.processes) %}
+      "Task": {
+        "properties": {
+          "assignee": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created": {
+            "type": "string"
+          },
+          "due": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "process_instance": {
+            "type": "string"
+          },
+          "task": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "created",
+          "id",
+          "name",
+          "process_instance",
+          "task"
+        ]
+      },
+{%- endif %}
+      "Page${{ values.entityTitle }}Out": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/${{ values.entityTitle }}Out"
+            },
+            "type": "array"
+          },
+          "page": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "size": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "total": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "size",
+          "total"
+        ]
+      },
+      "${{ values.entityTitle }}In": {
+        "properties": {
+          "start_date": {
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 0,
+            "type": "string"
+          },
+          "category": {
+            "maxLength": 40,
+            "minLength": 0,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "pending",
+              "closed"
+            ],
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "category",
+          "name"
+        ]
+      },
+      "${{ values.entityTitle }}Out": {
+        "properties": {
+          "start_date": {
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "created_by": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "pending",
+              "closed"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "category",
+          "created_at",
+          "created_by",
+          "id",
+          "name",
+          "status"
+        ]
+      }
+    }
+  },
+  "paths": {
+{%- if (values.dashboards) %}
+    "/api/dashboards": {
+      "get": {
+        "operationId": "dashboards_list",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Dashboard"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "dashboards-controller"
+        ],
+        "x-refresquito-auth": {
+          "kind": "roles",
+          "owner": "app",
+          "roles": [
+            "${{ values.name }}-admin",
+            "${{ values.name }}-viewer"
+          ]
+        }
+      }
+    },
+{%- endif %}
+{%- if (values.dashboards) %}
+    "/api/dashboards/{name}/guest-token": {
+      "get": {
+        "operationId": "dashboards_guest_token",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestToken"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "dashboards-controller"
+        ],
+        "x-refresquito-auth": {
+          "kind": "roles",
+          "owner": "app",
+          "roles": [
+            "${{ values.name }}-admin",
+            "${{ values.name }}-viewer"
+          ]
+        }
+      }
+    },
+{%- endif %}
+{%- if ((values.sites | length) > 0) %}
+    "/api/${{ values.entities }}/{id}/documents": {
+      "get": {
+        "operationId": "documents_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Document"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "documents-controller"
+        ],
+        "x-refresquito-auth": {
+          "kind": "roles",
+          "owner": "app",
+          "roles": [
+            "${{ values.name }}-admin",
+            "${{ values.name }}-viewer"
+          ]
+        },
+        "x-refresquito-source": [
+          "site:${{ values.sites[0] }}"
+        ]
+      },
+      "post": {
+        "operationId": "documents_add",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "file": {
+                    "format": "binary",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            },
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "documents-controller"
+        ],
+        "x-refresquito-auth": {
+          "kind": "roles",
+          "owner": "app",
+          "roles": [
+            "${{ values.name }}-admin"
+          ]
+        },
+        "x-refresquito-target": [
+          "site:${{ values.sites[0] }}"
+        ]
+      }
+    },
+{%- endif %}
+{%- if ((values.sites | length) > 0) %}
+    "/api/${{ values.entities }}/{id}/documents/{document}": {
+      "delete": {
+        "operationId": "documents_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "document",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "documents-controller"
+        ],
+        "x-refresquito-auth": {
+          "kind": "roles",
+          "owner": "app",
+          "roles": [
+            "${{ values.name }}-admin"
+          ]
+        },
+        "x-refresquito-target": [
+          "site:${{ values.sites[0] }}"
+        ]
+      },
+      "get": {
+        "operationId": "documents_download",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "document",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "format": "byte",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "documents-controller"
+        ],
+        "x-refresquito-auth": {
+          "kind": "roles",
+          "owner": "app",
+          "roles": [
+            "${{ values.name }}-admin",
+            "${{ values.name }}-viewer"
+          ]
+        },
+        "x-refresquito-source": [
+          "site:${{ values.sites[0] }}"
+        ]
+      }
+    },
+{%- endif %}
+{%- if ((values.buckets | length) > 0) %}
+    "/api/${{ values.entities }}/{id}/files": {
+      "get": {
+        "operationId": "files_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FileOut"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "files-controller"
+        ],
+        "x-refresquito-auth": {
+          "kind": "roles",
+          "owner": "app",
+          "roles": [
+            "${{ values.name }}-admin",
+            "${{ values.name }}-viewer"
+          ]
+        },
+        "x-refresquito-source": [
+          "bucket:${{ values.buckets[0] }}"
+        ]
+      },
+      "post": {
+        "operationId": "files_add",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "file": {
+                    "format": "binary",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileOut"
+                }
+              }
+            },
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "files-controller"
+        ],
+        "x-refresquito-auth": {
+          "kind": "roles",
+          "owner": "app",
+          "roles": [
+            "${{ values.name }}-admin"
+          ]
+        },
+        "x-refresquito-target": [
+          "bucket:${{ values.buckets[0] }}"
+        ]
+      }
+    },
+{%- endif %}
+{%- if ((values.buckets | length) > 0) %}
+    "/api/${{ values.entities }}/{id}/files/{name}": {
+      "delete": {
+        "operationId": "files_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "files-controller"
+        ],
+        "x-refresquito-auth": {
+          "kind": "roles",
+          "owner": "app",
+          "roles": [
+            "${{ values.name }}-admin"
+          ]
+        },
+        "x-refresquito-target": [
+          "bucket:${{ values.buckets[0] }}"
+        ]
+      },
+      "get": {
+        "operationId": "files_download",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "files-controller"
+        ],
+        "x-refresquito-auth": {
+          "kind": "roles",
+          "owner": "app",
+          "roles": [
+            "${{ values.name }}-admin",
+            "${{ values.name }}-viewer"
+          ]
+        },
+        "x-refresquito-source": [
+          "bucket:${{ values.buckets[0] }}"
+        ]
+      }
+    },
+{%- endif %}
+{%- if (values.processes) %}
+    "/api/${{ values.entities }}/{id}/review": {
+      "post": {
+        "operationId": "review_review",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewOut"
+                }
+              }
+            },
+            "description": "Accepted"
+          }
+        },
+        "tags": [
+          "review-controller"
+        ],
+        "x-refresquito-auth": {
+          "kind": "roles",
+          "owner": "app",
+          "roles": [
+            "${{ values.name }}-admin"
+          ]
+        },
+        "x-refresquito-source": [
+          "table:${{ values.entity }}"
+        ],
+        "x-refresquito-target": [
+          "process:review"
+        ]
+      }
+    },
+{%- endif %}
+{%- if (values.flows) %}
+    "/api/${{ values.entities }}/{id}/status": {
+      "post": {
+        "operationId": "welcome_status",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/${{ values.entityTitle }}Out"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "welcome-controller"
+        ],
+        "x-refresquito-auth": {
+          "kind": "flow",
+          "owner": "app"
+        },
+        "x-refresquito-target": [
+          "table:${{ values.entity }}"
+        ]
+      }
+    },
+{%- endif %}
+{%- if (values.flows) %}
+    "/api/${{ values.entities }}/{id}/welcome": {
+      "post": {
+        "operationId": "welcome_welcome",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "welcome-controller"
+        ],
+        "x-refresquito-auth": {
+          "kind": "roles",
+          "owner": "app",
+          "roles": [
+            "${{ values.name }}-admin"
+          ]
+        },
+        "x-refresquito-source": [
+          "table:${{ values.entity }}"
+        ],
+        "x-refresquito-target": [
+          "flow:new-${{ values.entity }}"
+        ]
+      }
+    },
+{%- endif %}
+{%- if (values.dashboards) %}
+    "/api/stats/${{ values.entities }}-by-status": {
+      "get": {
+        "operationId": "dashboards_${{ values.entities }}_by_status",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "dashboards-controller"
+        ],
+        "x-refresquito-auth": {
+          "kind": "roles",
+          "owner": "app",
+          "roles": [
+            "${{ values.name }}-admin",
+            "${{ values.name }}-viewer"
+          ]
+        },
+        "x-refresquito-source": [
+          "table:${{ values.entity }}"
+        ]
+      }
+    },
+{%- endif %}
+{%- if (values.processes) %}
+    "/api/tasks": {
+      "get": {
+        "operationId": "review_tasks",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Task"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "review-controller"
+        ],
+        "x-refresquito-auth": {
+          "kind": "roles",
+          "owner": "app",
+          "roles": [
+            "${{ values.name }}-admin",
+            "${{ values.name }}-viewer"
+          ]
+        },
+        "x-refresquito-source": [
+          "process:review"
+        ]
+      }
+    },
+{%- endif %}
+{%- if (values.processes) %}
+    "/api/tasks/{taskId}/complete": {
+      "post": {
+        "operationId": "review_complete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "taskId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": {},
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "review-controller"
+        ],
+        "x-refresquito-auth": {
+          "kind": "roles",
+          "owner": "app",
+          "roles": [
+            "${{ values.name }}-admin",
+            "${{ values.name }}-viewer"
+          ]
+        },
+        "x-refresquito-target": [
+          "process:review"
+        ]
+      }
+    },
+{%- endif %}
+    "/api/${{ values.entities }}": {
+      "get": {
+        "operationId": "${{ values.entities }}_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "active",
+                "pending",
+                "closed"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page${{ values.entityTitle }}Out"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "${{ values.entities }}-controller"
+        ],
+        "x-refresquito-auth": {
+          "kind": "roles",
+          "owner": "app",
+          "roles": [
+            "${{ values.name }}-admin",
+            "${{ values.name }}-viewer"
+          ]
+        },
+        "x-refresquito-source": [
+          "table:${{ values.entity }}"
+        ]
+      },
+      "post": {
+        "operationId": "${{ values.entities }}_create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/${{ values.entityTitle }}In"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/${{ values.entityTitle }}Out"
+                }
+              }
+            },
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "${{ values.entities }}-controller"
+        ],
+        "x-refresquito-auth": {
+          "kind": "roles",
+          "owner": "app",
+          "roles": [
+            "${{ values.name }}-admin"
+          ]
+        },
+        "x-refresquito-target": [
+          "table:${{ values.entity }}"
+        ]
+      }
+    },
+    "/api/${{ values.entities }}/{id}": {
+      "delete": {
+        "operationId": "${{ values.entities }}_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "${{ values.entities }}-controller"
+        ],
+        "x-refresquito-auth": {
+          "kind": "roles",
+          "owner": "app",
+          "roles": [
+            "${{ values.name }}-admin"
+          ]
+        },
+        "x-refresquito-target": [
+          "table:${{ values.entity }}"
+        ]
+      },
+      "get": {
+        "operationId": "${{ values.entities }}_one",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/${{ values.entityTitle }}Out"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "${{ values.entities }}-controller"
+        ],
+        "x-refresquito-auth": {
+          "kind": "roles",
+          "owner": "app",
+          "roles": [
+            "${{ values.name }}-admin",
+            "${{ values.name }}-viewer"
+          ]
+        },
+        "x-refresquito-source": [
+          "table:${{ values.entity }}"
+        ]
+      },
+      "put": {
+        "operationId": "${{ values.entities }}_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/${{ values.entityTitle }}In"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/${{ values.entityTitle }}Out"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "${{ values.entities }}-controller"
+        ],
+        "x-refresquito-auth": {
+          "kind": "roles",
+          "owner": "app",
+          "roles": [
+            "${{ values.name }}-admin"
+          ]
+        },
+        "x-refresquito-target": [
+          "table:${{ values.entity }}"
+        ]
+      }
+    }
+  }
+}

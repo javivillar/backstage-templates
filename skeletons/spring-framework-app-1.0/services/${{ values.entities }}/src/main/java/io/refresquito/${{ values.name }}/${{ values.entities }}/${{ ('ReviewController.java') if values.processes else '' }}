@@ -1,0 +1,79 @@
+package io.refresquito.${{ values.name }}.${{ values.entities }};
+
+import java.util.List;
+import java.util.Map;
+
+import io.refresquito.spring.error.RefresquitoException;
+import io.refresquito.spring.openapi.Lineage;
+import io.refresquito.spring.processes.ProcessInstance;
+import io.refresquito.spring.processes.Processes;
+import io.refresquito.spring.processes.Task;
+import io.refresquito.spring.security.RefresquitoUser;
+import jakarta.annotation.security.RolesAllowed;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
+import static io.refresquito.${{ values.name }}.${{ values.entities }}.${{ values.entitiesTitle }}Application.ADMIN;
+import static io.refresquito.${{ values.name }}.${{ values.entities }}.${{ values.entitiesTitle }}Application.VIEWER;
+import org.jspecify.annotations.Nullable;
+
+/**
+ * Block processes: a person reviews a ${{ values.entity }} (platform/processes/${{ values.name }}-review.bpmn), and everyone works the tasks of the
+ * processes of the ${{ values.title }} that are theirs (<rq-task-inbox> of refresquito-angular).
+ */
+@RestController
+@RequestMapping("/api")
+public class ReviewController {
+
+    public record ReviewIn(@Nullable String reviewer) {}
+
+    public record ReviewOut(String process, String businessKey) {}
+
+    private final ${{ values.entitiesTitle }}Controller ${{ values.entities }};
+    private final ObjectProvider<Processes> processes;
+
+    ReviewController(${{ values.entitiesTitle }}Controller ${{ values.entities }}, ObjectProvider<Processes> processes) {
+        this.${{ values.entities }} = ${{ values.entities }};
+        this.processes = processes;
+    }
+
+    @PostMapping("/${{ values.entities }}/{id}/review")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    @RolesAllowed(ADMIN)
+    @Lineage(source = "table:${{ values.entity }}", target = "process:review")
+    public ReviewOut review(@PathVariable long id, @RequestBody(required = false) ReviewIn body, RefresquitoUser user) {
+        ${{ values.entityTitle }} ${{ values.entity }} = ${{ values.entities }}.find(id);
+        String reviewer = body != null && body.reviewer() != null && !body.reviewer().isBlank() ? body.reviewer() : user.username();
+        ProcessInstance instance = Blocks.required(processes, "processes").start("review", "${{ values.entity }}-" + ${{ values.entity }}.getId(),
+                Map.of("${{ values.entity }}", ${{ values.entity }}.getName(), "requestedBy", user.username(), "reviewer", reviewer));
+        return new ReviewOut(instance.id(), instance.businessKey());
+    }
+
+    /** The open tasks of the user: assigned to them, or offered to them or to their groups. */
+    @GetMapping("/tasks")
+    @RolesAllowed({VIEWER, ADMIN})
+    @Lineage(source = "process:review")
+    public List<Task> tasks(RefresquitoUser user) {
+        return Blocks.required(processes, "processes").inbox(user.username());
+    }
+
+    @PostMapping("/tasks/{taskId}/complete")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @RolesAllowed({VIEWER, ADMIN})
+    @Lineage(target = "process:review")
+    public void complete(@PathVariable String taskId, @RequestBody(required = false) Map<String, Object> variables,
+                         RefresquitoUser user) {
+        Processes block = Blocks.required(processes, "processes");
+        if (block.inbox(user.username()).stream().noneMatch(t -> t.id().equals(taskId))) {
+            throw new RefresquitoException.NotFound("Task " + taskId + " is not one of yours");
+        }
+        block.complete(taskId, variables == null ? Map.of() : variables);
+    }
+}

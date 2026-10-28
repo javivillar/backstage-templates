@@ -2501,3 +2501,472 @@ spec:
           The assistant runs on GitHub Actions (minutes to an hour or more). When it ends, its **draft** pull requests are
           in the repository of the application (the code) and in refresquito-specs (the tasks done); their description
           says what it did, the tests and any question. Review them like any pull request: **merging is approving**.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: spring-framework-app
+  title: New application (Spring Framework)
+  description: 'Creates a new business application built with the Spring Framework of the platform (an Angular web and Spring Boot services, each
+    with its own PostgreSQL, with events between them, behind Keycloak) and proposes its deployment: the repository, a working copy of petstore-spring
+    with the names you give here, its tests and its CI; its entry in the catalog; and a pull request to refresquito-services that, once merged,
+    deploys it in the environments you choose with the platform blocks it uses.'
+  tags:
+  - spring-framework
+  - spring-boot
+  - angular
+  - postgresql
+  - microservices
+spec:
+  owner: group:default/backstage-admin
+  type: service
+  parameters:
+  - title: The application
+    required:
+    - name
+    - title
+    - description
+    properties:
+      name:
+        title: Name
+        description: Lowercase letters and digits, starting with a letter (no dashes). It names the repository, the Java package (io.refresquito.<name>),
+          the Keycloak client, the roles <name>-viewer and <name>-admin, the host <name>.<domain> and the namespace <zone>-<program>-<name>-oneke.
+        type: string
+        pattern: ^[a-z][a-z0-9]{2,30}$
+        ui:autofocus: true
+      title:
+        title: Title
+        description: How people read it, e.g. Orders.
+        type: string
+        maxLength: 60
+        pattern: ^[^"]+$
+      description:
+        title: Description
+        description: One sentence on what the application is for.
+        type: string
+        maxLength: 200
+  - title: Its first entity
+    description: 'The application starts with one entity (name, category, status and start date), with its list, its form and its service: services/<entities>,
+      with its own database, which publishes its events; and the service notifier, which handles them. Change it afterwards into what the application
+      is about, and add services as it grows.'
+    required:
+    - entity
+    - entities
+    properties:
+      entity:
+        title: Entity, singular
+        description: 'Lowercase letters only, e.g. order. It names the table and the class (Order). Not a name of a built-in type of TypeScript
+          (record, map, set, date, error, event, promise, ...): the web would not compile.'
+        type: string
+        pattern: ^(?!(?:record|partial|required|readonly|pick|omit|exclude|extract|map|set|weakmap|weakset|date|error|object|array|promise|string|number|boolean|symbol|function|event|node|element|response|request|headers|file|blob|document|window|location|history|storage|image|option|text|comment|range|selection|notification|worker|iterator|proxy|reflect|math|json|intl|regexp|uint)$)[a-z]{2,30}$
+      entities:
+        title: Entity, plural
+        description: Lowercase letters only, e.g. orders. It names the service (services/orders, its database and its image), the API path (/api/orders)
+          and the page.
+        type: string
+        pattern: ^[a-z]{2,30}$
+  - title: Where it runs
+    description: 'The application is deployed by Argo CD from refresquito-services. This template does not touch any cluster: it opens a pull
+      request there, and merging it is what deploys.'
+    required:
+    - environments
+    - initialStage
+    - frameworkVersion
+    properties:
+      environments:
+        title: Environments
+        description: The clusters to deploy it in, as <zone>-<program>. More can be added later, in the file of the application (bootstrap/app-of-apps/apps/<name>.yaml
+          of refresquito-services).
+        type: array
+        minItems: 1
+        uniqueItems: true
+        items:
+          type: string
+          enum:
+          - nato-sirtap
+        default:
+        - nato-sirtap
+        ui:widget: checkboxes
+      initialStage:
+        title: Initial stage
+        description: 'The stage it starts in. dev (the default): namespace <zone>-<program>-<name>-dev-oneke, https://<name>-dev.<domain>, its
+          own Keycloak client <name>-dev and the test users <name>-dev-viewer and <name>-dev-admin. It moves on to pre and pro with the template
+          "Promote an application" (the same for both frameworks). The data catalog (DataHub) is only for pro.'
+        type: string
+        enum:
+        - dev
+        - pre
+        - pro
+        default: dev
+      frameworkVersion:
+        title: Version of the Spring Framework
+        description: 'The maintained lines of the Spring Framework (its support policy, as the Python one: the latest major version, and the previous
+          one for 6 months). 1.0 is the first: Spring Boot 4.1 and Java 25 (refresquito-spring-boot), the web of refresquito-angular 3.3 (the
+          look of Refresquito, shared with the Python Framework) and refresquito-postgres 3.3 (PostgreSQL 18) for the database of each service;
+          events between services (RabbitMQ, with an outbox), calls between services with the token of the user, and the images on Docker Hardened
+          Images.'
+        type: string
+        enum:
+        - '1.0'
+        enumNames:
+        - 1.0 (refresquito-spring-boot 1.0.0, refresquito-angular 3.3.1, refresquito-postgres 3.3.0) - microservices on Spring Boot 4.1 and Java
+          25
+        default: '1.0'
+  - title: Platform blocks
+    description: What the application uses of the platform. Each block is created when the application is deployed, appears in the catalog as
+      a resource of the application, and makes it depend on the service that provides it. Removing a block later never deletes what it created.
+    properties:
+      sso:
+        title: Single sign-on (Keycloak)
+        description: 'A public client named as the application, the realm roles <name>-viewer and <name>-admin, and one test user per role. Every
+          application of the framework has it: the web signs in with it and its services read the roles from the token.'
+        type: boolean
+        default: true
+        ui:readonly: true
+      s3Buckets:
+        title: Object storage (SeaweedFS, S3) - buckets
+        description: 'Optional. One short name per bucket, e.g. documents: the application gets the bucket <name>-documents, an identity of its
+          own allowed on its buckets only, and its access key in the environment of its services (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_ENDPOINT_URL_S3,
+          S3_BUCKETS). Empty, the application does not use object storage.'
+        type: array
+        uniqueItems: true
+        items:
+          type: string
+          pattern: ^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$
+        default: []
+      dmsSites:
+        title: Documents (Alfresco) - sites
+        description: 'Optional. One short name per site, e.g. documents: the application gets the private Alfresco site <name>-documents, a person
+          of its own that works in it, and its credentials in the environment of its services (ALFRESCO_URL, ALFRESCO_USERNAME, ALFRESCO_PASSWORD,
+          ALFRESCO_SITES). Empty, the application does not use Alfresco.'
+        type: array
+        uniqueItems: true
+        items:
+          type: string
+          pattern: ^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$
+        default: []
+      dmsGroups:
+        title: Documents (Alfresco) - groups of people who may enter its sites
+        description: Keycloak groups (name or /path) whose members enter every site of the application, as Consumer the first time. Only used
+          with sites. Empty, people are added later to the group alfrescodms-site-<name>-<site>.
+        type: array
+        uniqueItems: true
+        items:
+          type: string
+          pattern: ^/?[A-Za-z0-9][A-Za-z0-9 ._/-]*$
+        default: []
+      datahub:
+        title: Data catalog (DataHub) - register its data
+        description: 'A data product <program>-<name> in DataHub with one dataset per table of its database, read from its schema every hour (migrations
+          show up by themselves), and its bucket, API, processes, flows, sites and dashboards inside it. Its team is the technical owner. Only
+          in pro: in dev and pre it waits until the application is promoted to pro. Without it, its objects in the services go to the domain Plataforma,
+          not to the application.'
+        type: boolean
+        default: true
+      dataClassification:
+        title: Data catalog (DataHub) - classification of its data
+        description: The classification of the data of the application, on the scale of the zone nato (lowest first), up to the ceiling of the
+          cluster (NATO RESTRICTED in sirtap). Its tables, bucket, API, processes, flows and sites inherit it; platform/datahub.yaml can raise
+          a table or a column. Only used with the data catalog.
+        type: string
+        enum:
+        - INTERNAL
+        - CONFIDENTIAL
+        - NATO UNCLASSIFIED
+        - NATO RESTRICTED
+        default: NATO UNCLASSIFIED
+      dataReleasability:
+        title: Data catalog (DataHub) - releasability
+        description: Who its data may be released to, e.g. NATO, REL TO ESP, ESP ONLY. Empty = not declared. Only used with the data catalog.
+        type: string
+        pattern: ^[A-Z][A-Z0-9 ,/-]*$
+        default: NATO
+      dataOwners:
+        title: Data catalog (DataHub) - people who own its data
+        description: User names of the realm, business owners of its data product. Only used with the data catalog.
+        type: array
+        uniqueItems: true
+        items:
+          type: string
+          pattern: ^[A-Za-z0-9][A-Za-z0-9._@-]*$
+        default: []
+      dataOwnerGroups:
+        title: Data catalog (DataHub) - groups that own its data
+        description: Keycloak groups (name or /path), business owners of its data product. Only used with the data catalog.
+        type: array
+        uniqueItems: true
+        items:
+          type: string
+          pattern: ^/?[A-Za-z0-9][A-Za-z0-9 ._/-]*$
+        default: []
+      gateway:
+        title: API gateway (Gravitee) - publish its API
+        description: Optional. The API of its first service in Gravitee at /gateway/<name>/, public in the developer portal with its OpenAPI.
+          Calls need a token of the realm from a subscribed Keycloak client; the web of the application is subscribed. The application gets nothing
+          in its environment.
+        type: boolean
+        default: false
+      gatewayTeam:
+        title: API gateway (Gravitee) - team that sees it in Backstage
+        description: Optional. A Keycloak group gravitee-team-<name>. Only used with the gateway.
+        type: string
+        pattern: ^(gravitee-team-[a-z0-9-]+)?$
+        default: ''
+      processes:
+        title: Processes (Camunda) - deploy its processes
+        description: Optional. The BPMN in platform/processes/ of its repository (it starts with an example, <name>-review) are deployed in Camunda
+          with each version. Its services get their own identity there (CAMUNDA_URL, CAMUNDA_USERNAME, CAMUNDA_PASSWORD) to start them and work
+          their tasks.
+        type: boolean
+        default: false
+      processGroups:
+        title: Processes (Camunda) - groups that start them and work their tasks
+        description: Keycloak groups (name or /path) whose members use them in Tasklist. Only used with processes.
+        type: array
+        uniqueItems: true
+        items:
+          type: string
+          pattern: ^/?[A-Za-z0-9][A-Za-z0-9 ._/-]*$
+        default: []
+      dashboards:
+        title: Dashboards (Superset) - import its dashboards
+        description: Optional. The Superset export in platform/dashboards/ of its repository (it starts with an example over its main table) is
+          imported in Superset with each version, over its own database, read with a read-only role. The superset-editor and superset-admin groups
+          see them. The application also comes with its page Dashboard (the dashboard embedded) and the data of its dataset in its service (DashboardsController).
+        type: boolean
+        default: false
+      flows:
+        title: Flows (Activepieces) - import its flows
+        description: Optional. The flows in platform/flows/ of its repository (one exported flow per file; it starts with an example, new-<entity>,
+          a webhook) are imported in an Activepieces project of its own with each version, and published once complete. Its services start them
+          with the framework (Flows), by their name or by an event.
+        type: boolean
+        default: false
+      flowGroups:
+        title: Flows (Activepieces) - groups that edit them
+        description: Keycloak groups (name or /path) whose members are editors of its project. Only used with flows.
+        type: array
+        uniqueItems: true
+        items:
+          type: string
+          pattern: ^/?[A-Za-z0-9][A-Za-z0-9 ._/-]*$
+        default: []
+      monitoring:
+        title: Monitoring (Prometheus, Grafana) - its metrics and dashboards
+        description: 'Prometheus scrapes the metrics of each of its services, and Grafana gets in the folder apps the dashboards <title> - Logs,
+          <title> - Audit and <title> - Performance (traffic, errors, latency per route, the JVM, the calls between its services, its events,
+          CPU and memory) of each stage, with a selector of the service, plus the ones in platform/monitoring/ of its repository. Off: nothing
+          of it is scraped and it gets no dashboards.'
+        type: boolean
+        default: true
+      admins:
+        title: People who get the role <name>-admin
+        description: User names of the realm (they must exist; nobody is created). Empty, only the test user has it.
+        type: array
+        items:
+          type: string
+          pattern: ^[a-z0-9][a-z0-9._-]{0,60}$
+        default: []
+  - title: Repository
+    properties:
+      owner:
+        title: GitHub owner
+        description: User or organization that will own the repository <owner>/<name>. It is created private.
+        type: string
+        default: javivillar
+      dataStewards:
+        title: Data stewards
+        description: 'GitHub users (@user, separated by spaces) who approve the exceptions to the classification of its data: the CODEOWNERS of
+          platform/datahub-exceptions.yaml. The data stewards of the program, not the team of the application.'
+        type: string
+        pattern: ^@[A-Za-z0-9-]+( @[A-Za-z0-9-]+)*$
+        default: '@javivillar'
+      securityApprovers:
+        title: Security approvers
+        description: 'GitHub users (@user, separated by spaces) who approve the exceptions to the checks of Quality & Security (an accepted vulnerability,
+          a public endpoint...): the CODEOWNERS of platform/security-exceptions.yaml. The security of the program, not the team of the application.'
+        type: string
+        pattern: ^@[A-Za-z0-9-]+( @[A-Za-z0-9-]+)*$
+        default: '@javivillar'
+  steps:
+  - id: fetch
+    name: Generate the application from the skeleton
+    action: fetch:template
+    input:
+      url: ./skeletons/spring-framework-app-${{ parameters.frameworkVersion }}
+      targetPath: ./app
+      copyWithoutTemplating:
+      - vendor/**
+      - frontend/package-lock.json
+      - frontend/public/favicon.ico
+      - .github/workflows/**
+      - .github/quality.py
+      values:
+        name: ${{ parameters.name }}
+        title: ${{ parameters.title }}
+        description: ${{ parameters.description }}
+        entity: ${{ parameters.entity }}
+        entityTitle: ${{ parameters.entity | capitalize }}
+        entities: ${{ parameters.entities }}
+        entitiesTitle: ${{ parameters.entities | capitalize }}
+        owner: ${{ parameters.owner }}
+        processes: ${{ parameters.processes }}
+        flows: ${{ parameters.flows }}
+        buckets: ${{ parameters.s3Buckets }}
+        sites: ${{ parameters.dmsSites }}
+        dashboards: ${{ parameters.dashboards }}
+        dataStewards: ${{ parameters.dataStewards }}
+        securityApprovers: ${{ parameters.securityApprovers }}
+  - id: publish
+    name: Create the repository
+    action: publish:github
+    input:
+      repoUrl: github.com?owner=${{ parameters.owner }}&repo=${{ parameters.name }}
+      sourcePath: ./app
+      description: ${{ parameters.description }}
+      defaultBranch: main
+      repoVisibility: private
+      gitCommitMessage: '${{ parameters.name }} 0.1.0: created from the template "New application (Spring Framework)"'
+  - id: register
+    name: Register in the Backstage catalog
+    action: catalog:register
+    input:
+      repoContentsUrl: ${{ steps['publish'].output.repoContentsUrl }}
+      optional: true
+      catalogInfoPath: /catalog-info.yaml
+  - id: deployment
+    name: Prepare the deployment (the file of the application)
+    action: fetch:template
+    input:
+      url: ./skeletons/spring-framework-deploy
+      targetPath: ./deploy
+      values:
+        name: ${{ parameters.name }}
+        title: ${{ parameters.title }}
+        description: ${{ parameters.description }}
+        entity: ${{ parameters.entity }}
+        entityTitle: ${{ parameters.entity | capitalize }}
+        entities: ${{ parameters.entities }}
+        entitiesTitle: ${{ parameters.entities | capitalize }}
+        owner: ${{ parameters.owner }}
+        environments: ${{ parameters.environments }}
+        admins: ${{ parameters.admins }}
+        buckets: ${{ parameters.s3Buckets }}
+        sites: ${{ parameters.dmsSites }}
+        siteGroups: ${{ parameters.dmsGroups }}
+        datahub: ${{ parameters.datahub }}
+        dataClassification: ${{ parameters.dataClassification }}
+        dataReleasability: ${{ parameters.dataReleasability }}
+        dataOwners: ${{ parameters.dataOwners }}
+        dataOwnerGroups: ${{ parameters.dataOwnerGroups }}
+        gateway: ${{ parameters.gateway }}
+        gatewayTeam: ${{ parameters.gatewayTeam }}
+        processes: ${{ parameters.processes }}
+        processGroups: ${{ parameters.processGroups }}
+        dashboards: ${{ parameters.dashboards }}
+        flows: ${{ parameters.flows }}
+        flowGroups: ${{ parameters.flowGroups }}
+        monitoring: ${{ parameters.monitoring }}
+        tag: ${{ steps['publish'].output.commitHash }}
+        stage: ${{ parameters.initialStage }}
+        spring: ${{ parameters.frameworkVersion + '.0' }}
+        angular: 3.3.1
+        postgres: 3.3.0
+  - id: deploy
+    name: Open the deployment pull request in refresquito-services
+    action: publish:github:pull-request
+    input:
+      repoUrl: github.com?owner=javivillar&repo=refresquito-services
+      branchName: deploy-${{ parameters.name }}
+      targetBranchName: main
+      sourcePath: ./deploy
+      title: Deploy ${{ parameters.name }} (${{ parameters.title }}) in ${{ parameters.environments | join(", ") }}, stage ${{ parameters.initialStage
+        }}
+      commitMessage: '${{ parameters.name }}: a new application of the Spring Framework, deployed in ${{ parameters.environments | join(", ")
+        }} (stage ${{ parameters.initialStage }})'
+      description: '**${{ parameters.title }}**: ${{ parameters.description }}
+
+
+        Created with the Backstage template "New application (Spring Framework)": repository
+
+        [${{ parameters.owner }}/${{ parameters.name }}](https://github.com/${{ parameters.owner }}/${{ parameters.name }}), commit `${{ steps[''publish''].output.commitHash
+        }}`.
+
+
+        Merging this deploys it, with no pass of the bootstrap:
+
+
+        | | |
+
+        |---|---|
+
+        | Environments | ${{ parameters.environments | join(", ") }} |
+
+        | Stage | ${{ parameters.initialStage }} (it moves on with the template "Promote an application") |
+
+        | Namespace | `<zone>-<program>-${{ parameters.name if parameters.initialStage == ''pro'' else (parameters.name + ''-'' + parameters.initialStage)
+        }}-oneke` |
+
+        | URL | `https://${{ parameters.name if parameters.initialStage == ''pro'' else (parameters.name + ''-'' + parameters.initialStage) }}.<domain>`
+        |
+
+        | Services | `${{ parameters.entities }}` (its API, its database, the primary one) and `notifier` (its events), each with its own PostgreSQL;
+        events between them in RabbitMQ (block `events`) |
+
+
+        | Images | `ghcr.io/${{ parameters.owner }}/${{ parameters.name }}-${{ parameters.entities }}`, `-notifier`, `-web` and `-platform`, tag
+        of that commit (its CI must have finished) |
+
+        | Platform blocks | `sso`: client `${{ parameters.name if parameters.initialStage == ''pro'' else (parameters.name + ''-'' + parameters.initialStage)
+        }}`, roles `${{ parameters.name }}-viewer` and `${{ parameters.name }}-admin`, their test users{% if parameters.s3Buckets | length %}.
+        `s3`: buckets ${{ parameters.s3Buckets | join(", ") }} (each one as `${{ parameters.name }}-<bucket>`){% endif %}{% if parameters.dmsSites
+        | length %}. `dms`: Alfresco sites ${{ parameters.dmsSites | join(", ") }} (each one as `${{ parameters.name }}-<site>`){% endif %}{%
+        if parameters.datahub %}. `datahub`: data product with the tables of its database, ${{ parameters.dataClassification }}{% if parameters.initialStage
+        != ''pro'' %} (only once it is in pro){% endif %}{% endif %}{% if parameters.gateway %}. `gateway`: its API at `/gateway/${{ parameters.name
+        }}/` in Gravitee{% endif %}{% if parameters.processes %}. `processes`: its BPMN of `platform/processes/` in Camunda{% endif %}{% if parameters.dashboards
+        %}. `dashboards`: its Superset export of `platform/dashboards/`{% endif %}{% if parameters.flows %}. `flows`: its Activepieces flows of
+        `platform/flows/`{% endif %}{% if parameters.monitoring %}. `monitoring`: its metrics in Prometheus, dashboards Logs and Performance in
+        the Grafana folder `apps`{% endif %} |
+
+        | Spring Framework | ${{ parameters.frameworkVersion }} |
+
+
+        Files: `bootstrap/app-of-apps/apps/${{ parameters.name }}.yaml` (what it is and what it uses) and
+
+        `catalog/apis/${{ parameters.name }}-${{ parameters.entities }}.json` (the API of its service, for the catalog). See `charts/spring-app-oneke/INSTALL.md`.
+
+        '
+  output:
+    links:
+    - title: Repository
+      url: ${{ steps['publish'].output.remoteUrl }}
+    - title: Deployment pull request
+      url: ${{ steps['deploy'].output.remoteUrl }}
+    - title: Open in the catalog
+      icon: catalog
+      entityRef: ${{ steps['register'].output.entityRef or ('component:default/' + parameters.name) }}
+    text:
+    - title: Next - merge the deployment pull request
+      content: 'The repository exists and its CI is building the images of commit `${{ steps[''publish''].output.commitHash }}`.
+
+
+        Its deployment is proposed in a **pull request of refresquito-services** (the link above). Once the CI of the
+
+        application has finished, merging that pull request deploys it: Argo CD creates
+
+        `<zone>-<program>-${{ parameters.name if parameters.initialStage == ''pro'' else (parameters.name + ''-'' + parameters.initialStage) }}-oneke`
+        in ${{ parameters.environments | join(", ") }} (stage **${{ parameters.initialStage }}**), and
+
+        within a few minutes the application answers on `https://${{ parameters.name if parameters.initialStage == ''pro'' else (parameters.name
+        + ''-'' + parameters.initialStage) }}.<domain>` with its Keycloak client
+
+        `${{ parameters.name if parameters.initialStage == ''pro'' else (parameters.name + ''-'' + parameters.initialStage) }}`, its roles and
+        the test users `${{ parameters.name if parameters.initialStage == ''pro'' else (parameters.name + ''-'' + parameters.initialStage) }}-admin`
+        and `${{ parameters.name if parameters.initialStage == ''pro'' else (parameters.name + ''-'' + parameters.initialStage) }}-viewer`.
+
+
+        Nothing else is needed: no command to run and no pass of the bootstrap. To roll out a later commit, or to move it on
+
+        to pre and pro, use the template **Promote an application (Python Framework)**, the same for both frameworks.
+
+        '

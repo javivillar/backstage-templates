@@ -1,0 +1,14 @@
+# Approved exceptions to the rule "an asset is never below what it reads" (e.g. an anonymous aggregate of a classified
+# table published at a lower level). Only the data stewards of the program approve them: they are the CODEOWNERS of
+# this file (.github/CODEOWNERS) and the team of the application cannot approve its own. Never above the ceiling of
+# the cluster; at most 12 months ahead; expired, the rule applies again.
+# Format: refresquito-services, charts/python-app-oneke/INSTALL.md, "Block datahub" (the same for charts/spring-app-oneke).
+#
+# exceptions:
+#   - asset: table:${{ values.entity }}_summary   # table:, process:, flow:, api:, bucket:<b>[/<folder>/], site:<s>[/<folder>/]
+#     reads: NATO RESTRICTED                  # what it would inherit
+#     granted: INTERNAL                       # what it is given
+#     reason: "aggregate of at least 10 records per cell, no identifiers"
+#     approvedBy: some-steward                # a data steward of the program (GitHub user): any other is refused
+#     expires: 2027-06-30
+exceptions: []

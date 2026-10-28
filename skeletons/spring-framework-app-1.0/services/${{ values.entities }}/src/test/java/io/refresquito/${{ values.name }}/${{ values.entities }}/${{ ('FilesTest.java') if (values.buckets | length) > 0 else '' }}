@@ -1,0 +1,55 @@
+package io.refresquito.${{ values.name }}.${{ values.entities }};
+
+import java.net.http.HttpResponse;
+import java.net.URI;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+
+import io.refresquito.spring.s3.ObjectInfo;
+import io.refresquito.spring.s3.Storage;
+
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+/** Block s3: the files of a ${{ values.entity }}, in its folder of the bucket. */
+class FilesTest extends BlockTest {
+
+    final Storage.Bucket bucket = mock(Storage.Bucket.class);
+
+    @org.junit.jupiter.api.BeforeEach
+    void bucket() {
+        when(storage.bucket("${{ values.buckets[0] }}")).thenReturn(bucket);
+    }
+
+    @Test
+    void the_files_of_a_${{ values.entity }}_are_in_its_folder_of_the_bucket() throws Exception {
+        String folder = "${{ values.entity }}/" + rex + "/";
+        when(bucket.list(folder)).thenReturn(List.of(new ObjectInfo(folder + "photo.jpg", 12L, "image/jpeg", "e", null, Map.of())));
+        HttpResponse<String> list = call("GET", "/api/${{ values.entities }}/" + rex + "/files", null, "${{ values.name }}-viewer");
+        assertThat(list.statusCode()).as(list.body()).isEqualTo(200);
+        assertThat(list.body()).contains("\"name\":\"photo.jpg\"", "\"content_type\":\"image/jpeg\"");
+
+        when(bucket.put(eq(folder + "card.txt"), any(byte[].class), eq("text/plain"), anyMap()))
+                .thenReturn(new ObjectInfo(folder + "card.txt", 5L, "text/plain", "e", null, Map.of()));
+        HttpResponse<String> added = upload("/api/${{ values.entities }}/" + rex + "/files", "../card.txt", "hello", "${{ values.name }}-admin");
+        assertThat(added.statusCode()).as(added.body()).isEqualTo(201);
+        assertThat(added.body()).contains("\"name\":\"card.txt\"", "\"size\":5");
+        assertThat(upload("/api/${{ values.entities }}/" + rex + "/files", "x.txt", "x", "${{ values.name }}-viewer").statusCode()).isEqualTo(403);
+
+        when(bucket.exists(folder + "photo.jpg")).thenReturn(true);
+        when(bucket.downloadUrl(folder + "photo.jpg", Duration.ofMinutes(5), "photo.jpg")).thenReturn(URI.create("https://s3.test/photo"));
+        assertThat(call("GET", "/api/${{ values.entities }}/" + rex + "/files/photo.jpg", null, "${{ values.name }}-viewer").body()).contains("https://s3.test/photo");
+        assertThat(call("GET", "/api/${{ values.entities }}/" + rex + "/files/none.jpg", null, "${{ values.name }}-viewer").statusCode()).isEqualTo(404);
+        assertThat(call("DELETE", "/api/${{ values.entities }}/" + rex + "/files/photo.jpg", null, "${{ values.name }}-admin").statusCode()).isEqualTo(204);
+        verify(bucket).delete(folder + "photo.jpg");
+        assertThat(call("GET", "/api/${{ values.entities }}/999/files", null, "${{ values.name }}-viewer").statusCode()).isEqualTo(404);
+    }
+}

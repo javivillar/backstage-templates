@@ -1,0 +1,10 @@
+# The platform gives the rest (RQ_*, DB_*, RABBITMQ_*, CAMUNDA_*, AWS_*, ALFRESCO_*, ACTIVEPIECES_*, SUPERSET_*):
+# refresquito-spring-boot reads it by itself.
+spring:
+  application:
+    name: ${{ values.name }}
+  jackson:
+    # the JSON of the platform: snake_case, as refresquito-fastapi answers and refresquito-angular reads
+    property-naming-strategy: SNAKE_CASE
+refresquito:
+  service-name: ${{ values.entities }}

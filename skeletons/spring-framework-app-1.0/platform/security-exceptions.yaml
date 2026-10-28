@@ -1,0 +1,26 @@
+# Approved exceptions to the checks of the scorecard "Quality & Security" of Backstage: a finding that is accepted, for
+# a reason, by someone allowed to accept it, until a date. Only the security approvers of the application approve
+# them: they are the CODEOWNERS of this file (.github/CODEOWNERS, branch protection of main: "Require review from
+# Code Owners"), so the team of the application cannot approve its own.
+#
+# The CI validates this file (.github/quality.py exceptions) and puts it in the quality report of each image
+# (part `exceptions`: active, expired, invalid); Backstage takes the findings of the active ones out of their checks
+# and shows them in the tab Exceptions of the card "Tests, coverage & code findings". At most 12 months ahead; expired,
+# the finding counts again. An invalid exception does not apply and fails the check "No invalid security exception".
+#
+#   check            id                                     also
+#   vulnerability    CVE-2023-44487 / GHSA-xxxx-xxxx-xxxx   image: ghcr.io/<owner>/<app>-<service>   (optional: one image)
+#   endpoint         "GET /api/info"                        (an operation without authentication)
+#   sast             B608 / no-eval                          file: services/${{ values.entities }}/src/main/java/...  (required)
+#   secret           generic-api-key                         file: tests/fixtures/fake.pem      (required)
+#   license          some-package                            (a dependency with a denied or no license)
+#   os-eol           docker.io/library/postgres              (an image whose OS is out of support)
+#
+# exceptions:
+#   - check: vulnerability
+#     id: CVE-2023-44487
+#     image: ghcr.io/javivillar/${{ values.name }}-web
+#     reason: "HTTP/2 is not enabled in the nginx of the web: the vulnerable code path is never reached"
+#     approvedBy: some-security-approver      # a CODEOWNER of this file (GitHub user)
+#     expires: 2027-03-31
+exceptions: []

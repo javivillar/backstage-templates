@@ -1,0 +1,52 @@
+package io.refresquito.${{ values.name }}.${{ values.entities }};
+
+import java.util.List;
+import java.util.Map;
+
+import io.refresquito.spring.dashboards.Dashboard;
+import io.refresquito.spring.dashboards.Dashboards;
+import io.refresquito.spring.dashboards.DataQuery;
+import io.refresquito.spring.dashboards.GuestToken;
+import io.refresquito.spring.openapi.Lineage;
+import io.refresquito.spring.security.RefresquitoUser;
+import jakarta.annotation.security.RolesAllowed;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import static io.refresquito.${{ values.name }}.${{ values.entities }}.${{ values.entitiesTitle }}Application.ADMIN;
+import static io.refresquito.${{ values.name }}.${{ values.entities }}.${{ values.entitiesTitle }}Application.VIEWER;
+
+/** Block dashboards: the Superset dashboard of the ${{ values.title }} embedded in its web, and the data of its dataset ${{ values.entity }}. */
+@RestController
+@RequestMapping("/api")
+public class DashboardsController {
+
+    private final ObjectProvider<Dashboards> dashboards;
+
+    DashboardsController(ObjectProvider<Dashboards> dashboards) {
+        this.dashboards = dashboards;
+    }
+
+    @GetMapping("/dashboards")
+    @RolesAllowed({VIEWER, ADMIN})
+    public List<Dashboard> list() {
+        return Blocks.required(dashboards, "dashboards").list();
+    }
+
+    /** What <rq-dashboard> asks to embed the dashboard, for the user of the request. */
+    @GetMapping("/dashboards/{name}/guest-token")
+    @RolesAllowed({VIEWER, ADMIN})
+    public GuestToken guestToken(@PathVariable String name, RefresquitoUser user) {
+        return Blocks.required(dashboards, "dashboards").guestToken(name, user, List.of());
+    }
+
+    @GetMapping("/stats/${{ values.entities }}-by-status")
+    @RolesAllowed({VIEWER, ADMIN})
+    @Lineage(source = "table:${{ values.entity }}")
+    public List<Map<String, Object>> ${{ values.entities }}ByStatus() {
+        return Blocks.required(dashboards, "dashboards").data("${{ values.entity }}", DataQuery.metrics("count").columns("status").orderBy("status", true));
+    }
+}

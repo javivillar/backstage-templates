@@ -1,0 +1,36 @@
+package io.refresquito.${{ values.name }}.${{ values.entities }};
+
+import java.net.http.HttpResponse;
+import java.util.List;
+import java.util.Map;
+
+import io.refresquito.spring.processes.ProcessInstance;
+import io.refresquito.spring.processes.Task;
+
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+/** Block processes: the review of a ${{ values.entity }} is a process of Camunda, and its tasks are the user's. */
+class ReviewTest extends BlockTest {
+
+    @Test
+    void a_review_is_a_process_and_its_tasks_are_the_users() throws Exception {
+        when(processes.start(eq("review"), eq("${{ values.entity }}-" + rex), anyMap())).thenReturn(new ProcessInstance("p1", "${{ values.name }}-review", "${{ values.entity }}-" + rex, false));
+        HttpResponse<String> started = call("POST", "/api/${{ values.entities }}/" + rex + "/review", "{\"reviewer\":\"leo\"}", "${{ values.name }}-admin");
+        assertThat(started.statusCode()).as(started.body()).isEqualTo(202);
+        assertThat(started.body()).contains("\"process\":\"p1\"", "\"business_key\":\"${{ values.entity }}-" + rex + "\"");
+        verify(processes).start("review", "${{ values.entity }}-" + rex, Map.of("${{ values.entity }}", "Rex", "requestedBy", "ana", "reviewer", "leo"));
+
+        when(processes.inbox("ana")).thenReturn(List.of(new Task("t1", "Review Rex", "review", "p1", "ana", "2026-10-28T10:00:00", null)));
+        assertThat(call("GET", "/api/tasks", null, "${{ values.name }}-viewer").body()).contains("\"id\":\"t1\"", "\"process_instance\":\"p1\"");
+        assertThat(call("POST", "/api/tasks/t9/complete", "{}", "${{ values.name }}-viewer").statusCode()).isEqualTo(404);
+        assertThat(call("POST", "/api/tasks/t1/complete", "{\"approved\":true}", "${{ values.name }}-viewer").statusCode()).isEqualTo(204);
+        verify(processes).complete("t1", Map.of("approved", true));
+    }
+}

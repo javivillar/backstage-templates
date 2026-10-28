@@ -64,6 +64,31 @@ run `helm template t bootstrap/app-of-apps --set zone=nato --set program=sirtap`
 `tools/python-app-overrides/` holds what is not a plain copy (README, CI, catalog entry, release
 notes). The CI of the skeleton names no application, so it is copied without templating.
 
+## The Spring Framework skeleton (`skeletons/spring-framework-app-<line>/`)
+
+The template `spring-framework-app` ("New application (Spring Framework)") is the same form as the Python one (the
+same application, entity, environments, stage, platform blocks and repository); only its versions are the lines of
+the Spring Framework. Its skeleton is generated the same way, from
+[petstore-spring](https://github.com/javivillar/petstore-spring), the reference application of the Spring Framework:
+the service of the entity (`services/<entities>`: its API, its database, the example code of each block marked) and
+the service `notifier` (it handles the events of the other), the web, `platform/`, the CI and `vendor/` (the framework
+as a Maven repository, refresquito-angular and refresquito-postgres). The service `adoptions` of petstore-spring, an
+example of a call between services about pets, is left out.
+
+```bash
+python3 tools/make-spring-app-skeleton.py ~/petstore-spring       # regenerate after petstore-spring changes; commit the result
+python3 tools/render-spring-app.py /tmp/orders processes=true buckets=files      # render it as Backstage would (needs jinja2)...
+python3 tools/render-spring-app.py /tmp/orders --deploy /tmp/orders-deploy        # ...and what it proposes to refresquito-services
+#   ...then `mvn test` and `cd frontend && npm ci && npm test` in /tmp/orders
+```
+
+The deployment it proposes (`skeletons/spring-framework-deploy/`, from `tools/spring-app-deploy/`) is the file of the
+application for `charts/spring-app-oneke`: its two services (the first one primary), the block `events` always on
+(its services talk through events), the blocks marked; and the definition of the API of its service,
+`catalog/apis/<name>-<entities>.json`. The template "Promote an application" moves its stages as for any application.
+`tools/spring-app-overrides/` holds what is not a plain copy (README, catalog entry, release notes, CODEOWNERS and the
+files of `platform/` about the data catalog).
+
 ## Templates
 
 26 templates across 4 self-service resource families, each keeping every
