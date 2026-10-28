@@ -40,6 +40,8 @@ position:
     - GRID_ID
     - ROW-1
     meta:
+      # Superset needs a chartId on import (it then finds the chart by its uuid): KeyError 'chartId' without it
+      chartId: 2
       height: 50
       sliceName: ${{ values.entitiesTitle }}
       uuid: 9d8e7b1d-20e2-49ce-a453-ac95d1db0b0c
@@ -53,6 +55,7 @@ position:
     - GRID_ID
     - ROW-1
     meta:
+      chartId: 1
       height: 50
       sliceName: ${{ values.entitiesTitle }} by status
       uuid: a8b62086-5b71-4643-a544-c8e762a832c6
