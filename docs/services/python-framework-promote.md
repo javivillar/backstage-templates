@@ -1,6 +1,10 @@
-# Promocionar una aplicación (Python Framework)
+# Promocionar una aplicación
 
-Un cluster sirve las tres etapas de una aplicación del Python Framework, cada una en su propio namespace:
+La misma plantilla sirve para las aplicaciones del Python Framework y del Spring Framework: las dos tienen el mismo
+fichero en refresquito-services y las mismas etapas (en una aplicación Spring todos sus servicios llevan la misma
+versión y se promocionan juntos).
+
+Un cluster sirve las tres etapas de una aplicación, cada una en su propio namespace:
 
 | Etapa | Namespace | URL | Keycloak |
 |---|---|---|---|
@@ -26,7 +30,7 @@ stages:
 
 ## La plantilla
 
-**Promote an application (Python Framework)**, en *Create*:
+**Promote an application**, en *Create*:
 
 | Campo | Qué es |
 |---|---|
