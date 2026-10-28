@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: ${{ values.name }}
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+refresquito:
+  service-name: notifier

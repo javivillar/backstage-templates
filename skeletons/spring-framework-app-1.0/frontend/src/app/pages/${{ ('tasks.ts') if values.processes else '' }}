@@ -1,0 +1,18 @@
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { RqTaskInbox } from 'refresquito-angular';
+
+/** The tasks of the processes of the ${{ values.title }} that are the user's (Camunda). */
+@Component({
+  selector: 'app-tasks',
+  imports: [RqTaskInbox],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <div class="rq-page-header">
+      <div><h1>My tasks</h1><div class="text-body-secondary small">The reviews of ${{ values.entities }} assigned or offered to you (Camunda)</div></div>
+    </div>
+    <section class="card">
+      <rq-task-inbox path="/api/tasks" />
+    </section>
+  `,
+})
+export class Tasks {}

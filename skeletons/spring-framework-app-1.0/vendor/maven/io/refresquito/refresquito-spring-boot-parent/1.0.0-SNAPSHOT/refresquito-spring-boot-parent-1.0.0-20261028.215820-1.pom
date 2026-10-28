@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The parent of every service of an application of the Spring framework of Refresquito:
+
+       <parent>
+         <groupId>io.refresquito</groupId>
+         <artifactId>refresquito-spring-boot-parent</artifactId>
+         <version>1.0.0</version>
+       </parent>
+
+     It is spring-boot-starter-parent plus: Java 25, the versions of the framework and of what it adds, and the
+     version fixes Refresquito applies ahead of the Spring Boot BOM (security: see docs/vulnerability-overrides.md). -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>4.1.2</version>
+    <relativePath/>
+  </parent>
+  <groupId>io.refresquito</groupId>
+  <artifactId>refresquito-spring-boot-parent</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>refresquito-spring-boot-parent</name>
+  <description>Parent of the services of the Spring framework of Refresquito: Spring Boot 4.1, Java 25, the framework and its version fixes.</description>
+
+  <licenses>
+    <license>
+      <name>Apache-2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <properties>
+    <java.version>25</java.version>
+    <refresquito-spring-boot.version>1.0.0-SNAPSHOT</refresquito-spring-boot.version>
+    <resilience4j.version>2.4.0</resilience4j.version>
+    <!-- block s3: the client of S3 (Apache-2.0) -->
+    <awssdk.version>2.57.5</awssdk.version>
+    <!-- the OpenAPI of each service at /api/openapi.json (Apache-2.0), on Spring Boot 4.1.2 -->
+    <springdoc.version>3.2.0</springdoc.version>
+    <!-- the coverage of the tests (EPL-2.0, a build tool: not in the application), target/site/jacoco/jacoco.xml -->
+    <jacoco.version>0.8.15</jacoco.version>
+    <!-- ==== Version fixes ahead of the Spring Boot BOM (docs/vulnerability-overrides.md). Remove each one when the
+         BOM reaches it. ==== -->
+    <!-- Spring Boot 4.1.2 manages 5.30.0: 4 high (fixed in 5.33-5.34) and 6 more up to 5.36.1 (grype, 2026-10-28) -->
+    <rabbit-amqp-client.version>5.37.0</rabbit-amqp-client.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.refresquito</groupId>
+        <artifactId>refresquito-spring-boot-starter</artifactId>
+        <version>${refresquito-spring-boot.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.refresquito</groupId>
+        <artifactId>refresquito-spring-boot-test</artifactId>
+        <version>${refresquito-spring-boot.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.github.resilience4j</groupId>
+        <artifactId>resilience4j-bom</artifactId>
+        <version>${resilience4j.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>software.amazon.awssdk</groupId>
+        <artifactId>bom</artifactId>
+        <version>${awssdk.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.springdoc</groupId>
+        <artifactId>springdoc-openapi-starter-webmvc-api</artifactId>
+        <version>${springdoc.version}</version>
+      </dependency>
+      <!-- not in resilience4j-bom 2.4.0 -->
+      <dependency>
+        <groupId>io.github.resilience4j</groupId>
+        <artifactId>resilience4j-spring-boot4</artifactId>
+        <version>${resilience4j.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-maven-plugin</artifactId>
+          <configuration>
+            <!-- layers for the image: dependencies, loader, snapshots, the application (Dockerfile of the template) -->
+            <layers><enabled>true</enabled></layers>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+    <plugins>
+      <!-- the coverage of the tests of every module: the quality report of the CI (quality.json) reads its jacoco.xml -->
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco.version}</version>
+        <executions>
+          <execution><id>agent</id><goals><goal>prepare-agent</goal></goals></execution>
+          <execution><id>report</id><phase>test</phase><goals><goal>report</goal></goals></execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

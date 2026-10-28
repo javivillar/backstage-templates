@@ -1,0 +1,54 @@
+package io.refresquito.${{ values.name }}.${{ values.entities }};
+
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.time.OffsetDateTime;
+import java.util.List;
+
+import io.refresquito.spring.dms.Content;
+import io.refresquito.spring.dms.Document;
+import io.refresquito.spring.dms.Documents;
+
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+/** Block dms: the documents of a ${{ values.entity }}, in its folder of the Alfresco site. */
+class DocumentsTest extends BlockTest {
+
+    final Documents.Site site = mock(Documents.Site.class);
+
+    @org.junit.jupiter.api.BeforeEach
+    void site() {
+        when(documents.site("${{ values.sites[0] }}")).thenReturn(site);
+    }
+
+    @Test
+    void the_documents_of_a_${{ values.entity }}_are_in_its_folder_of_the_site() throws Exception {
+        String folder = Documents.folder("${{ values.entity }}", rex);
+        Document mine = new Document("d1", "contract.pdf", folder, "application/pdf", 3L, OffsetDateTime.now(), "ana", null, null);
+        Document other = new Document("d2", "other.pdf", Documents.folder("${{ values.entity }}", 999), "application/pdf", 3L, null, null, null, null);
+        when(site.list(folder)).thenReturn(List.of(mine));
+        assertThat(call("GET", "/api/${{ values.entities }}/" + rex + "/documents", null, "${{ values.name }}-viewer").body()).contains("\"mime_type\":\"application/pdf\"");
+
+        when(site.upload("note.txt", "hello".getBytes(StandardCharsets.UTF_8), folder, "text/plain")).thenReturn(mine);
+        assertThat(upload("/api/${{ values.entities }}/" + rex + "/documents", "note.txt", "hello", "${{ values.name }}-admin").statusCode()).isEqualTo(201);
+
+        when(site.content("d1")).thenReturn(new Content(mine, "pdf".getBytes(StandardCharsets.UTF_8)));
+        HttpResponse<String> download = call("GET", "/api/${{ values.entities }}/" + rex + "/documents/d1", null, "${{ values.name }}-viewer");
+        assertThat(download.statusCode()).isEqualTo(200);
+        assertThat(download.headers().firstValue("Content-Disposition").orElse("")).contains("contract.pdf");
+        assertThat(download.body()).isEqualTo("pdf");
+        when(site.content("d2")).thenReturn(new Content(other, new byte[0]));
+        assertThat(call("GET", "/api/${{ values.entities }}/" + rex + "/documents/d2", null, "${{ values.name }}-viewer").statusCode()).isEqualTo(404);
+
+        when(site.get("d1")).thenReturn(mine);
+        when(site.get("d2")).thenReturn(other);
+        assertThat(call("DELETE", "/api/${{ values.entities }}/" + rex + "/documents/d2", null, "${{ values.name }}-admin").statusCode()).isEqualTo(404);
+        assertThat(call("DELETE", "/api/${{ values.entities }}/" + rex + "/documents/d1", null, "${{ values.name }}-admin").statusCode()).isEqualTo(204);
+        verify(site).delete("d1");
+    }
+}

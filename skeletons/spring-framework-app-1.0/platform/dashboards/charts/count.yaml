@@ -1,0 +1,15 @@
+slice_name: ${{ values.entitiesTitle }}
+description: null
+certified_by: null
+certification_details: null
+viz_type: big_number_total
+params:
+  viz_type: big_number_total
+  datasource: 1__table
+  metric: count
+  subheader: ${{ values.entities }}
+query_context: null
+cache_timeout: null
+uuid: 9d8e7b1d-20e2-49ce-a453-ac95d1db0b0c
+version: 1.0.0
+dataset_uuid: 5d456e6f-719a-43c0-83c2-a918355a8e74

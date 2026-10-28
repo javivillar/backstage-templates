@@ -1,0 +1,42 @@
+<div class="small text-body-secondary"><a routerLink="/${{ values.entities }}" class="text-decoration-none">${{ values.entitiesTitle }}</a> / {{ id() ? 'Edit' : 'New' }}</div>
+<h1 class="h2 fw-bold mb-0">{{ id() ? 'Edit ${{ values.entity }}' : 'New ${{ values.entity }}' }}</h1>
+<form class="card p-4" style="max-width: 36rem" [formGroup]="form" (ngSubmit)="save()">
+  <div class="mb-3">
+    <label class="form-label" for="name">Name</label>
+    <input id="name" class="form-control" formControlName="name" autocomplete="off" [class.is-invalid]="problem('name')" />
+    @if (problem('name'); as message) {
+      <small class="field-error invalid-feedback d-block">{{ message }}</small>
+    }
+  </div>
+  <div class="mb-3">
+    <label class="form-label" for="category">Category</label>
+    <input id="category" class="form-control" formControlName="category" autocomplete="off" [class.is-invalid]="problem('category')" />
+    @if (problem('category'); as message) {
+      <small class="field-error invalid-feedback d-block">{{ message }}</small>
+    }
+  </div>
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6">
+      <label class="form-label" for="status">Status</label>
+      <select id="status" class="form-select" formControlName="status">
+        @for (s of statuses; track s) {
+          <option [value]="s">{{ s }}</option>
+        }
+      </select>
+    </div>
+    <div class="col-sm-6">
+      <label class="form-label" for="start_date">Start date</label>
+      <input id="start_date" type="date" class="form-control" formControlName="start_date" [class.is-invalid]="problem('start_date')" />
+      @if (problem('start_date'); as message) {
+        <small class="field-error invalid-feedback d-block">{{ message }}</small>
+      }
+    </div>
+  </div>
+  <div class="form-actions d-flex justify-content-end gap-2">
+    <a class="btn btn-outline-secondary" routerLink="/${{ values.entities }}">Cancel</a>
+    <button type="submit" class="btn btn-primary" [disabled]="saving()">
+      @if (saving()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+      Save
+    </button>
+  </div>
+</form>

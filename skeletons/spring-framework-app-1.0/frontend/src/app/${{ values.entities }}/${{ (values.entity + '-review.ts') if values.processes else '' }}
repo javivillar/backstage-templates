@@ -1,0 +1,25 @@
+import { HttpClient } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
+import { ConfigService, NotificationService } from 'refresquito-angular';
+import { components } from '../api/${{ values.entities }}-schema';
+
+export type Review = components['schemas']['ReviewOut'];
+
+/** Block processes: start the review of a ${{ values.entity }} (its process review in Camunda); the task goes to "My tasks". */
+@Component({
+  selector: 'app-${{ values.entity }}-review',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `<button type="button" class="btn btn-outline-secondary" (click)="review()"><i class="bi bi-clipboard-check me-1" aria-hidden="true"></i>Ask for a review</button>`,
+})
+export class ${{ values.entityTitle }}Review {
+  readonly id = input.required<number>();
+  private readonly http = inject(HttpClient);
+  private readonly config = inject(ConfigService);
+  private readonly notifications = inject(NotificationService);
+
+  protected review(): void {
+    this.http
+      .post<Review>(`${this.config.apiUrl}/api/${{ values.entities }}/${this.id()}/review`, {})
+      .subscribe(() => this.notifications.success('Review requested: it is in your tasks'));
+  }
+}

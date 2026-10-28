@@ -1,0 +1,60 @@
+dashboard_title: ${{ values.title }}
+description: null
+css: null
+slug: ${{ values.name }}
+certified_by: null
+certification_details: null
+published: true
+uuid: d8f886f6-79e7-4934-8ca3-5552100f347f
+position:
+  DASHBOARD_VERSION_KEY: v2
+  ROOT_ID:
+    type: ROOT
+    id: ROOT_ID
+    children:
+    - GRID_ID
+  GRID_ID:
+    type: GRID
+    id: GRID_ID
+    children:
+    - ROW-1
+    parents:
+    - ROOT_ID
+  ROW-1:
+    type: ROW
+    id: ROW-1
+    children:
+    - CHART-${{ values.entities }}
+    - CHART-${{ values.entities }}-by-status
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  CHART-${{ values.entities }}:
+    type: CHART
+    id: CHART-${{ values.entities }}
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-1
+    meta:
+      height: 50
+      sliceName: ${{ values.entitiesTitle }}
+      uuid: 9d8e7b1d-20e2-49ce-a453-ac95d1db0b0c
+      width: 4
+  CHART-${{ values.entities }}-by-status:
+    type: CHART
+    id: CHART-${{ values.entities }}-by-status
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-1
+    meta:
+      height: 50
+      sliceName: ${{ values.entitiesTitle }} by status
+      uuid: a8b62086-5b71-4643-a544-c8e762a832c6
+      width: 8
+version: 1.0.0

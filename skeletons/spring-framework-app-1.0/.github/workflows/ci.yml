@@ -1,0 +1,227 @@
+# The services (Spring Framework) against a real PostgreSQL and RabbitMQ (Testcontainers), the web, and the contract
+# between them: services/<service>/openapi.json and the types the web generates from them must be committed up to date.
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main]
+env:
+  # the base images of the services: Docker Hardened Images when the repository has DHI_USERNAME / DHI_TOKEN
+  DHI_BUILD_IMAGE: dhi.io/maven:3-jdk25-alpine3.24-dev
+  DHI_RUNTIME_IMAGE: dhi.io/eclipse-temurin:25-alpine3.24
+jobs:
+  services:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+      # the database of the framework (refresquito-postgres, PostgreSQL 18): built from the Dockerfile of its release in
+      # vendor/ (the image is private); the tests start it with Testcontainers
+      - name: The database of the framework
+        run: docker build -q -t refresquito-postgres:ci vendor/refresquito-postgres-*/
+      # every test of every service; each one also checks that its openapi.json is what it publishes
+      - name: Tests
+        run: mvn -B test -Dpostgres.image=refresquito-postgres:ci
+      # The quality report (.github/quality.py services): the tests, the coverage (JaCoCo) and who can call each
+      # operation (x-refresquito-auth of the OpenAPI of each service, written by the framework).
+      - name: Quality report of the services
+        if: always()
+        run: |
+          mkdir -p quality
+          args=()
+          for f in services/*/openapi.json; do s=$(basename "$(dirname "$f")"); args+=(--openapi "$s=$f"); done
+          python3 .github/quality.py services quality/quality-backend.json \
+            --surefire 'services/*/target/surefire-reports' --jacoco 'services/*/target/site/jacoco/jacoco.xml' "${args[@]}"
+      # The approved exceptions to the checks (platform/security-exceptions.yaml): validated here (an invalid one is an
+      # error in the summary, it does not fail the job), applied by Backstage.
+      - name: Security exceptions
+        run: python3 .github/quality.py exceptions quality/quality-exceptions.json --file platform/security-exceptions.yaml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quality-backend
+          path: |
+            quality/quality-backend.json
+            quality/quality-exceptions.json
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: The API types are the ones of the openapi.json of the services
+        run: |
+          npm run gen:api
+          git diff --exit-code src/app/api/ || { echo "::error::run 'npm run gen:api' in frontend/ and commit it"; exit 1; }
+      - name: Tests
+        run: |
+          set -o pipefail
+          mkdir -p ../quality
+          KARMA_SPECS=../quality/specs.json npm test 2>&1 | tee ../quality/karma.log
+      # The quality report (.github/quality.py): tests, coverage and eslint. eslint only reports for now.
+      # Its rules of the block "Security" of eslint.config.js are counted apart (part security).
+      - name: Quality report of the frontend
+        run: |
+          npx eslint src -f json -o ../quality/eslint.json || true
+          npx eslint src || true
+          python3 ../.github/quality.py frontend ../quality/quality-frontend.json \
+            --karma ../quality/karma.log --specs ../quality/specs.json --eslint ../quality/eslint.json \
+            --coverage coverage/frontend/coverage-summary.json --coverage-final coverage/frontend/coverage-final.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: quality-frontend
+          path: quality/quality-frontend.json
+      - run: npm run build
+  # Secrets committed in any commit of the history (a secret removed later is still in it): gitleaks, with --redact so
+  # that the report says where, never what. It only reports; the images job adds what Trivy finds in the images.
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks on the whole history
+        env:
+          GITLEAKS_VERSION: "8.30.1"
+        run: |
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          curl -sSfL -o "gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" "$base/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfL "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt" | grep " gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz$" | sha256sum -c -
+          tar -xzf "gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" gitleaks && rm -f "gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          mkdir -p quality
+          ./gitleaks git . --redact --no-banner --report-format json --report-path quality/gitleaks.json --exit-code 0
+          python3 .github/quality.py secrets quality/secrets-repo.json --gitleaks quality/gitleaks.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: quality-gitleaks
+          path: quality/gitleaks.json
+  # The images (one per service, the web, and platform/ for the provisioner), pushed to ghcr.io with the commit as
+  # tag, once the tests of main pass. Each one carries its SBOM and the quality report (oras attach).
+  images:
+    if: github.event_name == 'push'
+    needs: [services, frontend, secrets]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      REGISTRY: ghcr.io/${{ github.repository_owner }}
+      TAG: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      # the name of the application (the artifactId of the root pom.xml): its images are <app>-<part>
+      - name: The application
+        run: echo "APP=$(sed -n 's#^  <artifactId>\(.*\)</artifactId>#\1#p' pom.xml | head -1)" >> "$GITHUB_ENV"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Docker Hardened Images, when the repository has their credentials
+        id: dhi
+        env:
+          DHI_USERNAME: ${{ secrets.DHI_USERNAME }}
+          DHI_TOKEN: ${{ secrets.DHI_TOKEN }}
+        run: |
+          if [ -n "$DHI_USERNAME" ] && [ -n "$DHI_TOKEN" ]; then
+            echo "$DHI_TOKEN" | docker login dhi.io -u "$DHI_USERNAME" --password-stdin
+            echo "args=--build-arg BUILD_IMAGE=$DHI_BUILD_IMAGE --build-arg RUNTIME_IMAGE=$DHI_RUNTIME_IMAGE" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::no DHI_USERNAME / DHI_TOKEN: the services are built on the upstream images"
+          fi
+      - name: Build and push
+        env:
+          DHI_ARGS: ${{ steps.dhi.outputs.args }}
+        run: |
+          build() {  # <image> <dockerfile> [build args...]
+            local image=$1 file=$2; shift 2
+            docker buildx build --push -f "$file" "$@" --metadata-file "meta-$image.json" -t "$REGISTRY/$APP-$image:$TAG" .
+            echo "$image $(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['containerimage.digest'])" "meta-$image.json")" >> images.txt
+          }
+          for service in $(ls services | grep -v Dockerfile); do
+            # shellcheck disable=SC2086
+            build "$service" services/Dockerfile --build-arg SERVICE="$service" $DHI_ARGS
+          done
+          build web frontend/Dockerfile
+          build platform platform/Containerfile
+          cat images.txt
+      - uses: anchore/sbom-action/download-syft@v0
+        id: syft
+      # The SBOM of each image (CycloneDX JSON, by Syft: the packages of the image, whatever its language). The web
+      # image serves the built application, whose packages Syft does not see: the production packages of its lock file
+      # (frontend/package-lock.json) go into the same SBOM.
+      - name: SBOMs
+        env:
+          SYFT: ${{ steps.syft.outputs.cmd }}
+        run: |
+          while read -r image digest; do
+            "$SYFT" "registry:$REGISTRY/$APP-$image@$digest" -o "cyclonedx-json=$APP-$image.cdx.json" -q
+          done < images.txt
+          "$SYFT" dir:frontend -o cyclonedx-json=$APP-web-app.cdx.json -q
+          python3 - $APP-web.cdx.json $APP-web-app.cdx.json <<'PY'
+          import json, sys
+          image_path, app_path = sys.argv[1], sys.argv[2]
+          image, app = json.load(open(image_path)), json.load(open(app_path))
+          have = {c.get("bom-ref") for c in image.get("components", [])}
+          image["components"] = image.get("components", []) + [c for c in app.get("components", []) if c.get("bom-ref") not in have]
+          refs = {c.get("bom-ref") for c in image["components"]}
+          image["dependencies"] = image.get("dependencies", []) + [d for d in app.get("dependencies", []) if d.get("ref") in refs]
+          json.dump(image, open(image_path, "w"))
+          print(f"{image_path}: {len(image['components'])} components")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sboms
+          path: "*.cdx.json"
+      # The quality report of this commit (the parts the test jobs left), attached to every image like the SBOM.
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: quality-*
+          path: quality
+          merge-multiple: true
+      # Secrets inside the images (a key or a .env copied into a layer): Trivy, the same version as the image scan of
+      # Wazuh; its report masks what it matches. With the gitleaks report of the history: the part secrets.
+      - name: Secrets in the images
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          args=()
+          while read -r image digest; do
+            docker run --rm -e TRIVY_USERNAME="${{ github.actor }}" -e TRIVY_PASSWORD="$TOKEN" -v "$PWD/quality:/out" \
+              docker.io/aquasec/trivy:0.74.0 image --quiet --scanners secret --format json --output "/out/trivy-$image.json" \
+              "$REGISTRY/$APP-$image@$digest" || echo "::warning::Trivy could not scan $APP-$image"
+            args+=(--trivy "$image=quality/trivy-$image.json")
+          done < images.txt
+          python3 .github/quality.py secrets quality/quality-secrets.json --gitleaks quality/gitleaks.json "${args[@]}"
+      - name: The quality report
+        run: python3 .github/quality.py merge quality.json quality/quality-backend.json quality/quality-frontend.json quality/quality-secrets.json quality/quality-exceptions.json --revision "$TAG"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: quality.json
+          path: quality.json
+      - uses: oras-project/setup-oras@v1
+      - name: The SBOMs and the quality report, attached to their images
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          echo "$TOKEN" | oras login ghcr.io -u "${{ github.actor }}" --password-stdin
+          while read -r image digest; do
+            for attach in "$APP-$image.cdx.json:application/vnd.cyclonedx+json" "quality.json:application/vnd.refresquito.quality.v1+json"; do
+              oras attach --artifact-type "${attach#*:}" \
+                --annotation "org.opencontainers.image.source=https://github.com/${{ github.repository }}" \
+                --annotation "org.opencontainers.image.revision=$TAG" \
+                "$REGISTRY/$APP-$image@$digest" "$attach"
+            done
+          done < images.txt

@@ -1,0 +1,7 @@
+# The image ${{ values.name }}-platform: platform/ of this commit, for the provisioner of the chart spring-app-oneke (it copies
+# /platform with sh, which the images of the services do not have). Build from the root of the repository:
+#   podman build -f platform/Containerfile -t ${{ values.name }}-platform .
+ARG BASE_IMAGE=docker.io/library/busybox:1.37
+FROM ${BASE_IMAGE}
+COPY platform /platform
+USER 65532

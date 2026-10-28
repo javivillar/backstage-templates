@@ -1,0 +1,53 @@
+package io.refresquito.${{ values.name }}.${{ values.entities }};
+
+import io.refresquito.spring.flows.Flows;
+import io.refresquito.spring.openapi.Lineage;
+import jakarta.annotation.security.RolesAllowed;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import static io.refresquito.${{ values.name }}.${{ values.entities }}.${{ values.entitiesTitle }}Application.ADMIN;
+
+/**
+ * Block flows: the flow new-${{ values.entity }} (platform/flows/new-${{ values.entity }}.json) welcomes a ${{ values.entity }}. Creating a ${{ values.entity }} publishes ${{ values.entity }}.created,
+ * which starts it too; every run is recorded (GET /api/flow-runs, by the framework); a flow sets the status of a ${{ values.entity }}
+ * with the key of the application (role flow), never as a user.
+ */
+@RestController
+@RequestMapping("/api/${{ values.entities }}")
+public class WelcomeController {
+
+    public record StatusIn(${{ values.entityTitle }}.Status status) {}
+
+    private final ${{ values.entitiesTitle }}Controller ${{ values.entities }};
+    private final ObjectProvider<Flows> flows;
+
+    WelcomeController(${{ values.entitiesTitle }}Controller ${{ values.entities }}, ObjectProvider<Flows> flows) {
+        this.${{ values.entities }} = ${{ values.entities }};
+        this.flows = flows;
+    }
+
+    @PostMapping("/{id}/welcome")
+    @RolesAllowed(ADMIN)
+    @Lineage(source = "table:${{ values.entity }}", target = "flow:new-${{ values.entity }}")
+    public Object welcome(@PathVariable long id) {
+        ${{ values.entityTitle }} ${{ values.entity }} = ${{ values.entities }}.find(id);
+        return Blocks.required(flows, "flows").triggerAndWait("new-${{ values.entity }}",
+                java.util.Map.of("name", ${{ values.entity }}.getName(), "category", ${{ values.entity }}.getCategory())).body();
+    }
+
+    @PostMapping("/{id}/status")
+    @RolesAllowed("flow")
+    @Transactional
+    @Lineage(target = "table:${{ values.entity }}")
+    public ${{ values.entityTitle }}Out status(@PathVariable long id, @RequestBody StatusIn body) {
+        ${{ values.entityTitle }} ${{ values.entity }} = ${{ values.entities }}.find(id);
+        ${{ values.entity }}.status = body.status();
+        return ${{ values.entityTitle }}Out.of(${{ values.entity }});
+    }
+}

@@ -1,0 +1,28 @@
+package io.refresquito.${{ values.name }}.${{ values.entities }};
+
+import java.util.List;
+import java.util.Map;
+
+import io.refresquito.spring.dashboards.Dashboard;
+import io.refresquito.spring.dashboards.GuestToken;
+
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+
+/** Block dashboards: the dashboards of Superset, for the user, and the data of its dataset. */
+class DashboardsTest extends BlockTest {
+
+    @Test
+    void the_dashboards_are_superset_for_the_user() throws Exception {
+        when(dashboards.list()).thenReturn(List.of(new Dashboard("main", "${{ values.title }}", 1, "u-1", "https://superset.test/d/1")));
+        assertThat(call("GET", "/api/dashboards", null, "${{ values.name }}-viewer").body()).contains("\"name\":\"main\"");
+        when(dashboards.guestToken(eq("main"), any(), eq(List.of()))).thenReturn(new GuestToken("tok", "u-1", "https://superset.test", 300));
+        assertThat(call("GET", "/api/dashboards/main/guest-token", null, "${{ values.name }}-viewer").body()).contains("\"superset_url\":\"https://superset.test\"");
+        when(dashboards.data(eq("${{ values.entity }}"), any())).thenReturn(List.of(Map.of("status", "active", "count", 3)));
+        assertThat(JSON.readTree(call("GET", "/api/stats/${{ values.entities }}-by-status", null, "${{ values.name }}-viewer").body()).get(0).get("count").asInt()).isEqualTo(3);
+    }
+}
