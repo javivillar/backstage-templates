@@ -89,7 +89,12 @@ DROP_LINES = [
     ("services/notifier/src/main/java/io/refresquito/petshop/notifier/Notices.java", "// the service adoptions", "}", 0),
     ("services/notifier/src/test/java/io/refresquito/petshop/notifier/NoticesTest.java", "void an_adoption_approved_is_a_notice", "}", 1),
 ]
-EDITS = [   # (file, old, new): words about adoptions in lines that stay
+EDITS = [   # (file, old, new): words about adoptions in lines that stay; the table of the entity quoted
+    # the table of a new application may be a word of SQL (order, user): quoted in its migration (Hibernate quotes it
+    # too: hibernate.auto_quote_keyword of refresquito-spring-boot). petstore-spring keeps its V1 as deployed.
+    ("services/pets/src/main/resources/db/migration/V1__pet.sql", "create table pet (", 'create table "pet" ('),
+    ("services/pets/src/main/resources/db/migration/V1__pet.sql", " on pet (species);", ' on "pet" (species);'),
+    ("services/pets/src/main/resources/db/migration/V1__pet.sql", " on pet (status);", ' on "pet" (status);'),
     ("services/notifier/src/main/java/io/refresquito/petshop/notifier/Notices.java",
      "a new pet and a change of status for everyone, an adoption for its\n * adopter. In the transaction",
      "a new pet and a change of status, for everyone. In\n * the transaction"),
