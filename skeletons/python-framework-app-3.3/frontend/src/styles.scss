@@ -1,0 +1,12 @@
+// The look of Refresquito (refresquito-angular 3.3), then what is only the ${{ values.name }}'s: the colour of each status.
+@import 'refresquito-angular/styles/refresquito';
+
+.status { @extend .badge; text-transform: capitalize; }
+.status-active { background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
+.status-pending { background: var(--bs-warning-bg-subtle); color: var(--bs-warning-text-emphasis); }
+.status-closed { background: var(--bs-secondary-bg-subtle); color: var(--bs-secondary-text-emphasis); }
+.${{ values.entity }}-avatar {
+  width: 96px; height: 96px; border-radius: 1rem; flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 2.5rem; font-weight: 700; background: #ffe8cc; color: #8a4b00;
+}

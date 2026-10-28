@@ -1,0 +1,2058 @@
+{
+  "info": {
+    "title": "${{ values.title }} API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "components": {
+    "securitySchemes": {
+      "HTTPBearer": {
+        "description": "Access token of the Keycloak realm",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    },
+    "schemas": {
+{%- if ((values.sites | length) > 0) %}
+      "Body_add_document_api_${{ values.entities }}__${{ values.entity }}_id__documents_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_add_document_api_${{ values.entities }}__${{ values.entity }}_id__documents_post",
+        "type": "object"
+      },
+{%- endif %}
+{%- if ((values.buckets | length) > 0) %}
+      "Body_add_file_api_${{ values.entities }}__${{ values.entity }}_id__files_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_add_file_api_${{ values.entities }}__${{ values.entity }}_id__files_post",
+        "type": "object"
+      },
+{%- endif %}
+{%- if (values.dashboards) %}
+      "Dashboard": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          },
+          "uuid": {
+            "title": "Uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "title",
+          "id",
+          "uuid",
+          "url"
+        ],
+        "title": "Dashboard",
+        "type": "object"
+      },
+{%- endif %}
+{%- if ((values.sites | length) > 0) %}
+      "Document": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "folder": {
+            "default": "",
+            "title": "Folder",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "mime_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mime Type"
+          },
+          "modified_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modified At"
+          },
+          "modified_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modified By"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "Document",
+        "type": "object"
+      },
+{%- endif %}
+{%- if ((values.buckets | length) > 0) %}
+      "DownloadOut": {
+        "properties": {
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "title": "DownloadOut",
+        "type": "object"
+      },
+{%- endif %}
+{%- if ((values.buckets | length) > 0) %}
+      "FileOut": {
+        "properties": {
+          "content_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Type"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "FileOut",
+        "type": "object"
+      },
+{%- endif %}
+{%- if (values.flows) %}
+      "FlowRunOut": {
+        "properties": {
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "event": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "flow": {
+            "title": "Flow",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "started_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started By"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "flow",
+          "event",
+          "status",
+          "detail",
+          "started_by",
+          "started_at",
+          "finished_at"
+        ],
+        "title": "FlowRunOut",
+        "type": "object"
+      },
+{%- endif %}
+{%- if (values.flows) %}
+      "FlowRunReport": {
+        "properties": {
+          "detail": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "status": {
+            "enum": [
+              "succeeded",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "FlowRunReport",
+        "type": "object"
+      },
+{%- endif %}
+{%- if (values.dashboards) %}
+      "GuestToken": {
+        "properties": {
+          "expires_in": {
+            "default": 300,
+            "title": "Expires In",
+            "type": "integer"
+          },
+          "superset_url": {
+            "title": "Superset Url",
+            "type": "string"
+          },
+          "token": {
+            "title": "Token",
+            "type": "string"
+          },
+          "uuid": {
+            "title": "Uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "uuid",
+          "superset_url"
+        ],
+        "title": "GuestToken",
+        "type": "object"
+      },
+{%- endif %}
+{%- if (values.flows) %}
+      "Page_FlowRunOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FlowRunOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "size": {
+            "title": "Size",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "size"
+        ],
+        "title": "Page[FlowRunOut]",
+        "type": "object"
+      },
+{%- endif %}
+{%- if (values.processes) %}
+      "ReviewIn": {
+        "properties": {
+          "reviewer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewer"
+          }
+        },
+        "title": "ReviewIn",
+        "type": "object"
+      },
+{%- endif %}
+{%- if (values.processes) %}
+      "ReviewOut": {
+        "properties": {
+          "business_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Business Key"
+          },
+          "process": {
+            "title": "Process",
+            "type": "string"
+          }
+        },
+        "required": [
+          "process",
+          "business_key"
+        ],
+        "title": "ReviewOut",
+        "type": "object"
+      },
+{%- endif %}
+{%- if (values.flows) %}
+      "StatusIn": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/${{ values.entityTitle }}Status"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "StatusIn",
+        "type": "object"
+      },
+{%- endif %}
+{%- if (values.processes) %}
+      "Task": {
+        "properties": {
+          "assignee": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignee"
+          },
+          "created": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created"
+          },
+          "due": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "process_instance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Process Instance"
+          },
+          "task": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "Task",
+        "type": "object"
+      },
+{%- endif %}
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "Page_${{ values.entityTitle }}Out_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/${{ values.entityTitle }}Out"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "size": {
+            "title": "Size",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "size"
+        ],
+        "title": "Page[${{ values.entityTitle }}Out]",
+        "type": "object"
+      },
+      "${{ values.entityTitle }}In": {
+        "properties": {
+          "start_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          },
+          "name": {
+            "examples": [
+              "Rex"
+            ],
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "category": {
+            "examples": [
+              "tools"
+            ],
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Category",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/${{ values.entityTitle }}Status",
+            "default": "active"
+          }
+        },
+        "required": [
+          "name",
+          "category"
+        ],
+        "title": "${{ values.entityTitle }}In",
+        "type": "object"
+      },
+      "${{ values.entityTitle }}Out": {
+        "properties": {
+          "start_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "title": "Created By",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/${{ values.entityTitle }}Status"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "category",
+          "status",
+          "start_date",
+          "created_at",
+          "created_by"
+        ],
+        "title": "${{ values.entityTitle }}Out",
+        "type": "object"
+      },
+      "${{ values.entityTitle }}Status": {
+        "enum": [
+          "active",
+          "pending",
+          "closed"
+        ],
+        "title": "${{ values.entityTitle }}Status",
+        "type": "string"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "paths": {
+{%- if (values.processes) %}
+    "/api/${{ values.entities }}/{${{ values.entity }}_id}/review": {
+      "post": {
+        "operationId": "ask_for_review_api_${{ values.entities }}__${{ values.entity }}_id__review_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "${{ values.entity }}_id",
+            "required": true,
+            "schema": {
+              "title": "${{ values.entityTitle }} Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ReviewIn"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Ask For Review",
+        "tags": [
+          "review"
+        ],
+        "x-refresquito-source": [
+          "table:${{ values.entity }}"
+        ],
+        "x-refresquito-target": [
+          "process:review"
+        ]
+      }
+    },
+{%- endif %}
+{%- if (values.processes) %}
+    "/api/tasks": {
+      "get": {
+        "description": "The open tasks of the user: assigned to them, or offered to them or to their groups.",
+        "operationId": "my_tasks_api_tasks_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Task"
+                  },
+                  "title": "Response My Tasks Api Tasks Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "My Tasks",
+        "tags": [
+          "review"
+        ],
+        "x-refresquito-source": [
+          "process:review"
+        ]
+      }
+    },
+{%- endif %}
+{%- if (values.processes) %}
+    "/api/tasks/{task_id}/complete": {
+      "post": {
+        "operationId": "complete_task_api_tasks__task_id__complete_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {
+              "title": "Task Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Variables"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Complete Task",
+        "tags": [
+          "review"
+        ],
+        "x-refresquito-target": [
+          "process:review"
+        ]
+      }
+    },
+{%- endif %}
+{%- if (values.flows) %}
+    "/api/${{ values.entities }}/{${{ values.entity }}_id}/welcome": {
+      "post": {
+        "operationId": "welcome_api_${{ values.entities }}__${{ values.entity }}_id__welcome_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "${{ values.entity }}_id",
+            "required": true,
+            "schema": {
+              "title": "${{ values.entityTitle }} Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Welcome Api ${{ values.entitiesTitle }}  ${{ values.entityTitle }} Id  Welcome Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Welcome",
+        "tags": [
+          "welcome"
+        ],
+        "x-refresquito-source": [
+          "table:${{ values.entity }}"
+        ],
+        "x-refresquito-target": [
+          "flow:new-${{ values.entity }}"
+        ]
+      }
+    },
+{%- endif %}
+{%- if (values.flows) %}
+    "/api/${{ values.entities }}/{${{ values.entity }}_id}/status": {
+      "post": {
+        "description": "The status of a ${{ values.entity }}, set by a flow of the ${{ values.name }}.",
+        "operationId": "set_status_api_${{ values.entities }}__${{ values.entity }}_id__status_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "${{ values.entity }}_id",
+            "required": true,
+            "schema": {
+              "title": "${{ values.entityTitle }} Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/${{ values.entityTitle }}Out"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Status",
+        "tags": [
+          "welcome"
+        ],
+        "x-refresquito-target": [
+          "table:${{ values.entity }}"
+        ]
+      }
+    },
+{%- endif %}
+{%- if ((values.buckets | length) > 0) %}
+    "/api/${{ values.entities }}/{${{ values.entity }}_id}/files": {
+      "get": {
+        "operationId": "list_files_api_${{ values.entities }}__${{ values.entity }}_id__files_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "${{ values.entity }}_id",
+            "required": true,
+            "schema": {
+              "title": "${{ values.entityTitle }} Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FileOut"
+                  },
+                  "title": "Response List Files Api ${{ values.entitiesTitle }}  ${{ values.entityTitle }} Id  Files Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Files",
+        "tags": [
+          "files"
+        ],
+        "x-refresquito-source": [
+          "bucket:${{ values.buckets[0] }}"
+        ]
+      },
+      "post": {
+        "operationId": "add_file_api_${{ values.entities }}__${{ values.entity }}_id__files_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "${{ values.entity }}_id",
+            "required": true,
+            "schema": {
+              "title": "${{ values.entityTitle }} Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_add_file_api_${{ values.entities }}__${{ values.entity }}_id__files_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Add File",
+        "tags": [
+          "files"
+        ],
+        "x-refresquito-target": [
+          "bucket:${{ values.buckets[0] }}"
+        ]
+      }
+    },
+{%- endif %}
+{%- if ((values.buckets | length) > 0) %}
+    "/api/${{ values.entities }}/{${{ values.entity }}_id}/files/{name}": {
+      "delete": {
+        "operationId": "delete_file_api_${{ values.entities }}__${{ values.entity }}_id__files__name__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "${{ values.entity }}_id",
+            "required": true,
+            "schema": {
+              "title": "${{ values.entityTitle }} Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete File",
+        "tags": [
+          "files"
+        ],
+        "x-refresquito-target": [
+          "bucket:${{ values.buckets[0] }}"
+        ]
+      },
+      "get": {
+        "operationId": "download_file_api_${{ values.entities }}__${{ values.entity }}_id__files__name__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "${{ values.entity }}_id",
+            "required": true,
+            "schema": {
+              "title": "${{ values.entityTitle }} Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DownloadOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Download File",
+        "tags": [
+          "files"
+        ],
+        "x-refresquito-source": [
+          "bucket:${{ values.buckets[0] }}"
+        ]
+      }
+    },
+{%- endif %}
+{%- if ((values.sites | length) > 0) %}
+    "/api/${{ values.entities }}/{${{ values.entity }}_id}/documents": {
+      "get": {
+        "operationId": "list_documents_api_${{ values.entities }}__${{ values.entity }}_id__documents_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "${{ values.entity }}_id",
+            "required": true,
+            "schema": {
+              "title": "${{ values.entityTitle }} Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Document"
+                  },
+                  "title": "Response List Documents Api ${{ values.entitiesTitle }}  ${{ values.entityTitle }} Id  Documents Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Documents",
+        "tags": [
+          "documents"
+        ],
+        "x-refresquito-source": [
+          "site:${{ values.sites[0] }}"
+        ]
+      },
+      "post": {
+        "operationId": "add_document_api_${{ values.entities }}__${{ values.entity }}_id__documents_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "${{ values.entity }}_id",
+            "required": true,
+            "schema": {
+              "title": "${{ values.entityTitle }} Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_add_document_api_${{ values.entities }}__${{ values.entity }}_id__documents_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Add Document",
+        "tags": [
+          "documents"
+        ],
+        "x-refresquito-target": [
+          "site:${{ values.sites[0] }}"
+        ]
+      }
+    },
+{%- endif %}
+{%- if ((values.sites | length) > 0) %}
+    "/api/${{ values.entities }}/{${{ values.entity }}_id}/documents/{document_id}": {
+      "delete": {
+        "operationId": "delete_document_api_${{ values.entities }}__${{ values.entity }}_id__documents__document_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "${{ values.entity }}_id",
+            "required": true,
+            "schema": {
+              "title": "${{ values.entityTitle }} Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Document",
+        "tags": [
+          "documents"
+        ],
+        "x-refresquito-target": [
+          "site:${{ values.sites[0] }}"
+        ]
+      },
+      "get": {
+        "operationId": "download_document_api_${{ values.entities }}__${{ values.entity }}_id__documents__document_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "${{ values.entity }}_id",
+            "required": true,
+            "schema": {
+              "title": "${{ values.entityTitle }} Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Download Document",
+        "tags": [
+          "documents"
+        ],
+        "x-refresquito-source": [
+          "site:${{ values.sites[0] }}"
+        ]
+      }
+    },
+{%- endif %}
+{%- if (values.dashboards) %}
+    "/api/dashboards": {
+      "get": {
+        "operationId": "list_dashboards_api_dashboards_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Dashboard"
+                  },
+                  "title": "Response List Dashboards Api Dashboards Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Dashboards",
+        "tags": [
+          "dashboards"
+        ]
+      }
+    },
+{%- endif %}
+{%- if (values.dashboards) %}
+    "/api/dashboards/{name}/guest-token": {
+      "get": {
+        "description": "What <rq-dashboard> asks to embed the dashboard, for the user of the request.",
+        "operationId": "guest_token_api_dashboards__name__guest_token_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestToken"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Guest Token",
+        "tags": [
+          "dashboards"
+        ]
+      }
+    },
+{%- endif %}
+{%- if (values.dashboards) %}
+    "/api/stats/${{ values.entities }}-by-status": {
+      "get": {
+        "operationId": "${{ values.entities }}_by_status_api_stats_${{ values.entities }}_by_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response ${{ values.entitiesTitle }} By Status Api Stats ${{ values.entitiesTitle }} By Status Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "${{ values.entitiesTitle }} By Status",
+        "tags": [
+          "dashboards"
+        ],
+        "x-refresquito-source": [
+          "table:${{ values.entity }}"
+        ]
+      }
+    },
+{%- endif %}
+{%- if (values.flows) %}
+    "/api/flow-runs": {
+      "get": {
+        "operationId": "list_flow_runs_api_flow_runs_get",
+        "parameters": [
+          {
+            "description": "Only the runs of this flow",
+            "in": "query",
+            "name": "flow",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only the runs of this flow",
+              "title": "Flow"
+            }
+          },
+          {
+            "description": "Only the runs in this status",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "started",
+                    "succeeded",
+                    "failed"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only the runs in this status",
+              "title": "Status"
+            }
+          },
+          {
+            "description": "Page number, from 1",
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "description": "Page number, from 1",
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Items per page",
+            "in": "query",
+            "name": "size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "description": "Items per page",
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Size",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_FlowRunOut_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Flow Runs",
+        "tags": [
+          "flow runs"
+        ],
+        "x-refresquito-source": [
+          "table:flow_run"
+        ]
+      }
+    },
+{%- endif %}
+{%- if (values.flows) %}
+    "/api/flow-runs/{run_id}": {
+      "post": {
+        "description": "How a run ended, told by the flow itself (its last step).",
+        "operationId": "report_flow_run_api_flow_runs__run_id__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FlowRunReport"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlowRunOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Report Flow Run",
+        "tags": [
+          "flow runs"
+        ],
+        "x-refresquito-target": [
+          "table:flow_run"
+        ]
+      }
+    },
+{%- endif %}
+    "/api/${{ values.entities }}": {
+      "get": {
+        "operationId": "list_${{ values.entities }}_api_${{ values.entities }}_get",
+        "parameters": [
+          {
+            "description": "Only the ${{ values.entities }} in this status",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/${{ values.entityTitle }}Status"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only the ${{ values.entities }} in this status",
+              "title": "Status"
+            }
+          },
+          {
+            "description": "Only this category",
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only this category",
+              "title": "Category"
+            }
+          },
+          {
+            "description": "Page number, from 1",
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "description": "Page number, from 1",
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Items per page",
+            "in": "query",
+            "name": "size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "description": "Items per page",
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Size",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_${{ values.entityTitle }}Out_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List ${{ values.entitiesTitle }}",
+        "tags": [
+          "${{ values.entities }}"
+        ],
+        "x-refresquito-source": [
+          "table:${{ values.entity }}"
+        ]
+      },
+      "post": {
+        "operationId": "create_${{ values.entity }}_api_${{ values.entities }}_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/${{ values.entityTitle }}In"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/${{ values.entityTitle }}Out"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create ${{ values.entityTitle }}",
+        "tags": [
+          "${{ values.entities }}"
+        ],
+        "x-refresquito-target": [
+          "table:${{ values.entity }}"
+        ]
+      }
+    },
+    "/api/${{ values.entities }}/{${{ values.entity }}_id}": {
+      "delete": {
+        "operationId": "delete_${{ values.entity }}_api_${{ values.entities }}__${{ values.entity }}_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "${{ values.entity }}_id",
+            "required": true,
+            "schema": {
+              "title": "${{ values.entityTitle }} Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete ${{ values.entityTitle }}",
+        "tags": [
+          "${{ values.entities }}"
+        ],
+        "x-refresquito-target": [
+          "table:${{ values.entity }}"
+        ]
+      },
+      "get": {
+        "operationId": "get_${{ values.entity }}_api_${{ values.entities }}__${{ values.entity }}_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "${{ values.entity }}_id",
+            "required": true,
+            "schema": {
+              "title": "${{ values.entityTitle }} Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/${{ values.entityTitle }}Out"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get ${{ values.entityTitle }}",
+        "tags": [
+          "${{ values.entities }}"
+        ],
+        "x-refresquito-source": [
+          "table:${{ values.entity }}"
+        ]
+      },
+      "put": {
+        "operationId": "update_${{ values.entity }}_api_${{ values.entities }}__${{ values.entity }}_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "${{ values.entity }}_id",
+            "required": true,
+            "schema": {
+              "title": "${{ values.entityTitle }} Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/${{ values.entityTitle }}In"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/${{ values.entityTitle }}Out"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update ${{ values.entityTitle }}",
+        "tags": [
+          "${{ values.entities }}"
+        ],
+        "x-refresquito-target": [
+          "table:${{ values.entity }}"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+"""The block processes of the ${{ values.name }}: a review is a process, and its task is in the inbox of the reviewer.
+Against the fake of refresquito_fastapi.testing."""
+
+import pytest
+from refresquito_fastapi.testing import assert_problem
+
+from .test_${{ values.entities }} import create
+
+pytestmark = pytest.mark.anyio
+
+
+async def test_a_review_is_a_process_and_a_task_of_the_reviewer(client, admin, tokens, processes):
+    ${{ values.entity }} = await create(client, admin, name="Rex")
+    asked = await client.post(f"/api/${{ values.entities }}/{${{ values.entity }}['id']}/review", headers=admin, json={"reviewer": "luis"})
+    assert asked.status_code == 202 and asked.json()["business_key"] == f"${{ values.entity }}-{${{ values.entity }}['id']}"
+    assert await processes.variables(processes.started[0].id) == {"${{ values.entity }}": "Rex", "requestedBy": "ana", "reviewer": "luis"}
+    [task] = await processes.tasks()
+    await processes.claim(task.id, "luis")   # in Camunda the BPMN assigns it to ${reviewer}
+    luis = tokens.headers("luis", roles=["${{ values.name }}-viewer"])
+    assert [t["name"] for t in (await client.get("/api/tasks", headers=luis)).json()] == ["review"]
+    assert (await client.post(f"/api/tasks/{task.id}/complete", headers=luis, json={"approved": True})).status_code == 204
+    assert processes.completed == [(task.id, {"approved": True})] and processes.started[0].ended
+
+
+async def test_a_task_of_someone_else_cannot_be_completed(client, admin, processes):
+    ${{ values.entity }} = await create(client, admin)
+    await client.post(f"/api/${{ values.entities }}/{${{ values.entity }}['id']}/review", headers=admin, json={"reviewer": "luis"})
+    [task] = await processes.tasks()
+    await processes.claim(task.id, "luis")
+    assert_problem(await client.post(f"/api/tasks/{task.id}/complete", headers=admin), 404, "not_found")
+
+
+async def test_review_needs_the_admin_and_an_existing_${{ values.entity }}(client, admin, viewer):
+    assert_problem(await client.post("/api/${{ values.entities }}/1/review", headers=viewer), 403)
+    assert_problem(await client.post("/api/${{ values.entities }}/999/review", headers=admin), 404, "not_found")
