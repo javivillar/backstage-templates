@@ -1,0 +1,41 @@
+"""Block flows: the flow new-${{ values.entity }} (platform/flows/new-${{ values.entity }}.json) welcomes a ${{ values.entity }}.
+
+- `POST /api/${{ values.entities }}/{id}/welcome` triggers it and waits for its answer;
+- creating a ${{ values.entity }} publishes the event `${{ values.entity }}.created`, which starts it too (its file says `"platform": {"events": [...]}`);
+- every run is recorded (`create_app(flow_runs=...)` in main.py) and the flow tells how it ended (`GET /api/flow-runs`);
+- `POST /api/${{ values.entities }}/{id}/status` is for its flows (FlowCaller: the key of the application, never a user).
+"""
+
+from typing import Any
+
+from fastapi import APIRouter
+from pydantic import BaseModel
+from refresquito_fastapi import lineage
+from refresquito_fastapi.db import SessionDep
+from refresquito_fastapi.platform.flows import FlowCaller, FlowsDep
+
+from .api import Writer, find
+from .models import ${{ values.entityTitle }}Status
+from .schemas import ${{ values.entityTitle }}Out
+
+router = APIRouter(prefix="/api/${{ values.entities }}", tags=["welcome"])
+
+
+class StatusIn(BaseModel):
+    status: ${{ values.entityTitle }}Status
+
+
+@router.post("/{${{ values.entity }}_id}/welcome", openapi_extra=lineage.source("table:${{ values.entity }}") | lineage.target("flow:new-${{ values.entity }}"))
+async def welcome(${{ values.entity }}_id: int, user: Writer, session: SessionDep, flows: FlowsDep) -> Any:
+    ${{ values.entity }} = await find(session, ${{ values.entity }}_id)
+    answer = await flows.trigger("new-${{ values.entity }}", {"name": ${{ values.entity }}.name, "category": ${{ values.entity }}.category}, wait=True)
+    return answer.body
+
+
+@router.post("/{${{ values.entity }}_id}/status", openapi_extra=lineage.target("table:${{ values.entity }}"))
+async def set_status(${{ values.entity }}_id: int, body: StatusIn, caller: FlowCaller, session: SessionDep) -> ${{ values.entityTitle }}Out:
+    """The status of a ${{ values.entity }}, set by a flow of the ${{ values.name }}."""
+    ${{ values.entity }} = await find(session, ${{ values.entity }}_id)
+    ${{ values.entity }}.status = body.status
+    await session.flush()
+    return ${{ values.entityTitle }}Out.model_validate(${{ values.entity }})

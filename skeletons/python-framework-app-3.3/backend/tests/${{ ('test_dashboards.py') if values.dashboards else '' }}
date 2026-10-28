@@ -1,0 +1,25 @@
+"""The block dashboards of the ${{ values.name }}: its dashboard embedded (a guest token for the user) and the data of its dataset.
+Against the fake of refresquito_fastapi.testing."""
+
+import pytest
+from refresquito_fastapi.testing import assert_problem
+
+pytestmark = pytest.mark.anyio
+
+
+async def test_its_dashboards_and_a_guest_token_for_the_user(client, viewer, dashboards):
+    assert [d["name"] for d in (await client.get("/api/dashboards", headers=viewer)).json()] == ["main"]
+    token = (await client.get("/api/dashboards/main/guest-token", headers=viewer)).json()
+    assert token["token"] == "guest-token-main-luis" and token["uuid"] == "uuid-main"
+    assert dashboards.tokens == [("main", "luis", [])]
+    assert_problem(await client.get("/api/dashboards/other/guest-token", headers=viewer), 404)
+
+
+async def test_${{ values.entities }}_by_status_as_superset_computes_them(client, viewer, dashboards):
+    rows = (await client.get("/api/stats/${{ values.entities }}-by-status", headers=viewer)).json()
+    assert rows == [{"status": "active", "count": 2}, {"status": "closed", "count": 1}]
+    assert dashboards.queries[0]["columns"] == ["status"] and dashboards.queries[0]["metrics"] == ["count"]
+
+
+async def test_nobody_without_a_${{ values.name }}_role(client, tokens):
+    assert_problem(await client.get("/api/dashboards/main/guest-token", headers=tokens.headers("eve", roles=["x"])), 403)

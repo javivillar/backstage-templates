@@ -36,10 +36,10 @@ SKELETONS = HERE.parent / "skeletons"
 OUT = SKELETONS / "python-framework-app"          # built here first, then one copy per line
 # the maintained lines of the Python Framework (its SUPPORT.md): line -> (refresquito-fastapi, refresquito-angular)
 LINES = {"0.1": ("0.1.0", "0.1.0"), "2.0": ("2.0.0", "2.0.0"), "3.0": ("3.0.1", "3.0.0"), "3.1": ("3.1.2", "3.1.1"),
-         "3.2": ("3.2.0", "3.2.0")}
+         "3.2": ("3.2.0", "3.2.0"), "3.3": ("3.3.0", "3.3.0")}
 # from 3.2 the framework has its database, refresquito-postgres: the Dockerfile of its release goes to
 # vendor/refresquito-postgres-<version>/ (the image is private: compose.yaml and the CI build it from there)
-POSTGRES = {"3.2": "3.2.0"}
+POSTGRES = {"3.2": "3.2.0", "3.3": "3.3.0"}
 NEWEST = max(LINES, key=lambda line: tuple(int(n) for n in line.split(".")))
 OVERRIDES = HERE / "python-app-overrides"
 src = pathlib.Path(sys.argv[1]).expanduser().resolve() if len(sys.argv) > 1 else sys.exit(__doc__)
@@ -48,6 +48,9 @@ V = lambda name: "${{ values.%s }}" % name   # noqa: E731
 # entityTitle and entitiesTitle are the capitalized names. They cannot be called Entity and Entities: the
 # catalog rejects a template whose keys differ only in case ("duplicate keys that vary only in casing")
 RULES = [   # in order: the longer names first
+    # 3.3: the icons of the petstore in <rq-shell> (Bootstrap Icons) are about pets: neutral ones for any application
+    ('icon="heart-fill"', 'icon="grid-3x3-gap-fill"'), ("icon: 'heart'", "icon: 'collection'"),
+    ('<i class="bi bi-heart-fill" aria-hidden="true"></i>', '<i class="bi bi-grid-3x3-gap-fill" aria-hidden="true"></i>'),
     ("PETSTORE_", "APP_"),
     ("petstore_test", "app_test"),
     ("javivillar/petstore", f"{V('owner')}/{V('name')}"),
@@ -122,7 +125,7 @@ BLOCK_LINES = [
     ("frontend/src/app/pets/pet-detail.html", "<app-pet-documents", "dms"),
     ("frontend/src/app/app.routes.ts", "from './pages/tasks'", "processes"),
     ("frontend/src/app/app.routes.ts", "// block processes", "processes"),
-    ("frontend/src/app/app.html", 'routerLink="/tasks"', "processes"),
+    ("frontend/src/app/app.ts", "link: '/tasks'", "processes"),
     # 3.1
     ("backend/src/petstore/main.py", "from .dashboards import", "dashboards"),
     ("backend/src/petstore/main.py", "# block dashboards", "dashboards"),
@@ -132,8 +135,8 @@ BLOCK_LINES = [
     ("frontend/src/app/app.routes.ts", "from './pages/flows'", "flows"),
     ("frontend/src/app/app.routes.ts", "// block dashboards", "dashboards"),
     ("frontend/src/app/app.routes.ts", "// block flows", "flows"),
-    ("frontend/src/app/app.html", 'routerLink="/dashboard"', "dashboards"),
-    ("frontend/src/app/app.html", 'routerLink="/flows"', "flows"),
+    ("frontend/src/app/app.ts", "link: '/dashboard'", "dashboards"),
+    ("frontend/src/app/app.ts", "link: '/flows'", "flows"),
     # 3.1.2: the lineage of each operation in the OpenAPI, one line per block
     ("backend/tests/test_lineage.py", '{pet_id}/review"', "processes"),
     ("backend/tests/test_lineage.py", '{pet_id}/welcome"', "flows"),

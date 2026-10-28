@@ -1,0 +1,77 @@
+<div class="rq-page-header">
+  <div>
+    <div class="small text-body-secondary"><a routerLink="/" class="text-decoration-none">Home</a> / ${{ values.entitiesTitle }}</div>
+    <h1>${{ values.entitiesTitle }}</h1>
+  </div>
+  <div class="rq-page-actions">
+    <a *rqHasRole="admin" class="btn btn-primary" routerLink="/${{ values.entities }}/new"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>New ${{ values.entity }}</a>
+  </div>
+</div>
+
+<section class="card">
+  <form class="filters card-header d-flex flex-wrap gap-3 align-items-end" (ngSubmit)="load(1)">
+    <div>
+      <label class="form-label small text-body-secondary mb-1" for="status">Status</label>
+      <select id="status" class="form-select" name="status" [ngModel]="status()" (ngModelChange)="status.set($event); load(1)">
+        <option value="">All</option>
+        @for (s of statuses; track s) {
+          <option [value]="s">{{ s }}</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label class="form-label small text-body-secondary mb-1" for="category">Category</label>
+      <input id="category" class="form-control" name="category" [ngModel]="category()" (ngModelChange)="category.set($event)" placeholder="tools, books..." />
+    </div>
+    <button type="submit" class="btn btn-outline-primary"><i class="bi bi-search me-1" aria-hidden="true"></i>Search</button>
+  </form>
+
+  @if (page(); as p) {
+    @if (p.items.length) {
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Category</th>
+              <th>Status</th>
+              <th>Starts</th>
+              <th>Added by</th>
+              <th><span class="visually-hidden">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (${{ values.entity }} of p.items; track ${{ values.entity }}.id) {
+              <tr>
+                <td>
+                  <a class="fw-semibold text-decoration-none" [routerLink]="['/${{ values.entities }}', ${{ values.entity }}.id]">{{ ${{ values.entity }}.name }}</a>
+                </td>
+                <td>{{ ${{ values.entity }}.category }}</td>
+                <td><span class="status status-{{ ${{ values.entity }}.status }}">{{ ${{ values.entity }}.status }}</span></td>
+                <td class="text-body-secondary">{{ ${{ values.entity }}.start_date | date: 'mediumDate' }}</td>
+                <td>{{ ${{ values.entity }}.created_by }}</td>
+                <td class="actions text-end text-nowrap">
+                  <ng-container *rqHasRole="admin">
+                    <a class="btn btn-sm btn-outline-secondary me-2" [routerLink]="['/${{ values.entities }}', ${{ values.entity }}.id, 'edit']">Edit</a>
+                    <button type="button" class="btn btn-sm btn-outline-danger" (click)="remove(${{ values.entity }})">Delete</button>
+                  </ng-container>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <nav class="pager card-footer d-flex align-items-center gap-3 flex-wrap" aria-label="Pages">
+        <span class="small text-body-secondary">Page {{ p.page }} of {{ pages() }} · {{ p.total }} ${{ values.entities }}</span>
+        <div class="ms-auto d-flex gap-2">
+          <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="p.page <= 1 || loading()" (click)="load(p.page - 1)"><i class="bi bi-chevron-left" aria-hidden="true"></i> Previous</button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="p.page >= pages() || loading()" (click)="load(p.page + 1)">Next <i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+        </div>
+      </nav>
+    } @else {
+      <p class="empty text-center text-body-secondary py-5 mb-0">No ${{ values.entities }} match.</p>
+    }
+  } @else if (loading()) {
+    <p class="empty text-center text-body-secondary py-5 mb-0"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Loading…</p>
+  }
+</section>
