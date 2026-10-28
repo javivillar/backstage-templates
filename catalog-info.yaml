@@ -1851,7 +1851,7 @@ spec:
           description: >-
             The stage it starts in. dev (the default): namespace <zone>-<program>-<name>-dev-oneke,
             https://<name>-dev.<domain>, its own Keycloak client <name>-dev and the test users <name>-dev-viewer and
-            <name>-dev-admin. It moves on to pre and pro with the template "Promote an application (Python Framework)".
+            <name>-dev-admin. It moves on to pre and pro with the template "Promote an application".
             The data catalog (DataHub) is only for pro.
           type: string
           enum: [dev, pre, pro]
@@ -2219,20 +2219,21 @@ spec:
           `${{ parameters.name if parameters.initialStage == 'pro' else (parameters.name + '-' + parameters.initialStage) }}`, its roles and the test users `${{ parameters.name if parameters.initialStage == 'pro' else (parameters.name + '-' + parameters.initialStage) }}-admin` and `${{ parameters.name if parameters.initialStage == 'pro' else (parameters.name + '-' + parameters.initialStage) }}-viewer`.
 
           Nothing else is needed: no command to run and no pass of the bootstrap. To roll out a later commit, or to move it on
-          to pre and pro, use the template **Promote an application (Python Framework)**.
+          to pre and pro, use the template **Promote an application**.
 ---
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
   name: python-framework-promote
-  title: Promote an application (Python Framework)
+  title: Promote an application
   description: >-
-    Moves a version of an application of the Python Framework to a stage (dev, pre or pro): the tag of one stage,
+    Moves a version of an application of the Python Framework or of the Spring Framework to a stage (dev, pre or pro): the tag of one stage,
     or a commit of its repository, becomes the tag of the stage you choose. It opens a pull request to
     refresquito-services that changes only that line of the file of the application; merging it deploys that
     version in that stage (each stage is a namespace of its own in the same cluster).
   tags:
     - python-framework
+    - spring-framework
     - promotion
     - gitops
 spec:
@@ -2390,9 +2391,9 @@ spec:
           **${{ parameters.name }}**: the stage **${{ parameters.target }}** takes
           ${{ ("the commit `" + parameters.commit + "`") if parameters.source == "commit" else ("the version of **" + parameters.source + "**, commit `" + (steps["parse"].output.content.stages[parameters.source].tag if steps["parse"].output.content.stages else "?") + "`") }}.
 
-          Created with the Backstage template "Promote an application (Python Framework)". It changes
+          Created with the Backstage template "Promote an application". It changes
           `stages.${{ parameters.target }}.tag` in `bootstrap/app-of-apps/apps/${{ parameters.name }}.yaml`${{ (", and adds the block `datahub` (classification " + parameters.dataClassification + ") if it had none") if (parameters.target == "pro" and parameters.datahub) else "" }}
-          (see *Stages* in `charts/python-app-oneke/INSTALL.md`). Merging it deploys that version: Argo CD rolls out
+          (see *Stages* in `charts/python-app-oneke/INSTALL.md`, the same for `charts/spring-app-oneke`). Merging it deploys that version: Argo CD rolls out
           `${{ parameters.name if parameters.target == "pro" else (parameters.name + "-" + parameters.target) }}-oneke`
           on `https://${{ parameters.name if parameters.target == "pro" else (parameters.name + "-" + parameters.target) }}.<domain>`.
           The CI of this pull request renders the stack: it fails when the stage it moves from has no version.
@@ -2967,6 +2968,6 @@ spec:
 
         Nothing else is needed: no command to run and no pass of the bootstrap. To roll out a later commit, or to move it on
 
-        to pre and pro, use the template **Promote an application (Python Framework)**, the same for both frameworks.
+        to pre and pro, use the template **Promote an application**, the same for both frameworks.
 
         '
