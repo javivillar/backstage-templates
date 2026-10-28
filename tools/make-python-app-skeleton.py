@@ -36,7 +36,7 @@ SKELETONS = HERE.parent / "skeletons"
 OUT = SKELETONS / "python-framework-app"          # built here first, then one copy per line
 # the maintained lines of the Python Framework (its SUPPORT.md): line -> (refresquito-fastapi, refresquito-angular)
 LINES = {"0.1": ("0.1.0", "0.1.0"), "2.0": ("2.0.0", "2.0.0"), "3.0": ("3.0.1", "3.0.0"), "3.1": ("3.1.2", "3.1.1"),
-         "3.2": ("3.2.0", "3.2.0"), "3.3": ("3.3.0", "3.3.0")}
+         "3.2": ("3.2.0", "3.2.0"), "3.3": ("3.3.0", "3.3.1")}
 # from 3.2 the framework has its database, refresquito-postgres: the Dockerfile of its release goes to
 # vendor/refresquito-postgres-<version>/ (the image is private: compose.yaml and the CI build it from there)
 POSTGRES = {"3.2": "3.2.0", "3.3": "3.3.0"}

@@ -34,7 +34,7 @@
     "@angular/platform-browser": "^20.3.0",
     "@angular/router": "^20.3.0",
     "keycloak-js": "^26.2.4",
-    "refresquito-angular": "file:../vendor/refresquito-angular-3.3.0.tgz",
+    "refresquito-angular": "file:../vendor/refresquito-angular-3.3.1.tgz",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
