@@ -3,16 +3,16 @@
   <groupId>io.refresquito</groupId>
   <artifactId>refresquito-spring-boot-parent</artifactId>
   <versioning>
-    <lastUpdated>20261028215820</lastUpdated>
+    <lastUpdated>20261028231205</lastUpdated>
     <snapshot>
-      <timestamp>20261028.215820</timestamp>
+      <timestamp>20261028.231205</timestamp>
       <buildNumber>1</buildNumber>
     </snapshot>
     <snapshotVersions>
       <snapshotVersion>
         <extension>pom</extension>
-        <value>1.0.0-20261028.215820-1</value>
-        <updated>20261028215820</updated>
+        <value>1.0.0-20261028.231205-1</value>
+        <updated>20261028231205</updated>
       </snapshotVersion>
     </snapshotVersions>
   </versioning>
