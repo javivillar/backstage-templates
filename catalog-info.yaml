@@ -2490,6 +2490,8 @@ spec:
           group: ${{ parameters.group }}
           instructions: ${{ parameters.instructions }}
           model: ${{ parameters.model }}
+          # who asked for it: the cost of the run is charged to them, its application and its system (page Costs)
+          requested_by: ${{ user.ref }}
   output:
     links:
       - title: The runs of the developer assistant
