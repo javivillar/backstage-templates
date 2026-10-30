@@ -89,6 +89,39 @@ spec:
           title: Parent group name
           description: Leave empty to create a top-level group.
           type: string
+    - title: What it governs
+      description: >-
+        Every group says which service of Refresquito or which stage of an
+        application it belongs to, and what it grants. It is shown on the
+        Access tab of that Component (Keycloak attributes refresquito.*).
+      required: [belongsTo, grants, kind]
+      properties:
+        belongsTo:
+          title: Belongs to
+          description: >-
+            A service of Refresquito (e.g. superset-oneke) or one stage of an
+            application (e.g. animalshelter-dev-oneke for its stage dev,
+            animalshelter-oneke for pro).
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              kind: Component
+            defaultKind: Component
+        grants:
+          title: What it grants
+          description: In words, e.g. "Animal shelter - the vets of the shelter".
+          type: string
+        kind:
+          title: Kind
+          type: string
+          default: team
+          enum: [team, role, access, data]
+          enumNames:
+            - team (the people of a team)
+            - role (a role inside the service or application)
+            - access (it only lets in)
+            - data (some data only, a bucket or a site)
   steps:
     - id: create-group
       name: Create group in Keycloak
@@ -96,6 +129,9 @@ spec:
       input:
         name: ${{ parameters.name }}
         parentGroupName: ${{ parameters.parentGroupName }}
+        belongsTo: ${{ parameters.belongsTo }}
+        grants: ${{ parameters.grants }}
+        kind: ${{ parameters.kind }}
   output:
     text:
       - title: Resultado
