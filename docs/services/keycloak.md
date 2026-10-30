@@ -11,8 +11,17 @@ tus propios** usuarios, grupos y clientes OIDC, sin pedírselo a un administrado
 | Tipo | Crear | Actualizar | Borrar |
 |---|---|---|---|
 | Usuario | email, nombre, contraseña **temporal** y grupos existentes a los que unirlo | email, nombre y pertenencia a grupos | sí |
-| Grupo | nombre, opcionalmente como subgrupo de otro | renombrar | sí |
+| Grupo | nombre, opcionalmente como subgrupo de otro; **a qué pertenece** (un servicio de Refresquito o una etapa de una aplicación), qué da y su tipo | renombrar | sí |
 | Cliente OIDC | los datos de una aplicación que quiera entrar con SSO | ajustes del cliente (no cambian el `clientId` ni el tipo público/confidencial) | sí |
+
+## A qué pertenece cada grupo: la pestaña Access
+
+Todo grupo dice qué gobierna: eliges en el catálogo el **servicio** (p. ej. `superset-oneke`) o la **etapa de una
+aplicación** (`animalshelter-dev-oneke` es su etapa dev, `animalshelter-oneke` su pro), escribes **qué da** y su tipo
+(`team`, `role`, `access`, `data`). Se guarda en Keycloak como atributos `refresquito.*` (componente, etapa, zona,
+programa y clasificación), y el grupo aparece en la pestaña **Access** de ese Component, con los clientes SSO y los
+roles que lo gobiernan y quién tiene cada rol. Lo que no dice a qué pertenece sale a `backstage-admin` como *Unowned*
+en `/keycloak-manager`.
 
 ## Quién puede hacer qué
 
