@@ -36,6 +36,12 @@ Su descripción dice lo que hizo, los tests y las preguntas que deja. **Mergear 
 aplicación construye las imágenes y el template *Promote* las lleva de dev a pre y pro. Cuando el cambio está en
 producción, el Functional Assistant lo archiva.
 
+## Lo que cuesta
+
+Cada ejecución guarda lo que consumió (tokens de cada modelo y tiempo, nunca la conversación) y quién la pidió en
+Backstage: la plantilla lo envía al workflow (`requested_by`). Backstage lo recoge cada 30 minutos y lo carga a la
+**aplicación** desarrollada (su tarjeta *Cost*) y a su **sistema** (página *Costs*), como asistente `developer`.
+
 ## Quién puede usarlo
 
 Por ahora solo el operador: corre con su suscripción de Claude. Detalles, instalación (dos secretos del repositorio
