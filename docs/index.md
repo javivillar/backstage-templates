@@ -32,6 +32,7 @@ qué permisos necesitas y qué debes esperar cuando lo haces. No cubre cómo se 
 | Keycloak | Crear y gestionar tus usuarios, grupos y clientes OIDC | [Keycloak](services/keycloak.md) |
 | Superset | Conexiones, datasets, gráficos y dashboards propios | [Superset](services/superset.md) |
 | Camunda | Desplegar y gestionar tus procesos BPMN | [Camunda](services/camunda.md) |
+| Operaton | Trabajar tareas y seguir procesos BPMN en el sucesor de Camunda (convive con él) | [Operaton](services/operaton.md) |
 | SeaweedFS | Buckets S3, table buckets, grupos y políticas propios | [SeaweedFS](services/seaweedfs.md) |
 | Alfresco | Crear y gestionar tus sites de documentos | [Alfresco](services/alfresco.md) |
 | Activepieces | Proyectos, miembros y flujos de automatización | [Activepieces](services/activepieces.md) |
