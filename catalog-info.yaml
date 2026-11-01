@@ -3124,7 +3124,7 @@ spec:
           source: ${{ parameters.source }}
           tags: ${{ parameters.tags }}
           project: ${{ parameters.project }}
-          nameGiven: ${{ true if parameters.name else false }}
+          nameGiven: ${{ parameters.name or '' }}   # the name typed, or empty (a value 'false' would be a non-empty string, i.e. true)
           name: ${{ parameters.name or parameters.source.split('/') | last }}
           fileName: ${{ parameters.project }}-${{ parameters.name or parameters.source.split('/') | last }}-${{ parameters.tags | join('-') }}
           category: ${{ parameters.category }}
