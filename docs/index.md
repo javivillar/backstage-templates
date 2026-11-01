@@ -37,6 +37,7 @@ qué permisos necesitas y qué debes esperar cuando lo haces. No cubre cómo se 
 | Alfresco | Crear y gestionar tus sites de documentos | [Alfresco](services/alfresco.md) |
 | Activepieces | Proyectos, miembros y flujos de automatización | [Activepieces](services/activepieces.md) |
 | DataHub | Dar de alta y gobernar los datos de un producto (dueños, clasificación, retención, linaje) | [DataHub](services/datahub.md) |
+| Harbor | Ver las imágenes curadas y pedir una nueva (plantilla *Request a curated image*) | [Harbor](services/harbor.md) |
 
 ## Cómo se documenta cada servicio
 

@@ -3009,3 +3009,170 @@ spec:
         to pre and pro, use the template **Promote an application**, the same for both frameworks.
 
         '
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: harbor-request-image
+  title: Request a curated image
+  description: >-
+    Ask for a new container image (or a new tag of one) in the curated projects of Harbor (common, framework-python,
+    framework-spring). It opens a pull request in opennebula with one file in harbor/catalog.d; the platform team
+    reviews it, its CI checks it, and after the merge the next sync copies it into the quarantine, where it is
+    scanned and promoted only if it passes the gate. Look first at the page Images: it may already be there.
+  tags: [harbor, images, supply-chain]
+  links:
+    - title: How images get into Harbor
+      url: https://github.com/javivillar/opennebula/blob/main/harbor/README.md#request-an-image
+spec:
+  owner: group:default/backstage-admin
+  type: harbor-image
+  parameters:
+    - title: The image
+      required: [source, tags, project]
+      properties:
+        source:
+          title: Source
+          description: >-
+            Registry and repository, without tag. Docker Hardened Images first (dhi.io/<name>: they are signed, have
+            SBOM, VEX and provenance); a community image only with a clean scan.
+          type: string
+          pattern: '^[a-z0-9.-]+(:[0-9]+)?(/[a-z0-9._-]+)+$'
+          ui:placeholder: dhi.io/valkey
+        tags:
+          title: Tags
+          description: One or more pinned tags (never latest). Check they exist, e.g. regctl manifest head dhi.io/valkey:8.1-debian13
+          type: array
+          minItems: 1
+          maxItems: 5
+          items:
+            type: string
+            pattern: '^(?!latest$)[A-Za-z0-9_][A-Za-z0-9._-]{0,127}$'
+        project:
+          title: Project in Harbor
+          type: string
+          enum: [common, framework-python, framework-spring]
+          enumNames:
+            - "common: building blocks of the systems of the PaaS and of the platform"
+            - "framework-python: base images of the Python framework"
+            - "framework-spring: base images of the Spring framework"
+          default: common
+        name:
+          title: Name in Harbor (optional)
+          description: Default, the last part of the source (dhi.io/valkey -> valkey).
+          type: string
+          pattern: '^[a-z0-9][a-z0-9._-]*$'
+    - title: What it is for (shown on the page Images)
+      required: [category, audience, summary, note]
+      properties:
+        category:
+          title: Category
+          type: string
+          enum: [database, cache, messaging, web, runtime, build, observability, identity, security, data, search, storage, workflow, platform, tools]
+          enumNames:
+            - Databases
+            - Caches and key-value stores
+            - Messaging and events
+            - Web servers and proxies
+            - Runtimes of applications
+            - Build stages
+            - Metrics, logs, traces
+            - Identity and access
+            - Certificates, secrets, security
+            - Data platform and analytics
+            - Search engines
+            - Object storage
+            - Workflows and automation
+            - Platform control plane
+            - Tools and small bases
+        audience:
+          title: Who may use it
+          type: string
+          enum: [apps, platform]
+          enumNames: ["apps: any system of the PaaS", "platform: only the platform services (e.g. licences the systems may not use)"]
+          default: apps
+        summary:
+          title: Summary
+          description: One line, what it is and when to use it.
+          type: string
+          maxLength: 200
+        note:
+          title: Why it is needed
+          description: Who needs it and for what, and the scan you made (e.g. "Trivy 0 critical / 2 high, with its VEX 0/0").
+          type: string
+          ui:widget: textarea
+        owner:
+          title: Owner
+          description: Group responsible for keeping it up to date.
+          type: string
+          default: platform-team
+        license:
+          title: Licence (SPDX, only if the image does not declare it)
+          type: string
+        eol:
+          title: End of life (YYYY-MM-DD, only if the image does not declare it)
+          type: string
+          pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+  steps:
+    - id: file
+      name: Write the request (one file of harbor/catalog.d)
+      action: fetch:template
+      input:
+        url: ./skeletons/harbor-image-request
+        targetPath: ./request
+        values:
+          source: ${{ parameters.source }}
+          tags: ${{ parameters.tags }}
+          project: ${{ parameters.project }}
+          nameGiven: ${{ true if parameters.name else false }}
+          name: ${{ parameters.name or parameters.source.split('/') | last }}
+          fileName: ${{ parameters.project }}-${{ parameters.name or parameters.source.split('/') | last }}-${{ parameters.tags | join('-') }}
+          category: ${{ parameters.category }}
+          audience: ${{ parameters.audience }}
+          summary: ${{ parameters.summary }}
+          note: ${{ parameters.note }}
+          owner: ${{ parameters.owner or 'platform-team' }}
+          license: ${{ parameters.license }}
+          eol: ${{ parameters.eol }}
+          requestedBy: ${{ user.entity.metadata.name if user.entity else 'unknown' }}
+    - id: pr
+      name: Open the pull request in opennebula
+      action: publish:github:pull-request
+      input:
+        repoUrl: github.com?owner=javivillar&repo=opennebula
+        branchName: request-image-${{ parameters.project }}-${{ parameters.name or parameters.source.split('/') | last }}-${{ parameters.tags | join('-') }}
+        targetBranchName: main
+        sourcePath: ./request
+        targetPath: harbor/catalog.d
+        title: "Request image ${{ parameters.project }}/${{ parameters.name or parameters.source.split('/') | last }}:${{ parameters.tags | join(', ') }}"
+        commitMessage: "harbor catalog: request ${{ parameters.source }}:${{ parameters.tags | join(', ') }} into ${{ parameters.project }}"
+        description: |
+          **${{ parameters.source }}** — tags ${{ parameters.tags | join(', ') }} — into `${{ parameters.project }}`
+          (${{ parameters.category }}, audience ${{ parameters.audience }}), requested in Backstage by ${{ user.entity.metadata.name if user.entity else 'unknown' }}.
+
+          > ${{ parameters.summary }}
+
+          Why: ${{ parameters.note }}
+
+          ## Review (platform team)
+
+          - [ ] Docker Hardened Image, or a community image with a clean scan (`harbor/compare-dhi.sh`, `harbor/vex-check.sh`)
+          - [ ] The tags exist upstream (`regctl manifest head <source>:<tag>`) and are pinned
+          - [ ] Licence allowed by the policy of Refresquito (open source; AGPL only with audience `platform`)
+          - [ ] The CI of this pull request (harbor-catalog) is green: the catalog with this file is valid
+
+          After the merge: `git pull` in the checkout of the Harbor host (the sync timer runs from it); the sync of 04:00
+          (or `sudo ./harbor/install-harbor.sh sync`) copies it into `incoming`, scans it and promotes it only if it passes
+          the gate. Then it is on the page Images of Backstage. If it is held, sync says why (`HELD`).
+  output:
+    links:
+      - title: The pull request
+        url: ${{ steps['pr'].output.remoteUrl }}
+      - title: Images in Backstage
+        url: /images
+    text:
+      - title: Next
+        content: |
+          The request is the pull request above, in **opennebula** (`harbor/catalog.d/${{ parameters.project }}-${{ parameters.name or parameters.source.split('/') | last }}-${{ parameters.tags | join('-') }}.toml`).
+          The platform team reviews it; its CI checks the catalog. After the merge, the next sync of Harbor (daily at 04:00)
+          copies the image into the quarantine and promotes it, signed, if it passes the scan and the VEX check.
