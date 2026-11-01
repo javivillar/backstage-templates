@@ -1,0 +1,21 @@
+# Requested in Backstage with the template "Request a curated image" by ${{ values.requestedBy }}.
+# Reviewed in this pull request; once merged, the next sync of Harbor copies it into the quarantine (incoming) and
+# promotes it to ${{ values.project }} if it passes the gate (opennebula harbor/README.md, "Request an image").
+[[image]]
+project = "${{ values.project }}"
+source = "${{ values.source }}"
+tags = [{% for t in values.tags %}${{ t | dump }}{% if not loop.last %}, {% endif %}{% endfor %}]
+{%- if values.nameGiven %}
+name = "${{ values.name }}"
+{%- endif %}
+category = "${{ values.category }}"
+audience = "${{ values.audience }}"
+summary = ${{ values.summary | dump }}
+owner = "${{ values.owner }}"
+{%- if values.license %}
+license = ${{ values.license | dump }}
+{%- endif %}
+{%- if values.eol %}
+eol = "${{ values.eol }}"
+{%- endif %}
+note = ${{ values.note | dump }}
