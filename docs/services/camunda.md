@@ -3,6 +3,9 @@
 Camunda ejecuta los procesos BPMN. Desde Backstage **despliegas y gestionas tus definiciones de proceso**; los procesos en ejecución y sus
 tareas se trabajan en las aplicaciones de Camunda (Cockpit y Tasklist).
 
+> **Camunda se va a sustituir por [Operaton](operaton.md)**, que funciona en paralelo mientras tanto. Estas plantillas
+> seguirán desplegando en Camunda hasta que se pasen a Operaton; entonces se avisará aquí.
+
 ## Qué te da
 
 - **Página `/camunda-manager`**: tus definiciones de proceso (los administradores ven todas, con columna *Owner*).

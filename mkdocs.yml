@@ -6,6 +6,7 @@ nav:
       - Keycloak (identidades): services/keycloak.md
       - Superset (análisis): services/superset.md
       - Camunda (procesos BPM): services/camunda.md
+      - Operaton (procesos BPM, sucesor de Camunda): services/operaton.md
       - SeaweedFS (almacenamiento S3): services/seaweedfs.md
       - Alfresco (documentos): services/alfresco.md
       - Activepieces (automatización): services/activepieces.md
