@@ -29,7 +29,7 @@ the flows of an event with `flows.publish(<event>, ...)` (the flow says its even
 waiting for its answer, with `flows.call(<flow>, ...)`.
 
 **Monitoring:** with the block `monitoring` (on by default), Prometheus scrapes the metrics of every service and Grafana
-gets, in the folder `apps`, the dashboards `<title> - Logs` and `<title> - Performance` of each stage, made by the
+gets, in `Applications/<name>/<stage>`, the dashboards `<title> - Logs` and `<title> - Performance` of each stage, made by the
 platform: nothing to write here. A dashboard of its own is a Grafana JSON (a dashboard's JSON model) saved in
 `monitoring/<name>.json`; `$namespace` in its queries is the namespace of the deployment, and the data sources are the
 variables `prometheus` and `loki`. A file `logs.json` or `performance.json` replaces the standard one. Grafana gets it

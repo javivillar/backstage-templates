@@ -18,7 +18,7 @@ usan Camunda ([Camunda](camunda.md)) hasta que se pasen a Operaton.
 
 - **La REST API** en `operaton.<dominio>/engine-rest`, con HTTP Basic y tu usuario de Keycloak. Es la de Camunda 7
   (mismas rutas): su definición está en *Catálogo > APIs > Operaton REST API*.
-- **Dos dashboards en Grafana** (carpeta *apps*): **Operaton** (instancias, tareas, incidentes, jobs, rendimiento) y
+- **Dos dashboards en Grafana** (carpeta *Services/operaton/pro*): **Operaton** (instancias, tareas, incidentes, jobs, rendimiento) y
   **Operaton Logs**.
 
 ## Quién puede hacer qué

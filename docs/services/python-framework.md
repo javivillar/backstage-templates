@@ -46,7 +46,7 @@ indiques. La entidad nace con nombre, categoría, estado y fecha de inicio: cám
 | Dashboards (Superset) - import its dashboards | sí / no | Opcional. El export de Superset de `platform/dashboards/` se importa en Superset con cada versión |
 | Flows (Activepieces) - import its flows | sí / no | Opcional. Los flujos de `platform/flows/` se importan en un proyecto propio de Activepieces y se publican |
 | Flows (Activepieces) - groups that edit them | `finance` | Grupos cuyos miembros editan los flujos en su proyecto de Activepieces |
-| Monitoring (Prometheus, Grafana) - its metrics and dashboards | **sí** / no | Marcada por defecto. Prometheus recoge las métricas de su API y Grafana recibe, en la carpeta `apps`, los dashboards *Logs* y *Performance* de cada etapa |
+| Monitoring (Prometheus, Grafana) - its metrics and dashboards | **sí** / no | Marcada por defecto. Prometheus recoge las métricas de su API y Grafana recibe, en `Applications/<nombre>/<etapa>`, los dashboards *Logs* y *Performance* de cada etapa (también como pestañas *Logging* y *Performance* en la consola) |
 | People who get the role `<name>-admin` | `javi` | Usuarios del realm que serán administradores de la aplicación (deben existir) |
 | GitHub owner | `javivillar` | Dueño del repositorio |
 
