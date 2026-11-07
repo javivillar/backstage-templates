@@ -2066,7 +2066,7 @@ spec:
         monitoring:
           title: Monitoring (Prometheus, Grafana) - its metrics and dashboards
           description: >-
-            Prometheus scrapes the metrics of its API, and Grafana gets in the folder apps the dashboards
+            Prometheus scrapes the metrics of its API, and Grafana gets in Applications/<name>/<stage> the dashboards
             <title> - Logs (levels, errors, failed requests, the lines) and <title> - Performance (traffic,
             errors, latency per route, CPU and memory) of each stage, plus the ones in platform/monitoring/
             of its repository. Off: nothing of it is scraped and it gets no dashboards.
@@ -2229,7 +2229,7 @@ spec:
           | Namespace | `<zone>-<program>-${{ parameters.name if parameters.initialStage == 'pro' else (parameters.name + '-' + parameters.initialStage) }}-oneke` |
           | URL | `https://${{ parameters.name if parameters.initialStage == 'pro' else (parameters.name + '-' + parameters.initialStage) }}.<domain>` |
           | Images | `ghcr.io/${{ parameters.owner }}/${{ parameters.name }}-api` and `-web`, tag of that commit (its CI must have finished) |
-          | Platform blocks | `sso`: client `${{ parameters.name if parameters.initialStage == 'pro' else (parameters.name + '-' + parameters.initialStage) }}`, roles `${{ parameters.name }}-viewer` and `${{ parameters.name }}-admin`, their test users{% if parameters.s3Buckets | length %}. `s3`: buckets ${{ parameters.s3Buckets | join(", ") }} (each one as `${{ parameters.name }}-<bucket>`){% endif %}{% if parameters.dmsSites | length %}. `dms`: Alfresco sites ${{ parameters.dmsSites | join(", ") }} (each one as `${{ parameters.name }}-<site>`){% endif %}{% if parameters.datahub %}. `datahub`: data product with the tables of its database, ${{ parameters.dataClassification }}{% if parameters.initialStage != 'pro' %} (only once it is in pro){% endif %}{% endif %}{% if parameters.gateway %}. `gateway`: its API at `/gateway/${{ parameters.name }}/` in Gravitee{% endif %}{% if parameters.processes %}. `processes`: its BPMN of `platform/processes/` in Camunda{% endif %}{% if parameters.dashboards %}. `dashboards`: its Superset export of `platform/dashboards/`{% endif %}{% if parameters.flows %}. `flows`: its Activepieces flows of `platform/flows/`{% endif %}{% if parameters.monitoring %}. `monitoring`: its metrics in Prometheus, dashboards Logs and Performance in the Grafana folder `apps`{% endif %} |
+          | Platform blocks | `sso`: client `${{ parameters.name if parameters.initialStage == 'pro' else (parameters.name + '-' + parameters.initialStage) }}`, roles `${{ parameters.name }}-viewer` and `${{ parameters.name }}-admin`, their test users{% if parameters.s3Buckets | length %}. `s3`: buckets ${{ parameters.s3Buckets | join(", ") }} (each one as `${{ parameters.name }}-<bucket>`){% endif %}{% if parameters.dmsSites | length %}. `dms`: Alfresco sites ${{ parameters.dmsSites | join(", ") }} (each one as `${{ parameters.name }}-<site>`){% endif %}{% if parameters.datahub %}. `datahub`: data product with the tables of its database, ${{ parameters.dataClassification }}{% if parameters.initialStage != 'pro' %} (only once it is in pro){% endif %}{% endif %}{% if parameters.gateway %}. `gateway`: its API at `/gateway/${{ parameters.name }}/` in Gravitee{% endif %}{% if parameters.processes %}. `processes`: its BPMN of `platform/processes/` in Camunda{% endif %}{% if parameters.dashboards %}. `dashboards`: its Superset export of `platform/dashboards/`{% endif %}{% if parameters.flows %}. `flows`: its Activepieces flows of `platform/flows/`{% endif %}{% if parameters.monitoring %}. `monitoring`: its metrics in Prometheus, dashboards Logs and Performance in Applications/<name>/<stage> of Grafana{% endif %} |
           | Python Framework | ${{ parameters.frameworkVersion }} |
 
           Files: `bootstrap/app-of-apps/apps/${{ parameters.name }}.yaml` (what it is and what it uses) and
@@ -2792,7 +2792,7 @@ spec:
         default: []
       monitoring:
         title: Monitoring (Prometheus, Grafana) - its metrics and dashboards
-        description: 'Prometheus scrapes the metrics of each of its services, and Grafana gets in the folder apps the dashboards <title> - Logs,
+        description: 'Prometheus scrapes the metrics of each of its services, and Grafana gets in Applications/<name>/<stage> the dashboards <title> - Logs,
           <title> - Audit and <title> - Performance (traffic, errors, latency per route, the JVM, the calls between its services, its events,
           CPU and memory) of each stage, with a selector of the service, plus the ones in platform/monitoring/ of its repository. Off: nothing
           of it is scraped and it gets no dashboards.'
@@ -2965,7 +2965,7 @@ spec:
         }}/` in Gravitee{% endif %}{% if parameters.processes %}. `processes`: its BPMN of `platform/processes/` in Camunda{% endif %}{% if parameters.dashboards
         %}. `dashboards`: its Superset export of `platform/dashboards/`{% endif %}{% if parameters.flows %}. `flows`: its Activepieces flows of
         `platform/flows/`{% endif %}{% if parameters.monitoring %}. `monitoring`: its metrics in Prometheus, dashboards Logs and Performance in
-        the Grafana folder `apps`{% endif %} |
+        Applications/<name>/<stage> of Grafana{% endif %} |
 
         | Spring Framework | ${{ parameters.frameworkVersion }} |
 
