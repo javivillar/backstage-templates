@@ -1844,6 +1844,20 @@ spec:
           description: One sentence on what the application is for.
           type: string
           maxLength: 200
+        system:
+          title: Business service
+          description: >-
+            The System it implements: the business service of its specification in refresquito-specs (type business-service).
+            Its Component, its instances and its blocks belong to it. Empty: a System named as the application (refresquito-services
+            generates a minimal one until its specification exists).
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            allowArbitraryValues: true
+            defaultKind: System
+            catalogFilter:
+              kind: System
+              spec.type: business-service
     - title: Its first entity
       description: >-
         The application starts with one entity (name, category, status and start date), with its
@@ -2131,6 +2145,8 @@ spec:
           entities: ${{ parameters.entities }}
           entitiesTitle: ${{ parameters.entities | capitalize }}
           owner: ${{ parameters.owner }}
+          # its business service (System), in catalog-info.yaml and in the file of the application
+          system: "${{ (parameters.system | parseEntityRef({ defaultKind: 'system', defaultNamespace: 'default' }) | pick('name')) if parameters.system else parameters.name }}"
           # 3.0: the example code of each platform block marked (the older skeletons do not read them)
           processes: ${{ parameters.processes }}
           flows: ${{ parameters.flows }}
@@ -2178,6 +2194,8 @@ spec:
           entities: ${{ parameters.entities }}
           entitiesTitle: ${{ parameters.entities | capitalize }}
           owner: ${{ parameters.owner }}
+          # its business service (System), in catalog-info.yaml and in the file of the application
+          system: "${{ (parameters.system | parseEntityRef({ defaultKind: 'system', defaultNamespace: 'default' }) | pick('name')) if parameters.system else parameters.name }}"
           environments: ${{ parameters.environments }}
           admins: ${{ parameters.admins }}
           buckets: ${{ parameters.s3Buckets }}
@@ -2584,6 +2602,20 @@ spec:
         description: One sentence on what the application is for.
         type: string
         maxLength: 200
+      system:
+        title: Business service
+        description: >-
+          The System it implements: the business service of its specification in refresquito-specs (type business-service).
+          Its Component, its instances and its blocks belong to it. Empty: a System named as the application (refresquito-services
+          generates a minimal one until its specification exists).
+        type: string
+        ui:field: EntityPicker
+        ui:options:
+          allowArbitraryValues: true
+          defaultKind: System
+          catalogFilter:
+            kind: System
+            spec.type: business-service
   - title: Its first entity
     description: 'The application starts with one entity (name, category, status and start date), with its list, its form and its service: services/<entities>,
       with its own database, which publishes its events; and the service notifier, which handles them. Change it afterwards into what the application
@@ -2849,6 +2881,8 @@ spec:
         entities: ${{ parameters.entities }}
         entitiesTitle: ${{ parameters.entities | capitalize }}
         owner: ${{ parameters.owner }}
+        # its business service (System), in catalog-info.yaml and in the file of the application
+        system: "${{ (parameters.system | parseEntityRef({ defaultKind: 'system', defaultNamespace: 'default' }) | pick('name')) if parameters.system else parameters.name }}"
         processes: ${{ parameters.processes }}
         flows: ${{ parameters.flows }}
         buckets: ${{ parameters.s3Buckets }}
@@ -2888,6 +2922,8 @@ spec:
         entities: ${{ parameters.entities }}
         entitiesTitle: ${{ parameters.entities | capitalize }}
         owner: ${{ parameters.owner }}
+        # its business service (System), in catalog-info.yaml and in the file of the application
+        system: "${{ (parameters.system | parseEntityRef({ defaultKind: 'system', defaultNamespace: 'default' }) | pick('name')) if parameters.system else parameters.name }}"
         environments: ${{ parameters.environments }}
         admins: ${{ parameters.admins }}
         buckets: ${{ parameters.s3Buckets }}
@@ -3176,3 +3212,655 @@ spec:
           The request is the pull request above, in **opennebula** (`harbor/catalog.d/${{ parameters.project }}-${{ parameters.name or parameters.source.split('/') | last }}-${{ parameters.tags | join('-') }}.toml`).
           The platform team reviews it; its CI checks the catalog. After the merge, the next sync of Harbor (daily at 04:00)
           copies the image into the quarantine and promotes it, signed, if it passes the scan and the VEX check.
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: business-model-import
+  title: Import business model
+  description: >-
+    Loads a business model (domains, subdomains and business processes) into the business map of a customer from a
+    file: the APQC Process Classification Framework the customer downloaded, the Refresquito template, or the customer's
+    own spreadsheet with a column mapping. It previews the changes first and proposes the result as a pull request
+    to refresquito-services (catalog/business-map/<namespace>/); merging it is what loads it. The file itself is
+    never stored in git. A reimport matches entities by their original ID, keeps what was edited in the portal and
+    marks the ones no longer in the file as deprecated. Only for the groups business-architect and backstage-admin.
+  tags: [business-map, continuity, apqc]
+spec:
+  owner: group:default/backstage-admin
+  type: business-map
+  parameters:
+    - title: The file
+      required: [source, file, namespace]
+      properties:
+        source:
+          title: Source
+          type: string
+          enum: [apqc, template, own]
+          enumNames:
+            - "APQC PCF: the Excel downloaded from APQC (its layout is known)"
+            - "Refresquito template: fixed columns ID, parent, title, owner, criticality, RPO, RTO, retention, applications"
+            - "Own layout: the customer's spreadsheet as it is (map its columns on the next page)"
+          default: template
+        file:
+          title: File
+          description: Excel (.xlsx) or CSV. It is read by the import and never stored in git.
+          type: string
+          format: data-url
+        sheet:
+          title: Sheet
+          description: The sheet of the Excel to read. Empty, the first one. Ignored for CSV.
+          type: string
+          default: ""
+        namespace:
+          title: Customer namespace
+          description: >-
+            The namespace of the customer in the catalog, e.g. occar-a400m. Its domains and processes are written to
+            catalog/business-map/<namespace>/ of refresquito-services.
+          type: string
+          pattern: '^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$'
+        owner:
+          title: Default owner
+          description: Group that owns the processes the file gives no owner (empty, group:unassigned until assigned).
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              kind: Group
+        keepFrom:
+          title: Keep the support categories of (optional)
+          description: >-
+            An APQC model already loaded: its support categories (finance, HR, IT...) are kept in this customer's
+            model next to the ones of the file.
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              kind: ReferenceModel
+      dependencies:
+        source:
+          oneOf:
+            - properties:
+                source: { enum: [apqc] }
+                industry:
+                  title: Industry
+                  description: The industry of the PCF file, e.g. aerospace-defense; empty for the cross-industry one.
+                  type: string
+                  pattern: '^([a-z0-9][a-z0-9-]*)?$'
+                  default: ""
+                version:
+                  title: PCF version
+                  type: string
+                  pattern: '^[0-9]+(\.[0-9]+)*$'
+                  default: "7.4"
+              required: [version]
+            - properties:
+                source: { enum: [template, own] }
+    - title: Mapping
+      description: >-
+        Only for an own layout: which column holds each field (a column letter, e.g. B, or its header) and what the
+        values of the criticality column mean. APQC files and the Refresquito template are matched by themselves.
+        The mapping is saved with the model and reused on the next import.
+      dependencies:
+        source:
+          oneOf:
+            - properties:
+                source: { enum: [own] }
+                mapping:
+                  title: Columns
+                  type: object
+                  required: [id, title]
+                  properties:
+                    id: { title: ID, type: string }
+                    title: { title: Title, type: string }
+                    parent: { title: Parent ID (or give the level), type: string }
+                    level: { title: Level (or give the parent), type: string }
+                    owner: { title: Owner, type: string }
+                    criticality: { title: Criticality, type: string }
+                    rpo: { title: RPO, type: string }
+                    rto: { title: RTO, type: string }
+                    retention: { title: Retention, type: string }
+                    applications: { title: Applications (business services, separated by commas), type: string }
+                valueMapping:
+                  title: Values
+                  type: object
+                  properties:
+                    criticality:
+                      title: Criticality values
+                      description: Each value of the criticality column (e.g. Alta) and what it means.
+                      type: object
+                      additionalProperties:
+                        type: string
+                        enum: [critical, important, standard]
+              required: [mapping]
+            - properties:
+                source: { enum: [apqc, template] }
+    - title: Preview and confirm
+      description: >-
+        The template first previews the import without writing anything: counts (domains, subdomains, new, changed,
+        no longer in the file, unchanged), the errors that stop it (a parent not in the file, a duplicated ID, a
+        missing required column), the warnings (an application not in the catalog, an owner that is no group) and the
+        list of changes. Run it once with "Only preview" to read them; run it again without it to open the pull
+        request. With errors, nothing is imported unless you skip the rows with errors.
+      properties:
+        previewOnly:
+          title: Only preview
+          description: Show the preview and stop; nothing is written.
+          type: boolean
+          default: true
+        skipErrors:
+          title: Skip the rows with errors
+          description: Import the rest of the file and leave out the rows with errors (listed in the pull request).
+          type: boolean
+          default: false
+  steps:
+    # who may change the business map: business-architect and backstage-admin (checked here until the permission
+    # framework covers templates); the step only runs, and fails, for anybody else
+    - id: allowed
+      name: "Check the groups: only business-architect and backstage-admin may change the business map"
+      if: ${{ not (('"group:default/business-architect"' in ((user.entity.relations if user.entity else []) | dump)) or ('"group:default/backstage-admin"' in ((user.entity.relations if user.entity else []) | dump))) }}
+      action: catalog:fetch
+      input:
+        entityRef: group:default/only-business-architect-or-backstage-admin-may-change-the-business-map
+    - id: preview
+      name: Preview the import (nothing is written)
+      action: refresquito:business-model:preview
+      input:
+        source: ${{ parameters.source }}
+        file: ${{ parameters.file }}
+        # rjsf puts the name of the file in the data URL (data:<type>;name=<file>;base64,...)
+        fileName: ${{ parameters.file.split(';name=')[1].split(';')[0] if ';name=' in parameters.file else 'upload' }}
+        sheet: ${{ parameters.sheet }}
+        namespace: ${{ parameters.namespace }}
+        owner: ${{ parameters.owner }}
+        mapping: ${{ parameters.mapping }}
+        valueMapping: ${{ parameters.valueMapping }}
+        keepFrom: ${{ parameters.keepFrom }}
+        industry: ${{ parameters.industry }}
+        version: ${{ parameters.version }}
+    # stops here with "Only preview", or when the preview has errors and they are not skipped
+    - id: import
+      name: Write the entities (catalog/business-map/${{ parameters.namespace }}/)
+      if: ${{ (not parameters.previewOnly) and (parameters.skipErrors or (steps.preview.output.errors | length) == 0) }}
+      action: refresquito:business-model:import
+      input:
+        source: ${{ parameters.source }}
+        file: ${{ parameters.file }}
+        fileName: ${{ parameters.file.split(';name=')[1].split(';')[0] if ';name=' in parameters.file else 'upload' }}
+        sheet: ${{ parameters.sheet }}
+        namespace: ${{ parameters.namespace }}
+        owner: ${{ parameters.owner }}
+        mapping: ${{ parameters.mapping }}
+        valueMapping: ${{ parameters.valueMapping }}
+        keepFrom: ${{ parameters.keepFrom }}
+        industry: ${{ parameters.industry }}
+        version: ${{ parameters.version }}
+        skipErrors: ${{ parameters.skipErrors }}
+    - id: pr
+      name: Open the pull request in refresquito-services
+      if: ${{ (not parameters.previewOnly) and (parameters.skipErrors or (steps.preview.output.errors | length) == 0) }}
+      action: publish:github:pull-request
+      input:
+        repoUrl: github.com?owner=javivillar&repo=refresquito-services
+        branchName: business-map-import-${{ parameters.namespace }}
+        targetBranchName: main
+        sourcePath: ./catalog/business-map/${{ parameters.namespace }}
+        targetPath: catalog/business-map/${{ parameters.namespace }}
+        title: "Business map: import the business model of ${{ parameters.namespace }} (${{ parameters.source }})"
+        commitMessage: "business map ${{ parameters.namespace }}: import ${{ parameters.source }} model"
+        description: |
+          Business model of **${{ parameters.namespace }}** imported in Backstage by ${{ user.entity.metadata.name if user.entity else 'unknown' }}
+          from a file of source `${{ parameters.source }}` (the file is not in git; only the entities made from it).
+
+          | Domains | Subdomains | New | Changed | No longer in the file | Unchanged |
+          |---|---|---|---|---|---|
+          | ${{ steps.preview.output.counts.domains }} | ${{ steps.preview.output.counts.subdomains }} | ${{ steps.preview.output.counts.new }} | ${{ steps.preview.output.counts.changed }} | ${{ steps.preview.output.counts.gone }} | ${{ steps.preview.output.counts.unchanged }} |
+
+          {% if steps.preview.output.errors | length %}**Rows with errors, left out:**
+          {% for e in steps.preview.output.errors %}
+          - row ${{ e.row }}: ${{ e.message }}{% endfor %}
+          {% endif %}{% if steps.preview.output.warnings | length %}**Warnings:**
+          {% for w in steps.preview.output.warnings %}
+          - ${{ w.message if w.message else w }}{% endfor %}
+          {% endif %}
+          **Changes:**
+          {% for c in steps.preview.output.changes %}
+          - ${{ c.kind }} `${{ c.id }}` ${{ c.title }}: ${{ c.what }}{% endfor %}
+
+          Reimport rules: entities are matched by their original ID; fields edited in the portal after the last import
+          (owner, applications, overrides) keep the portal value; entities no longer in the file are kept and marked
+          deprecated for review, never deleted. Files: `catalog/business-map/${{ parameters.namespace }}/`.
+  output:
+    links:
+      - title: The pull request
+        url: ${{ steps['pr'].output.remoteUrl }}
+      - title: Business map
+        url: /console/business-map
+    text:
+      - title: Preview
+        content: |
+          | Domains | Subdomains | New | Changed | No longer in the file | Unchanged |
+          |---|---|---|---|---|---|
+          | ${{ steps.preview.output.counts.domains }} | ${{ steps.preview.output.counts.subdomains }} | ${{ steps.preview.output.counts.new }} | ${{ steps.preview.output.counts.changed }} | ${{ steps.preview.output.counts.gone }} | ${{ steps.preview.output.counts.unchanged }} |
+
+          **Errors** (${{ steps.preview.output.errors | length }}){% if (steps.preview.output.errors | length) and not parameters.skipErrors %}: nothing was imported; fix them, or run it again with "Skip the rows with errors"{% endif %}
+          {% for e in steps.preview.output.errors %}
+          - row ${{ e.row }}: ${{ e.message }}{% endfor %}
+
+          **Warnings** (${{ steps.preview.output.warnings | length }})
+          {% for w in steps.preview.output.warnings %}
+          - ${{ w.message if w.message else w }}{% endfor %}
+
+          **Changes** (${{ steps.preview.output.changes | length }})
+          {% for c in steps.preview.output.changes %}
+          - ${{ c.kind }} `${{ c.id }}` ${{ c.title }}: ${{ c.what }}{% endfor %}
+
+          {% if parameters.previewOnly %}Only a preview: nothing was written. Run the template again without "Only preview" to open the pull request.{% endif %}
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: business-model-adopt
+  title: Adopt reference model
+  description: >-
+    Copies the level-1 domains of a reference model (e.g. the APQC PCF for aerospace & defense) that apply to a
+    customer, with their subdomains and business processes, into the customer's namespace, keeping their APQC IDs.
+    It proposes them as a pull request to refresquito-services (catalog/business-map/<namespace>/); adapt them
+    afterwards with "Edit business process". Only for the groups business-architect and backstage-admin.
+  tags: [business-map, continuity, apqc]
+spec:
+  owner: group:default/backstage-admin
+  type: business-map
+  parameters:
+    - title: The model
+      required: [model, categories, namespace, owner]
+      properties:
+        model:
+          title: Reference model
+          description: A model already loaded with "Import business model" (source apqc or template).
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              kind: ReferenceModel
+        categories:
+          title: Categories that apply
+          description: >-
+            The IDs of its level-1 domains to copy, e.g. 1.0, 2.0, 6.0 (see the model in the catalog). Add the support
+            categories of the cross-industry model too if it is loaded (finance, HR, IT...).
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            pattern: '^[A-Za-z0-9][A-Za-z0-9._-]*$'
+        namespace:
+          title: Customer namespace
+          description: Where the copy goes, e.g. occar-a400m (catalog/business-map/<namespace>/ of refresquito-services).
+          type: string
+          pattern: '^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$'
+        owner:
+          title: Owner group
+          description: Owns the copied domains and processes until each one gets its own owner.
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              kind: Group
+  steps:
+    - id: allowed
+      name: "Check the groups: only business-architect and backstage-admin may change the business map"
+      if: ${{ not (('"group:default/business-architect"' in ((user.entity.relations if user.entity else []) | dump)) or ('"group:default/backstage-admin"' in ((user.entity.relations if user.entity else []) | dump))) }}
+      action: catalog:fetch
+      input:
+        entityRef: group:default/only-business-architect-or-backstage-admin-may-change-the-business-map
+    - id: adopt
+      name: Copy the domains and processes (catalog/business-map/${{ parameters.namespace }}/)
+      action: refresquito:business-model:adopt
+      input:
+        model: ${{ parameters.model }}
+        categories: ${{ parameters.categories }}
+        namespace: ${{ parameters.namespace }}
+        owner: ${{ parameters.owner }}
+    - id: pr
+      name: Open the pull request in refresquito-services
+      action: publish:github:pull-request
+      input:
+        repoUrl: github.com?owner=javivillar&repo=refresquito-services
+        branchName: business-map-adopt-${{ parameters.namespace }}-${{ parameters.model | parseEntityRef | pick('name') }}
+        targetBranchName: main
+        sourcePath: ./catalog/business-map/${{ parameters.namespace }}
+        targetPath: catalog/business-map/${{ parameters.namespace }}
+        title: "Business map: ${{ parameters.namespace }} adopts ${{ parameters.model | parseEntityRef | pick('name') }}"
+        commitMessage: "business map ${{ parameters.namespace }}: adopt ${{ parameters.model | parseEntityRef | pick('name') }} (${{ parameters.categories | join(', ') }})"
+        description: |
+          **${{ parameters.namespace }}** adopts the categories ${{ parameters.categories | join(', ') }} of the reference model
+          `${{ parameters.model }}`, owned by `${{ parameters.owner }}`; requested in Backstage by ${{ user.entity.metadata.name if user.entity else 'unknown' }}.
+
+          The domains, subdomains and processes keep their `apqc.org/pcf-id`. Files: `catalog/business-map/${{ parameters.namespace }}/`.
+  output:
+    links:
+      - title: The pull request
+        url: ${{ steps['pr'].output.remoteUrl }}
+      - title: Business map
+        url: /console/business-map
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: business-process-new
+  title: New business process
+  description: >-
+    Adds a business process to the business map of a customer: its domain, its owner, its continuity criticality
+    (critical, important, standard: the RPO, RTO and retention it needs, unless overridden here) and the business
+    services it depends on. It proposes it as a pull request to refresquito-services
+    (catalog/business-map/<namespace>/process-<name>.yaml). Only for the groups business-architect and backstage-admin.
+  tags: [business-map, continuity]
+spec:
+  owner: group:default/backstage-admin
+  type: business-map
+  parameters:
+    - title: The process
+      required: [title, name, domain, owner, criticality]
+      properties:
+        title:
+          title: Title
+          description: How people read it, e.g. Manage repair and maintenance.
+          type: string
+          maxLength: 120
+          pattern: '^[^"]+$'
+          ui:autofocus: true
+        name:
+          title: Name
+          description: The slug of the title, unique in the namespace, e.g. manage-repair-and-maintenance.
+          type: string
+          pattern: '^[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$'
+        description:
+          title: Description
+          type: string
+          maxLength: 300
+          default: ""
+        domain:
+          title: Domain
+          description: The business area it belongs to; the process goes in the namespace of that domain (the customer).
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              kind: Domain
+              spec.type: business-area
+        owner:
+          title: Owner group
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              kind: Group
+        processKey:
+          title: Process key (optional)
+          description: The key of its BPMN in the process engine, e.g. maintenance-event.
+          type: string
+          pattern: '^([A-Za-z_][A-Za-z0-9_.-]*)?$'
+          default: ""
+    - title: Continuity
+      description: >-
+        The criticality sets the RPO and RTO it needs (critical 15m / 4h, important 4h / 24h, standard 24h / 72h by
+        default); an override here replaces that value. The requirement is inherited by the business services it
+        depends on and checked against what their production instances deliver. It is not the support tier
+        (gold / silver / bronze) of the components.
+      required: [criticality]
+      properties:
+        criticality:
+          title: Criticality
+          type: string
+          enum: [critical, important, standard]
+          default: standard
+        rpo:
+          title: RPO override
+          description: Empty, the default of its criticality. A number and m, h, d or y, e.g. 15m.
+          type: string
+          pattern: '^([0-9]+(m|h|d|y))?$'
+          default: ""
+        rto:
+          title: RTO override
+          description: Empty, the default of its criticality, e.g. 4h.
+          type: string
+          pattern: '^([0-9]+(m|h|d|y))?$'
+          default: ""
+        retention:
+          title: Retention
+          description: How long its records are kept, e.g. 30y. Empty, not declared.
+          type: string
+          pattern: '^([0-9]+(m|h|d|y))?$'
+          default: ""
+        dependsOn:
+          title: Business services it depends on
+          type: array
+          items:
+            type: string
+          ui:field: MultiEntityPicker
+          ui:options:
+            catalogFilter:
+              kind: System
+              spec.type: business-service
+          default: []
+  steps:
+    - id: allowed
+      name: "Check the groups: only business-architect and backstage-admin may change the business map"
+      if: ${{ not (('"group:default/business-architect"' in ((user.entity.relations if user.entity else []) | dump)) or ('"group:default/backstage-admin"' in ((user.entity.relations if user.entity else []) | dump))) }}
+      action: catalog:fetch
+      input:
+        entityRef: group:default/only-business-architect-or-backstage-admin-may-change-the-business-map
+    - id: file
+      name: Write the process
+      action: fetch:template
+      input:
+        url: ./skeletons/business-process
+        targetPath: ./out/catalog/business-map/${{ parameters.domain | parseEntityRef | pick('namespace') }}
+        values:
+          template: New business process
+          # one file per process: process-<name>.yaml (Edit business process rewrites it)
+          fileName: process-${{ parameters.name }}
+          name: ${{ parameters.name }}
+          namespace: ${{ parameters.domain | parseEntityRef | pick('namespace') }}
+          title: ${{ parameters.title }}
+          description: ${{ parameters.description }}
+          domain: ${{ parameters.domain }}
+          owner: ${{ parameters.owner }}
+          criticality: ${{ parameters.criticality }}
+          rpo: ${{ parameters.rpo }}
+          rto: ${{ parameters.rto }}
+          retention: ${{ parameters.retention }}
+          dependsOn: ${{ parameters.dependsOn }}
+          processKey: ${{ parameters.processKey }}
+    - id: pr
+      name: Open the pull request in refresquito-services
+      action: publish:github:pull-request
+      input:
+        repoUrl: github.com?owner=javivillar&repo=refresquito-services
+        branchName: business-process-${{ parameters.domain | parseEntityRef | pick('namespace') }}-${{ parameters.name }}
+        targetBranchName: main
+        sourcePath: ./out
+        title: "Business map: new process ${{ parameters.title }} (${{ parameters.domain | parseEntityRef | pick('namespace') }})"
+        commitMessage: "business map ${{ parameters.domain | parseEntityRef | pick('namespace') }}: new process ${{ parameters.name }}"
+        description: |
+          New business process **${{ parameters.title }}** in `${{ parameters.domain }}`, owned by `${{ parameters.owner }}`,
+          criticality **${{ parameters.criticality }}**{% if parameters.rpo %}, RPO ${{ parameters.rpo }}{% endif %}{% if parameters.rto %}, RTO ${{ parameters.rto }}{% endif %}{% if parameters.retention %}, retention ${{ parameters.retention }}{% endif %};
+          depends on ${{ parameters.dependsOn | join(', ') if parameters.dependsOn | length else 'nothing yet' }}.
+          Requested in Backstage by ${{ user.entity.metadata.name if user.entity else 'unknown' }}.
+
+          File: `catalog/business-map/${{ parameters.domain | parseEntityRef | pick('namespace') }}/process-${{ parameters.name }}.yaml`.
+  output:
+    links:
+      - title: The pull request
+        url: ${{ steps['pr'].output.remoteUrl }}
+      - title: Business map
+        url: /console/business-map
+---
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: business-process-edit
+  title: Edit business process
+  description: >-
+    Changes a business process of the business map: owner, criticality, RPO/RTO/retention overrides, the business
+    services it depends on, its process key. The console opens it prefilled (formData in the URL). It proposes the
+    change as a pull request to refresquito-services. Only processes kept in a file of their own
+    (catalog/business-map/<namespace>/process-<name>.yaml); an imported or adopted one is edited by its next import.
+    Only for the groups business-architect and backstage-admin.
+  tags: [business-map, continuity]
+spec:
+  owner: group:default/backstage-admin
+  type: business-map
+  parameters:
+    - title: The process
+      required: [process, title, domain, owner]
+      properties:
+        process:
+          title: Process
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              kind: BusinessProcess
+        title:
+          title: Title
+          type: string
+          maxLength: 120
+          pattern: '^[^"]+$'
+        description:
+          title: Description
+          type: string
+          maxLength: 300
+          default: ""
+        domain:
+          title: Domain
+          description: The business area it belongs to (of the same customer).
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              kind: Domain
+              spec.type: business-area
+        owner:
+          title: Owner group
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              kind: Group
+        processKey:
+          title: Process key (optional)
+          description: The key of its BPMN in the process engine, e.g. maintenance-event.
+          type: string
+          pattern: '^([A-Za-z_][A-Za-z0-9_.-]*)?$'
+          default: ""
+    - title: Continuity
+      description: >-
+        The criticality sets the RPO and RTO it needs (critical 15m / 4h, important 4h / 24h, standard 24h / 72h by
+        default); an override here replaces that value. It is not the support tier (gold / silver / bronze) of the
+        components.
+      required: [criticality]
+      properties:
+        criticality:
+          title: Criticality
+          type: string
+          enum: [critical, important, standard]
+          default: standard
+        rpo:
+          title: RPO override
+          description: Empty, the default of its criticality. A number and m, h, d or y, e.g. 15m.
+          type: string
+          pattern: '^([0-9]+(m|h|d|y))?$'
+          default: ""
+        rto:
+          title: RTO override
+          description: Empty, the default of its criticality, e.g. 4h.
+          type: string
+          pattern: '^([0-9]+(m|h|d|y))?$'
+          default: ""
+        retention:
+          title: Retention
+          description: How long its records are kept, e.g. 30y. Empty, not declared.
+          type: string
+          pattern: '^([0-9]+(m|h|d|y))?$'
+          default: ""
+        dependsOn:
+          title: Business services it depends on
+          type: array
+          items:
+            type: string
+          ui:field: MultiEntityPicker
+          ui:options:
+            catalogFilter:
+              kind: System
+              spec.type: business-service
+          default: []
+  steps:
+    - id: allowed
+      name: "Check the groups: only business-architect and backstage-admin may change the business map"
+      if: ${{ not (('"group:default/business-architect"' in ((user.entity.relations if user.entity else []) | dump)) or ('"group:default/backstage-admin"' in ((user.entity.relations if user.entity else []) | dump))) }}
+      action: catalog:fetch
+      input:
+        entityRef: group:default/only-business-architect-or-backstage-admin-may-change-the-business-map
+    - id: current
+      name: Read the process from the catalog
+      action: catalog:fetch
+      input:
+        entityRef: ${{ parameters.process }}
+    # only a process kept in its own file can be rewritten whole; one written by an import or an adoption shares
+    # the file of its domain with the others (the step only runs, and fails, then)
+    - id: ownfile
+      name: "Check the file: only a process of its own file (process-<name>.yaml) is edited here"
+      if: ${{ not (('/catalog/business-map/' + (parameters.process | parseEntityRef | pick('namespace')) + '/process-' + (parameters.process | parseEntityRef | pick('name')) + '.yaml') in (steps.current.output.entity.metadata.annotations['backstage.io/managed-by-location'] or '')) }}
+      action: catalog:fetch
+      input:
+        entityRef: group:default/imported-processes-are-edited-by-their-next-import
+    - id: file
+      name: Write the process
+      action: fetch:template
+      input:
+        url: ./skeletons/business-process
+        targetPath: ./out/catalog/business-map/${{ parameters.process | parseEntityRef | pick('namespace') }}
+        values:
+          template: Edit business process
+          fileName: process-${{ parameters.process | parseEntityRef | pick('name') }}
+          name: ${{ parameters.process | parseEntityRef | pick('name') }}
+          namespace: ${{ parameters.process | parseEntityRef | pick('namespace') }}
+          title: ${{ parameters.title }}
+          description: ${{ parameters.description }}
+          domain: ${{ parameters.domain }}
+          owner: ${{ parameters.owner }}
+          criticality: ${{ parameters.criticality }}
+          rpo: ${{ parameters.rpo }}
+          rto: ${{ parameters.rto }}
+          retention: ${{ parameters.retention }}
+          dependsOn: ${{ parameters.dependsOn }}
+          processKey: ${{ parameters.processKey }}
+          # its origin in a reference model, kept as it is
+          pcfId: ${{ steps.current.output.entity.metadata.annotations['apqc.org/pcf-id'] or '' }}
+          pcfVersion: ${{ steps.current.output.entity.metadata.annotations['apqc.org/pcf-version'] or '' }}
+          modelId: ${{ steps.current.output.entity.metadata.annotations['refresquito.io/model-id'] or '' }}
+    - id: pr
+      name: Open the pull request in refresquito-services
+      action: publish:github:pull-request
+      input:
+        repoUrl: github.com?owner=javivillar&repo=refresquito-services
+        branchName: business-process-edit-${{ parameters.process | parseEntityRef | pick('namespace') }}-${{ parameters.process | parseEntityRef | pick('name') }}
+        targetBranchName: main
+        sourcePath: ./out
+        title: "Business map: edit process ${{ parameters.title }} (${{ parameters.process | parseEntityRef | pick('namespace') }})"
+        commitMessage: "business map ${{ parameters.process | parseEntityRef | pick('namespace') }}: edit process ${{ parameters.process | parseEntityRef | pick('name') }}"
+        description: |
+          Business process **${{ parameters.title }}** (`${{ parameters.process }}`) changed in Backstage by
+          ${{ user.entity.metadata.name if user.entity else 'unknown' }}: owner `${{ parameters.owner }}`, domain `${{ parameters.domain }}`,
+          criticality **${{ parameters.criticality }}**{% if parameters.rpo %}, RPO ${{ parameters.rpo }}{% endif %}{% if parameters.rto %}, RTO ${{ parameters.rto }}{% endif %}{% if parameters.retention %}, retention ${{ parameters.retention }}{% endif %};
+          depends on ${{ parameters.dependsOn | join(', ') if parameters.dependsOn | length else 'nothing' }}.
+
+          File: `catalog/business-map/${{ parameters.process | parseEntityRef | pick('namespace') }}/process-${{ parameters.process | parseEntityRef | pick('name') }}.yaml`.
+  output:
+    links:
+      - title: The pull request
+        url: ${{ steps['pr'].output.remoteUrl }}
+      - title: Business map
+        url: /console/business-map

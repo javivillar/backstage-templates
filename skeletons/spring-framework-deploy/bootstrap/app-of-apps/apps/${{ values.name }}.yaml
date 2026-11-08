@@ -3,6 +3,8 @@
 name: ${{ values.name }}
 title: ${{ values.title | dump }}
 description: ${{ values.description | dump }}
+# its business service: the System of its specification in refresquito-specs (its instances and blocks belong to it)
+system: ${{ values.system }}
 repository: ${{ values.owner }}/${{ values.name }}
 # the clusters it is deployed in, as <zone>-<program>
 environments: ${{ values.environments | dump }}

@@ -1,0 +1,44 @@
+# Business process ${{ values.title }} (business map), written by the Backstage template "${{ values.template }}".
+# Its continuity requirement: the criticality, and the RPO/RTO/retention that override its defaults.
+apiVersion: refresquito.io/v1alpha1
+kind: BusinessProcess
+metadata:
+  name: ${{ values.name }}
+  namespace: ${{ values.namespace }}
+  title: ${{ values.title | dump }}
+{%- if values.description %}
+  description: ${{ values.description | dump }}
+{%- endif %}
+{%- if values.processKey or values.pcfId or values.modelId %}
+  annotations:
+{%- if values.pcfId %}
+    apqc.org/pcf-id: ${{ values.pcfId | dump }}
+{%- endif %}
+{%- if values.pcfVersion %}
+    apqc.org/pcf-version: ${{ values.pcfVersion | dump }}
+{%- endif %}
+{%- if values.modelId %}
+    refresquito.io/model-id: ${{ values.modelId | dump }}
+{%- endif %}
+{%- if values.processKey %}
+    refresquito.io/process-key: ${{ values.processKey | dump }}
+{%- endif %}
+{%- endif %}
+spec:
+  owner: ${{ values.owner }}
+  domain: ${{ values.domain }}
+  criticality: ${{ values.criticality }}
+{%- if values.rpo %}
+  rpo: ${{ values.rpo }}
+{%- endif %}
+{%- if values.rto %}
+  rto: ${{ values.rto }}
+{%- endif %}
+{%- if values.retention %}
+  retention: ${{ values.retention }}
+{%- endif %}
+{%- if values.dependsOn | length %}
+  dependsOn: ${{ values.dependsOn | dump }}
+{%- else %}
+  dependsOn: []
+{%- endif %}
