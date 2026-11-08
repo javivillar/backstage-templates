@@ -1,0 +1,39 @@
+# Business process ${{ values.title }} (business map), written by the Backstage template "${{ values.template }}".
+# Its continuity requirement: the criticality, and the RPO/RTO/retention that override its defaults.
+apiVersion: refresquito.io/v1alpha1
+kind: BusinessProcess
+metadata:
+  name: ${{ values.name }}
+  namespace: ${{ values.namespace }}
+  title: ${{ values.title | dump }}
+{%- if values.description %}
+  description: ${{ values.description | dump }}
+{%- endif %}
+  # every annotation of the current process stays (the reimport reads refresquito.io/imported-hash, the APQC IDs,
+  # refresquito.io/deprecated...), except the ones the catalog adds itself; the process key comes from the form
+{%- set skip = ["backstage.io/managed-by-location", "backstage.io/managed-by-origin-location", "backstage.io/view-url", "backstage.io/edit-url", "backstage.io/source-location", "refresquito.io/process-key"] %}
+{%- set comma = joiner(",") %}
+  annotations: {
+{%- for key, value in values.annotations %}{% if key not in skip %}${{ comma() }}
+    ${{ key | dump }}: ${{ value | dump }}{% endif %}{% endfor %}
+{%- if values.processKey %}${{ comma() }}
+    "refresquito.io/process-key": ${{ values.processKey | dump }}{% endif %}
+  }
+spec:
+  owner: ${{ values.owner }}
+  domain: ${{ values.domain }}
+  criticality: ${{ values.criticality }}
+{%- if values.rpo %}
+  rpo: ${{ values.rpo }}
+{%- endif %}
+{%- if values.rto %}
+  rto: ${{ values.rto }}
+{%- endif %}
+{%- if values.retention %}
+  retention: ${{ values.retention }}
+{%- endif %}
+{%- if values.dependsOn | length %}
+  dependsOn: ${{ values.dependsOn | dump }}
+{%- else %}
+  dependsOn: []
+{%- endif %}

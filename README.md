@@ -212,7 +212,29 @@ modified. Adding/removing/re-roling members and renaming/deleting are also
 available from the `/activepieces-manager` page. See `plugins/activepieces-backend`'s
 README for the full model.
 
-All 33 are `owner: group:default/backstage-admin` (the *template* owner —
+### Business map (`scaffolder-backend-module-business-map`) — import, adopt, new/edit process
+
+| Template (`metadata.name`) | Title | Steps |
+| --- | --- | --- |
+| `business-model-import` | Import business model | `refresquito:business-model:preview`, then (not "Only preview", and no errors or "Skip the rows with errors") `refresquito:business-model:import` → pull request |
+| `business-model-adopt` | Adopt reference model | `refresquito:business-model:adopt` → pull request |
+| `business-process-new` | New business process | `fetch:template` of `skeletons/business-process/` → pull request |
+| `business-process-edit` | Edit business process | `catalog:fetch` of the process, `fetch:template` → pull request |
+
+Each one opens a pull request in refresquito-services under `catalog/business-map/<namespace>/` (a process made
+here is `process-<name>.yaml`; Edit only rewrites those). Only the Keycloak groups `business-architect` and
+`backstage-admin` may run them: their first step, `allowed`, runs only for anybody else, and fails (a `catalog:fetch`
+of an entity that does not exist, named after the rule). The form is still visible to everyone; the permission
+framework would hide it (later). The Scaffolder shows no output between steps, so Import shows the preview in
+its result: run it once with "Only preview", then again to open the pull request.
+
+The skeletons of the application lines write `spec.type: business-application` and `spec.system` (the parameter
+"Business service" of the New application templates, the name of the application by default) in the catalog entry
+of the repository, and `system:` in the file of the application in refresquito-services. The applications created
+before (petstore, petshop, animalshelter, personnelsecurity, support) change their own `catalog-info.yaml` by pull
+request: `type: service` → `type: business-application`, `system: business-systems` → `system: <their System>`.
+
+All templates are `owner: group:default/backstage-admin` (the *template* owner —
 who can edit the template definition — unrelated to per-object ownership,
 which is what actually gates edit/delete of the objects these templates
 create).

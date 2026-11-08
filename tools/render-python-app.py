@@ -31,6 +31,8 @@ out = pathlib.Path(argv[0]).expanduser().resolve()
 values = {"name": "orders", "title": "Orders", "description": "Orders of the shop", "entity": "order", "entities": "orders",
           "owner": "javivillar", "dataStewards": "@javivillar", "securityApprovers": "@javivillar"}
 values.update(dict(a.split("=", 1) for a in argv[1:]))
+# its business service (System): the template's default is the name of the application
+values.setdefault("system", values["name"])
 # the line of the Python Framework: its own skeleton, as the template's step fetch picks it
 line = values.setdefault("frameworkVersion", "3.2")
 SKELETON = SKELETONS / f"python-framework-app-{line}"
@@ -71,6 +73,7 @@ print(f"rendered {values['name']} ({values['entityTitle']}/{values['entities']})
 if deploy:
     # what the template adds for the deployment pull request (its step "deploy")
     values.update(tag=values.get("tag", "0000000"), stage=values.get("stage", "dev"), fastapi=values.get("fastapi", f"{line}.0"), angular=values.get("angular", f"{line}.0"), postgres=values.get("postgres", "3.2.0" if line == "3.2" else ""),
+                  systemInSpecs=values.get("systemInSpecs", "true") in ("true", "1", "yes", True),
                   environments=values.get("environments", "nato-sirtap").split(","),
                   admins=[a for a in values.get("admins", "").split(",") if a],
 

@@ -21,10 +21,11 @@ metadata:
     title: Release notes
     icon: docs
 spec:
-  type: service
+  # the business application: the code of its business service (the System of its specification, in refresquito-specs)
+  type: business-application
   lifecycle: experimental
   owner: group:default/development-team
-  system: business-systems
+  system: ${{ values.system }}
   # what is deployed from this repository: the service ${{ values.name }}-oneke of the stack, which
   # carries the API, the URL of each cluster and the service level
   dependencyOf:

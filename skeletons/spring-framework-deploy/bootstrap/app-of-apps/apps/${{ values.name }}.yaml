@@ -3,6 +3,12 @@
 name: ${{ values.name }}
 title: ${{ values.title | dump }}
 description: ${{ values.description | dump }}
+# its business service: the System of its specification in refresquito-specs (its instances and blocks belong to it)
+system: ${{ values.system }}
+{%- if values.systemInSpecs == false or values.systemInSpecs == 'false' %}
+# no specification yet: the app-of-apps generates a minimal System for it
+systemInSpecs: false
+{%- endif %}
 repository: ${{ values.owner }}/${{ values.name }}
 # the clusters it is deployed in, as <zone>-<program>
 environments: ${{ values.environments | dump }}
