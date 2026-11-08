@@ -6,7 +6,7 @@ runs in the platform is always the version of the application that runs.
 
 | Folder | What | Used when |
 |---|---|---|
-| `processes/` | BPMN processes, DMN decisions and forms for Camunda 7 | the block `processes` of the application is on |
+| `processes/` | BPMN processes, DMN decisions and forms for Operaton (the open-source Camunda 7 engine: `camunda:` BPMN runs unchanged) | the block `processes` of the application is on |
 | `dashboards/` | Dashboards for Superset: a dashboard exported from Superset (Dashboards, ⋮, Export), unzipped here as it comes | the block `dashboards` of the application is on |
 | `flows/` | Flows for Activepieces: each one a flow exported from Activepieces (the flow's menu, Export), saved as `<flow>.json` | the block `flows` of the application is on |
 | `monitoring/` | Grafana dashboards of its own (optional), one JSON per file, besides the standard Logs and Performance | the block `monitoring` of the application is on |
@@ -30,7 +30,7 @@ platform: nothing to write here. A dashboard of its own is a Grafana JSON (a das
 variables `prometheus` and `loki`. A file `logs.json` or `performance.json` replaces the standard one. Grafana gets it
 again when the file changes.
 
-The application talks to Camunda as itself (`CAMUNDA_URL`, `CAMUNDA_USERNAME`, `CAMUNDA_PASSWORD` in the environment
+The application talks to the process engine (Operaton) as itself (`CAMUNDA_URL`, `CAMUNDA_USERNAME`, `CAMUNDA_PASSWORD` in the environment
 of the API). How it works: `charts/python-app-oneke/INSTALL.md` of
 [`refresquito-services`](https://github.com/javivillar/refresquito-services/blob/main/charts/python-app-oneke/INSTALL.md),
 "Block `processes`".

@@ -78,7 +78,7 @@ Cada bloque es algo que la aplicación usa de la plataforma. Todos son opcionale
 | **Data catalog - people / groups who own its data** | Responsables **de negocio** del producto de datos. El técnico es siempre el equipo de la aplicación |
 | **API gateway (Gravitee) - publish its API** | Publica el API en `/gateway/<nombre>/` y en el portal de desarrolladores |
 | **API gateway - team** | Grupo `gravitee-team-<equipo>` cuyos miembros ven el API en Backstage |
-| **Processes (Camunda) - deploy its processes** | Despliega en Camunda los BPMN de `platform/processes/` del repositorio |
+| **Processes (Operaton) - deploy its processes** | Despliega en Operaton los BPMN de `platform/processes/` del repositorio |
 | **Processes - groups** | Grupos cuyos miembros inician los procesos y trabajan sus tareas en Tasklist |
 | **Dashboards (Superset) - import its dashboards** | Importa en Superset los dashboards de `platform/dashboards/` |
 | **Flows (Activepieces) - import its flows** | Importa en un proyecto propio de Activepieces los flujos de `platform/flows/` |
@@ -191,14 +191,14 @@ Los permisos los comprueba el API: un usuario sin `orders-viewer` ni `orders-adm
 | Aplicación de Gravitee | `Orders (web)`, con el cliente `orders`, ya suscrita |
 | Equipo | metadato `backstage-team` = el grupo indicado |
 
-### Camunda · bloque *Processes*
+### Operaton · bloque *Processes*
 
 | Qué | Nombre |
 |---|---|
 | Despliegue | `orders`, con los BPMN/DMN de `platform/processes/`; cada cambio es una versión nueva |
 | Regla | el `id` de cada proceso o decisión empieza por `orders-` (si no, no se despliega) |
 | Usuario de la aplicación | `app-orders` en Keycloak, con permiso solo sobre sus procesos |
-| Personas | los grupos de *Processes - groups*: inician sus procesos y trabajan sus tareas en Tasklist (`https://bpm.<dominio>`) |
+| Personas | los grupos de *Processes - groups*: inician sus procesos y trabajan sus tareas en Tasklist (`https://operaton.<dominio>/operaton/app/tasklist/`) |
 | En el entorno del API | `CAMUNDA_URL`, `CAMUNDA_USERNAME`, `CAMUNDA_PASSWORD`, `CAMUNDA_KEY_PREFIX` (`orders-`) |
 
 ### Superset · bloque *Dashboards*
@@ -354,7 +354,7 @@ application** pasa a pre y a pro, y cada paso es una pull request que copia el t
 | Cliente de Keycloak | `orders` | `orders-dev` |
 | Roles | `orders-viewer`, `orders-admin` del **realm** | los mismos nombres, como roles **del cliente** `orders-dev`: un rol dado en dev no vale en pro |
 | Usuarios de prueba | `orders-viewer`, `orders-admin` | `orders-dev-viewer`, `orders-dev-admin` |
-| Lo que crean los bloques | `orders-...`, `app-orders` | `orders-dev-...`, `app-orders-dev`; los ids de Camunda pasan a `orders-dev-...` |
+| Lo que crean los bloques | `orders-...`, `app-orders` | `orders-dev-...`, `app-orders-dev`; los ids de Operaton pasan a `orders-dev-...` |
 | DataHub | sí | no: hay un único DataHub y el producto de datos es el de pro |
 | En el catálogo | `orders-oneke` (production) | `orders-dev-oneke` (experimental) |
 
@@ -389,7 +389,7 @@ probó antes. Una etapa nunca cambia por promocionar otra: llevar algo a pre no 
 
 | | Cómo llega a cada etapa |
 |---|---|
-| **Configuración** (cliente de Keycloak, buckets, sitios, Camunda, base de datos...) | Variables de entorno con los nombres de esa etapa. El código **no debe tener nada escrito a mano** que dependa de la etapa |
+| **Configuración** (cliente de Keycloak, buckets, sitios, Operaton, base de datos...) | Variables de entorno con los nombres de esa etapa. El código **no debe tener nada escrito a mano** que dependa de la etapa |
 | **Contenido de `platform/`** (procesos, dashboards, flujos) | Viaja dentro de la imagen: cada etapa tiene el de su versión. Si pro corre `c1`, tiene los procesos de `c1` |
 | **Base de datos** | Cada etapa tiene la suya; las migraciones se aplican solas al arrancar el API. Los datos no pasan de una etapa a otra |
 | **Personas** | Los grupos que declaras son los mismos en todas las etapas; los usuarios de prueba y los roles de dev y pre son propios |
@@ -408,7 +408,7 @@ Si un nombre está escrito a mano, en dev y pre falla: cada etapa solo tiene per
 ### Lo que crean los bloques: una copia por etapa
 
 Cada etapa tiene **su propia copia** de cada bloque, para que probar en dev nunca toque lo que usa pro: el proceso de
-Camunda (`orders-dev-review`), el sitio de Alfresco (`orders-dev-records`, que nace vacío), el bucket, los dashboards
+Operaton (`orders-dev-review`), el sitio de Alfresco (`orders-dev-records`, que nace vacío), el bucket, los dashboards
 (sobre la base de datos de dev) y el proyecto de Activepieces (`Orders (dev)`, cuyas **conexiones hay que crear en cada
 proyecto**: las credenciales nunca van al repositorio). DataHub es la excepción: hay uno solo y el producto de datos es
 el de pro.

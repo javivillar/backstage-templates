@@ -8,7 +8,7 @@ platform is always the version of the application that runs. The blocks read the
 
 | Folder | What | Used when |
 |---|---|---|
-| `processes/` | BPMN processes, DMN decisions and forms for Camunda 7 | the block `processes` of the application is on |
+| `processes/` | BPMN processes, DMN decisions and forms for Operaton (the open-source Camunda 7 engine: `camunda:` BPMN runs unchanged) | the block `processes` of the application is on |
 | `dashboards/` | Dashboards for Superset: a dashboard exported from Superset (Dashboards, ⋮, Export), unzipped here as it comes | the block `dashboards` of the application is on |
 | `flows/` | Flows for Activepieces: each one a flow exported from Activepieces (the flow's menu, Export), saved as `<flow>.json` | the block `flows` of the application is on |
 | `monitoring/` | Grafana dashboards of its own (optional), one JSON per file, besides the standard Logs and Performance | the block `monitoring` of the application is on |

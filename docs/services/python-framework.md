@@ -32,7 +32,7 @@ indiques. La entidad nace con nombre, categoría, estado y fecha de inicio: cám
 | Environments | `nato-sirtap` | Los clusters donde se despliega, como `<zona>-<programa>` |
 | Initial stage | `dev` | La etapa en la que nace: **dev** por defecto (`https://<nombre>-dev.<dominio>`, cliente `<nombre>-dev`). Pasa a pre y pro con la plantilla [Promote an application](python-framework-promote.md) |
 | Version of the Python Framework | `3.3` | Con qué versión del framework nace. Solo se ofrecen las mantenidas: la **3.3** (el aspecto de Refresquito: tema Bootstrap con su azul, modo claro y oscuro, y el layout `<rq-shell>` con el usuario y un menú por roles), la **3.2** (mantenida hasta el 28-04-2027; trae su propia base de datos, refresquito-postgres: PostgreSQL 18 sin root y sin vulnerabilidades altas ni críticas conocidas, la misma en el clúster, en el CI y en `compose.yaml`), la **3.1** (mantenida hasta el 23-04-2027; añade los dashboards de Superset embebidos y las ejecuciones de sus flujos), la **3.0** (usa los bloques de la plataforma en su código y rechaza tokens de otras aplicaciones), la **2.0** (añade la traza de auditoría) y la **0.1** (mantenida hasta el 15-04-2027) |
-| Platform blocks | *Single sign-on* | Lo que usa de la plataforma. Hoy, el inicio de sesión con Keycloak (lo llevan todas), el almacenamiento de objetos, los documentos, el catálogo de datos, el gateway de APIs, los procesos de Camunda, los dashboards de Superset, los flujos de Activepieces (opcionales) y la monitorización (marcada por defecto) |
+| Platform blocks | *Single sign-on* | Lo que usa de la plataforma. Hoy, el inicio de sesión con Keycloak (lo llevan todas), el almacenamiento de objetos, los documentos, el catálogo de datos, el gateway de APIs, los procesos de Operaton, los dashboards de Superset, los flujos de Activepieces (opcionales) y la monitorización (marcada por defecto) |
 | Object storage - buckets | `documents` | Opcional. Un bucket `<name>-documents` en SeaweedFS, solo para la aplicación, con su clave de acceso ya en el entorno del API |
 | Documents (Alfresco) - sites | `records` | Opcional. Un sitio privado `<name>-records` en Alfresco, con un usuario propio de la aplicación y sus credenciales ya en el entorno del API |
 | Documents (Alfresco) - groups | `finance` | Grupos de Keycloak cuyos miembros entran en los sitios de la aplicación |
@@ -41,8 +41,8 @@ indiques. La entidad nace con nombre, categoría, estado y fecha de inicio: cám
 | Data catalog (DataHub) - people / groups who own its data | `ana` / `finance` | Responsables de negocio de sus datos. Tu equipo es siempre el responsable técnico |
 | API gateway (Gravitee) - publish its API | sí / no | Opcional. Su API en el gateway, en `/gateway/<name>/`, pública en el portal de desarrolladores |
 | API gateway (Gravitee) - team | `gravitee-team-alpha` | Opcional. El grupo cuyos miembros ven la API en Backstage |
-| Processes (Camunda) - deploy its processes | sí / no | Opcional. Los BPMN de `platform/processes/` se despliegan en Camunda con cada versión |
-| Processes (Camunda) - groups | `finance` | Grupos cuyos miembros inician los procesos y trabajan sus tareas en Tasklist |
+| Processes (Operaton) - deploy its processes | sí / no | Opcional. Los BPMN de `platform/processes/` se despliegan en Operaton con cada versión |
+| Processes (Operaton) - groups | `finance` | Grupos cuyos miembros inician los procesos y trabajan sus tareas en Tasklist |
 | Dashboards (Superset) - import its dashboards | sí / no | Opcional. El export de Superset de `platform/dashboards/` se importa en Superset con cada versión |
 | Flows (Activepieces) - import its flows | sí / no | Opcional. Los flujos de `platform/flows/` se importan en un proyecto propio de Activepieces y se publican |
 | Flows (Activepieces) - groups that edit them | `finance` | Grupos cuyos miembros editan los flujos en su proyecto de Activepieces |
@@ -148,20 +148,20 @@ suscripción se acepta sola.
 Tu aplicación no recibe nada en su entorno: sigue sirviendo su API en `/api` como siempre, y el gateway es una puerta
 más para otros consumidores.
 
-### Procesos (Camunda)
+### Procesos (Operaton)
 
 Tus procesos son parte de tu código: los BPMN (y DMN y formularios) van en `platform/processes/` de tu repositorio, y el
-Dockerfile del API los copia a la imagen. Así, Camunda tiene siempre los procesos de la versión que corre: al desplegar
+Dockerfile del API los copia a la imagen. Así, Operaton tiene siempre los procesos de la versión que corre: al desplegar
 un commit nuevo, lo que cambió pasa a ser una versión nueva del proceso. La aplicación nace con uno de ejemplo,
 `<nombre>-review`, que puedes cambiar o borrar.
 
 **Regla:** el `id` de cada proceso y decisión empieza por el nombre de la aplicación y un guion (`orders-approval`).
 Uno con otro id no se despliega, y el despliegue de ese commit te lo dice en el log del provisioner.
 
-Tu API habla con Camunda como ella misma: `CAMUNDA_URL` (la API REST, `engine-rest`), `CAMUNDA_USERNAME` y
+Tu API habla con Operaton como ella misma: `CAMUNDA_URL` (la API REST, `engine-rest`), `CAMUNDA_USERNAME` y
 `CAMUNDA_PASSWORD` (autenticación HTTP Basic). Puede iniciar sus procesos y leer, reclamar y completar sus tareas, nada
 de otras aplicaciones. Las personas de los grupos que indiques los inician y trabajan sus tareas en Tasklist
-(`https://bpm.<dominio>`). El framework no trae cliente de Camunda: usa su API REST con el cliente HTTP que prefieras.
+(`https://operaton.<dominio>/operaton/app/tasklist/`). El framework no trae cliente del motor de procesos: usa su API REST con el cliente HTTP que prefieras.
 
 ### Dashboards (Superset)
 
@@ -216,7 +216,7 @@ código, en un fichero propio en el API y otro en la web, y nada de los que no m
 
 | Bloque | API | Web |
 |---|---|---|
-| Procesos (Camunda) | `review.py`: `POST /api/<entidades>/{id}/review` arranca el proceso `review`; `GET /api/tasks` y `POST /api/tasks/{id}/complete` | botón *Ask for a review* y página *My tasks* |
+| Procesos (Operaton) | `review.py`: `POST /api/<entidades>/{id}/review` arranca el proceso `review`; `GET /api/tasks` y `POST /api/tasks/{id}/complete` | botón *Ask for a review* y página *My tasks* |
 | Flujos (Activepieces) | `welcome.py`: `POST /api/<entidades>/{id}/welcome` espera la respuesta del flujo `new-<entidad>`. Desde la 3.1, además, crear un registro publica el evento `<entidad>.created` y las ejecuciones de sus flujos quedan en la tabla `flow_run` (`GET /api/flow-runs`) | botón *Welcome*; desde la 3.1, página *Flows* |
 | Dashboards (Superset), desde la 3.1 | `dashboards.py`: `GET /api/dashboards`, `GET /api/dashboards/{name}/guest-token` y `GET /api/stats/<entidades>-by-status` (los datos de su dataset, calculados por Superset) | página *Dashboard*, con su dashboard embebido (`<rq-dashboard>`) |
 | Almacenamiento (S3) | `files.py`: ficheros de cada registro en el primer bucket que declares, descarga con URL prefirmada | sección *Files* |

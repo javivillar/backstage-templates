@@ -851,14 +851,15 @@ apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
   name: camunda-provision-process
-  title: Provision Camunda Process
+  title: Provision Operaton Process
   description: >-
-    Deploys a minimal Camunda process (start event -> one user task -> end
+    Deploys a minimal Operaton process (start event -> one user task -> end
     event), pre-wired with per-developer isolation, and grants you exclusive
     rights to it — no other developer can see or start it, even one who
     shares your Keycloak group. You then download the BPMN and model the
-    real process in the desktop Camunda Modeler.
-  tags: [camunda, bpm]
+    real process in a BPMN modeler (the desktop Camunda Modeler works:
+    Operaton, its open-source successor, runs its BPMN unchanged).
+  tags: [operaton, camunda, bpm]
 spec:
   owner: group:default/backstage-admin
   type: camunda-resource
@@ -881,7 +882,7 @@ spec:
           type: string
   steps:
     - id: provision-process
-      name: Provision process in Camunda
+      name: Provision process in Operaton
       action: camunda:provision-process
       input:
         processName: ${{ parameters.processName }}
@@ -892,7 +893,7 @@ spec:
       - title: Resultado
         content: |
           Proceso **${{ steps['provision-process'].output.processKey }}**
-          desplegado en Camunda. Ábrelo en Cockpit:
+          desplegado en Operaton. Ábrelo en Cockpit:
           ${{ steps['provision-process'].output.cockpitUrl }}
 
           Descarga el BPMN de abajo, modélalo en el Camunda Modeler de
@@ -909,13 +910,13 @@ apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
   name: camunda-update-process
-  title: Update Camunda Process
+  title: Update Operaton Process
   description: >-
     Redeploy a new BPMN version under an existing process key you own (or,
     if backstage-admin, any key). Model the process further in the desktop
     Camunda Modeler, then paste the updated XML here — the process id inside
     it must not change, or ownership won't carry over.
-  tags: [camunda, bpm]
+  tags: [operaton, camunda, bpm]
 spec:
   owner: group:default/backstage-admin
   type: camunda-resource
@@ -936,7 +937,7 @@ spec:
           ui:widget: textarea
   steps:
     - id: update-process
-      name: Redeploy process in Camunda
+      name: Redeploy process in Operaton
       action: camunda:update-process
       input:
         processKey: ${{ parameters.processKey }}
@@ -945,17 +946,17 @@ spec:
     text:
       - title: Resultado
         content: |
-          Proceso **${{ parameters.processKey }}** redesplegado en Camunda.
+          Proceso **${{ parameters.processKey }}** redesplegado en Operaton.
 ---
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
   name: camunda-delete-process
-  title: Delete Camunda Process
+  title: Delete Operaton Process
   description: >-
     Delete a process definition (all versions, all instances) you own, or —
     if backstage-admin — any process key.
-  tags: [camunda, bpm]
+  tags: [operaton, camunda, bpm]
 spec:
   owner: group:default/backstage-admin
   type: camunda-resource
@@ -968,7 +969,7 @@ spec:
           type: string
   steps:
     - id: delete-process
-      name: Delete process in Camunda
+      name: Delete process in Operaton
       action: camunda:delete-process
       input:
         processKey: ${{ parameters.processKey }}
@@ -976,7 +977,7 @@ spec:
     text:
       - title: Resultado
         content: |
-          Proceso **${{ parameters.processKey }}** eliminado de Camunda.
+          Proceso **${{ parameters.processKey }}** eliminado de Operaton.
 ---
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
@@ -2019,10 +2020,10 @@ spec:
           pattern: '^(gravitee-team-[a-z0-9-]+)?$'
           default: ""
         processes:
-          title: Processes (Camunda) - deploy its processes
+          title: Processes (Operaton) - deploy its processes
           description: >-
             Optional. The BPMN in platform/processes/ of its repository (it starts with an example,
-            <name>-review) are deployed in Camunda with each version. The API gets its own identity
+            <name>-review) are deployed in Operaton with each version. The API gets its own identity
             there (CAMUNDA_URL, CAMUNDA_USERNAME, CAMUNDA_PASSWORD) to start them and work their tasks.
           type: boolean
           default: false
@@ -2752,7 +2753,7 @@ spec:
         pattern: ^(gravitee-team-[a-z0-9-]+)?$
         default: ''
       processes:
-        title: Processes (Camunda) - deploy its processes
+        title: Processes (Operaton) - deploy its processes
         description: Optional. The BPMN in platform/processes/ of its repository (it starts with an example, <name>-review) are deployed in Camunda
           with each version. Its services get their own identity there (CAMUNDA_URL, CAMUNDA_USERNAME, CAMUNDA_PASSWORD) to start them and work
           their tasks.
