@@ -3356,17 +3356,20 @@ spec:
                 source: { enum: [apqc, template] }
     - title: Preview and confirm
       description: >-
-        The template first previews the import without writing anything: counts (domains, subdomains, new, changed,
-        no longer in the file, unchanged), the errors that stop it (a parent not in the file, a duplicated ID, a
-        missing required column), the warnings (an application not in the catalog, an owner that is no group) and the
-        list of changes. Run it once with "Only preview" to read them; run it again without it to open the pull
-        request. With errors, nothing is imported unless you skip the rows with errors.
+        What the import would do, read from the file now (nothing is written yet): counts (domains, subdomains, new,
+        changed, no longer in the file, unchanged), the errors that stop it (a parent not in the file, a duplicated ID,
+        a missing required column), the warnings (an application not in the catalog, an owner that is no group) and
+        the changes. With errors you cannot go on: fix the file and upload it again (Back), or skip the rows with
+        errors.
       properties:
-        previewOnly:
-          title: Only preview
-          description: Show the preview and stop; nothing is written.
-          type: boolean
-          default: true
+        preview:
+          title: Preview
+          type: object
+          default: {}
+          ui:field: BusinessModelPreview
+          ui:backstage:
+            review:
+              show: false
         skipErrors:
           title: Skip the rows with errors
           description: Import the rest of the file and leave out the rows with errors (listed in the pull request).
@@ -3381,6 +3384,7 @@ spec:
       action: catalog:fetch
       input:
         entityRef: group:default/only-business-architect-or-backstage-admin-may-change-the-business-map
+    # the same preview as the form's, again at run time: its counts, errors and changes go into the pull request
     - id: preview
       name: Preview the import (nothing is written)
       action: refresquito:business-model:preview
@@ -3397,10 +3401,10 @@ spec:
         keepFrom: ${{ parameters.keepFrom }}
         industry: ${{ parameters.industry }}
         version: ${{ parameters.version }}
-    # stops here with "Only preview", or when the preview has errors and they are not skipped
+    # the form already stopped an import with errors (field BusinessModelPreview); the action checks it again and
+    # fails when the file has errors and skipErrors is not ticked
     - id: import
       name: Write the entities (catalog/business-map/${{ parameters.namespace }}/)
-      if: ${{ (not parameters.previewOnly) and (parameters.skipErrors or (steps.preview.output.errors | length) == 0) }}
       action: refresquito:business-model:import
       input:
         source: ${{ parameters.source }}
@@ -3417,7 +3421,6 @@ spec:
         skipErrors: ${{ parameters.skipErrors }}
     - id: pr
       name: Open the pull request in refresquito-services
-      if: ${{ (not parameters.previewOnly) and (parameters.skipErrors or (steps.preview.output.errors | length) == 0) }}
       action: publish:github:pull-request
       input:
         repoUrl: github.com?owner=javivillar&repo=refresquito-services
@@ -3462,7 +3465,7 @@ spec:
           |---|---|---|---|---|---|
           | ${{ steps.preview.output.counts.domains }} | ${{ steps.preview.output.counts.subdomains }} | ${{ steps.preview.output.counts.new }} | ${{ steps.preview.output.counts.changed }} | ${{ steps.preview.output.counts.gone }} | ${{ steps.preview.output.counts.unchanged }} |
 
-          **Errors** (${{ steps.preview.output.errors | length }}){% if (steps.preview.output.errors | length) and not parameters.skipErrors %}: nothing was imported; fix them, or run it again with "Skip the rows with errors"{% endif %}
+          **Errors** (${{ steps.preview.output.errors | length }}){% if steps.preview.output.errors | length %}: those rows were left out{% endif %}
           {% for e in steps.preview.output.errors %}
           - row ${{ e.row }}: ${{ e.message }}{% endfor %}
 
@@ -3473,8 +3476,6 @@ spec:
           **Changes** (${{ steps.preview.output.changes | length }})
           {% for c in steps.preview.output.changes %}
           - ${{ c.kind }} `${{ c.id }}` ${{ c.title }}: ${{ c.what }}{% endfor %}
-
-          {% if parameters.previewOnly %}Only a preview: nothing was written. Run the template again without "Only preview" to open the pull request.{% endif %}
 ---
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
