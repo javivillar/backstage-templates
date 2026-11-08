@@ -73,6 +73,7 @@ print(f"rendered {values['name']} ({values['entityTitle']}/{values['entities']})
 if deploy:
     # what the template adds for the deployment pull request (its step "deploy")
     values.update(tag=values.get("tag", "0000000"), stage=values.get("stage", "dev"), fastapi=values.get("fastapi", f"{line}.0"), angular=values.get("angular", f"{line}.0"), postgres=values.get("postgres", "3.2.0" if line == "3.2" else ""),
+                  systemInSpecs=values.get("systemInSpecs", "true") in ("true", "1", "yes", True),
                   environments=values.get("environments", "nato-sirtap").split(","),
                   admins=[a for a in values.get("admins", "").split(",") if a],
 

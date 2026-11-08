@@ -1858,6 +1858,13 @@ spec:
             catalogFilter:
               kind: System
               spec.type: business-service
+        systemInSpecs:
+          title: Its business service already has a specification in refresquito-specs
+          description: >-
+            Off: refresquito-services generates a minimal System (type business-service) for it until its specification
+            exists in refresquito-specs.
+          type: boolean
+          default: true
     - title: Its first entity
       description: >-
         The application starts with one entity (name, category, status and start date), with its
@@ -2196,6 +2203,8 @@ spec:
           owner: ${{ parameters.owner }}
           # its business service (System), in catalog-info.yaml and in the file of the application
           system: "${{ (parameters.system | parseEntityRef({ defaultKind: 'system', defaultNamespace: 'default' }) | pick('name')) if parameters.system else parameters.name }}"
+          # false: the app-of-apps generates a minimal System for it (no specification yet)
+          systemInSpecs: ${{ parameters.systemInSpecs }}
           environments: ${{ parameters.environments }}
           admins: ${{ parameters.admins }}
           buckets: ${{ parameters.s3Buckets }}
@@ -2616,6 +2625,13 @@ spec:
           catalogFilter:
             kind: System
             spec.type: business-service
+      systemInSpecs:
+        title: Its business service already has a specification in refresquito-specs
+        description: >-
+          Off: refresquito-services generates a minimal System (type business-service) for it until its specification
+          exists in refresquito-specs.
+        type: boolean
+        default: true
   - title: Its first entity
     description: 'The application starts with one entity (name, category, status and start date), with its list, its form and its service: services/<entities>,
       with its own database, which publishes its events; and the service notifier, which handles them. Change it afterwards into what the application
@@ -2924,6 +2940,8 @@ spec:
         owner: ${{ parameters.owner }}
         # its business service (System), in catalog-info.yaml and in the file of the application
         system: "${{ (parameters.system | parseEntityRef({ defaultKind: 'system', defaultNamespace: 'default' }) | pick('name')) if parameters.system else parameters.name }}"
+        # false: the app-of-apps generates a minimal System for it (no specification yet)
+        systemInSpecs: ${{ parameters.systemInSpecs }}
         environments: ${{ parameters.environments }}
         admins: ${{ parameters.admins }}
         buckets: ${{ parameters.s3Buckets }}
