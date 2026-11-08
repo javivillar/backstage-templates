@@ -3255,11 +3255,12 @@ spec:
         source:
           title: Source
           type: string
-          enum: [apqc, template, own]
+          enum: [apqc, template, own, bia]
           enumNames:
             - "APQC PCF: the Excel downloaded from APQC (its layout is known)"
             - "Refresquito template: fixed columns ID, parent, title, owner, criticality, RPO, RTO, retention, applications"
             - "Own layout: the customer's spreadsheet as it is (map its columns on the next page)"
+            - "BIA results: the BIA sheet downloaded from Business continuity, filled by the business owners (updates only the filled cells)"
           default: template
         file:
           title: File
@@ -3314,7 +3315,7 @@ spec:
                   default: "7.4"
               required: [version]
             - properties:
-                source: { enum: [template, own] }
+                source: { enum: [template, own, bia] }
     - title: Mapping
       description: >-
         Only for an own layout: which column holds each field (a column letter, e.g. B, or its header) and what the
@@ -3332,6 +3333,7 @@ spec:
                   properties:
                     id: { title: ID, type: string }
                     title: { title: Title, type: string }
+                    description: { title: Description, type: string }
                     parent: { title: Parent ID (or give the level), type: string }
                     level: { title: Level (or give the parent), type: string }
                     owner: { title: Owner, type: string }
@@ -3353,7 +3355,7 @@ spec:
                         enum: [critical, important, standard]
               required: [mapping]
             - properties:
-                source: { enum: [apqc, template] }
+                source: { enum: [apqc, template, bia] }
     - title: Preview and confirm
       description: >-
         What the import would do, read from the file now (nothing is written yet): counts (domains, subdomains, new,
