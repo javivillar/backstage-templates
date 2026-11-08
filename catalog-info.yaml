@@ -3423,15 +3423,12 @@ spec:
         skipErrors: ${{ parameters.skipErrors }}
     - id: pr
       name: Open the pull request in refresquito-services
-      action: publish:github:pull-request
+      # one commit for all the files (publish:github:pull-request makes a request per file: too slow for thousands)
+      action: refresquito:business-model:pull-request
       input:
-        repoUrl: github.com?owner=javivillar&repo=refresquito-services
+        namespace: ${{ parameters.namespace }}
         branchName: business-map-import-${{ parameters.namespace }}
-        targetBranchName: main
-        sourcePath: ./catalog/business-map/${{ parameters.namespace }}
-        targetPath: catalog/business-map/${{ parameters.namespace }}
         title: "Business map: import the business model of ${{ parameters.namespace }} (${{ parameters.source }})"
-        commitMessage: "business map ${{ parameters.namespace }}: import ${{ parameters.source }} model"
         description: |
           Business model of **${{ parameters.namespace }}** imported in Backstage by ${{ user.entity.metadata.name if user.entity else 'unknown' }}
           from a file of source `${{ parameters.source }}` (the file is not in git; only the entities made from it).
