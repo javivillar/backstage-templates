@@ -3855,10 +3855,9 @@ spec:
           retention: ${{ parameters.retention }}
           dependsOn: ${{ parameters.dependsOn }}
           processKey: ${{ parameters.processKey }}
-          # its origin in a reference model, kept as it is
-          pcfId: ${{ steps.current.output.entity.metadata.annotations['apqc.org/pcf-id'] or '' }}
-          pcfVersion: ${{ steps.current.output.entity.metadata.annotations['apqc.org/pcf-version'] or '' }}
-          modelId: ${{ steps.current.output.entity.metadata.annotations['refresquito.io/model-id'] or '' }}
+          # every annotation of the current process (imported-hash, APQC IDs, deprecated...): the skeleton keeps them
+          # all except the ones the catalog adds, and takes the process key from the form
+          annotations: ${{ steps.current.output.entity.metadata.annotations }}
     - id: pr
       name: Open the pull request in refresquito-services
       action: publish:github:pull-request

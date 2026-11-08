@@ -9,21 +9,16 @@ metadata:
 {%- if values.description %}
   description: ${{ values.description | dump }}
 {%- endif %}
-{%- if values.processKey or values.pcfId or values.modelId %}
-  annotations:
-{%- if values.pcfId %}
-    apqc.org/pcf-id: ${{ values.pcfId | dump }}
-{%- endif %}
-{%- if values.pcfVersion %}
-    apqc.org/pcf-version: ${{ values.pcfVersion | dump }}
-{%- endif %}
-{%- if values.modelId %}
-    refresquito.io/model-id: ${{ values.modelId | dump }}
-{%- endif %}
-{%- if values.processKey %}
-    refresquito.io/process-key: ${{ values.processKey | dump }}
-{%- endif %}
-{%- endif %}
+  # every annotation of the current process stays (the reimport reads refresquito.io/imported-hash, the APQC IDs,
+  # refresquito.io/deprecated...), except the ones the catalog adds itself; the process key comes from the form
+{%- set skip = ["backstage.io/managed-by-location", "backstage.io/managed-by-origin-location", "backstage.io/view-url", "backstage.io/edit-url", "backstage.io/source-location", "refresquito.io/process-key"] %}
+{%- set comma = joiner(",") %}
+  annotations: {
+{%- for key, value in values.annotations %}{% if key not in skip %}${{ comma() }}
+    ${{ key | dump }}: ${{ value | dump }}{% endif %}{% endfor %}
+{%- if values.processKey %}${{ comma() }}
+    "refresquito.io/process-key": ${{ values.processKey | dump }}{% endif %}
+  }
 spec:
   owner: ${{ values.owner }}
   domain: ${{ values.domain }}
