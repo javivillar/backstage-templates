@@ -2242,7 +2242,7 @@ spec:
         url: ${{ steps['deploy'].output.remoteUrl }}
       - title: Open in the catalog
         icon: catalog
-        entityRef: ${{ steps['register'].output.entityRef or ('component:default/' + parameters.name) }}
+        url: /console/entity/default/component/${{ parameters.name }}
     text:
       - title: Next - merge the deployment pull request
         content: |
@@ -2983,7 +2983,7 @@ spec:
       url: ${{ steps['deploy'].output.remoteUrl }}
     - title: Open in the catalog
       icon: catalog
-      entityRef: ${{ steps['register'].output.entityRef or ('component:default/' + parameters.name) }}
+      url: /console/entity/default/component/${{ parameters.name }}
     text:
     - title: Next - merge the deployment pull request
       content: 'The repository exists and its CI is building the images of commit `${{ steps[''publish''].output.commitHash }}`.
@@ -3169,7 +3169,7 @@ spec:
       - title: The pull request
         url: ${{ steps['pr'].output.remoteUrl }}
       - title: Images in Backstage
-        url: /images
+        url: /console/images
     text:
       - title: Next
         content: |
